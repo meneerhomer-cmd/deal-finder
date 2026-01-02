@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+www/
+dist/
+
+# Angular cache
+.angular/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files with secrets
+.env.local
+.env.*.local
+
+# Ionic/Capacitor
+android/
+ios/
+plugins/
+
+# Logs
+*.log
+npm-debug.log*

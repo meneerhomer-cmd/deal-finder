@@ -1,0 +1,16 @@
+{
+  "name": "Deal Finder",
+  "short_name": "Deals",
+  "description": "Vind de beste multi-buy promoties in België",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3880ff",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

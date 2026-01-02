@@ -1,0 +1,169 @@
+/*
+ * Deal Finder - Global Styles
+ */
+
+// Import Ionic styles
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+// Custom global styles
+* {
+  box-sizing: border-box;
+}
+
+// Discount badge
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--ion-color-danger);
+  color: white;
+}
+
+// Deal type chip
+.deal-type-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  
+  &.multi-buy {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  &.percentage {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
+  &.fixed-price {
+    background: #e9d5ff;
+    color: #6b21a8;
+  }
+  
+  &.price-drop {
+    background: #ffedd5;
+    color: #c2410c;
+  }
+}
+
+// Retailer colors
+.retailer-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  
+  &.carrefour { background: var(--retailer-carrefour); }
+  &.lidl { background: var(--retailer-lidl); }
+  &.delhaize { background: var(--retailer-delhaize); }
+  &.colruyt { background: var(--retailer-colruyt); }
+  &.aldi { background: var(--retailer-aldi); }
+  &.kruidvat { background: var(--retailer-kruidvat); }
+}
+
+// Price display
+.price {
+  font-weight: 700;
+  color: var(--ion-color-success);
+  font-size: 1.25rem;
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+}
+
+// Category emoji
+.category-icon {
+  font-size: 1.5rem;
+  margin-right: 8px;
+}
+
+// Card hover effect
+ion-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Loading skeleton
+.skeleton-card {
+  height: 120px;
+  margin: 8px;
+  border-radius: 8px;
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  
+  ion-icon {
+    font-size: 64px;
+    color: var(--ion-color-medium);
+    margin-bottom: 16px;
+  }
+  
+  h2 {
+    margin: 0 0 8px;
+    color: var(--ion-color-dark);
+  }
+  
+  p {
+    margin: 0;
+    color: var(--ion-color-medium);
+  }
+}
+
+// Filter chips container
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--ion-color-light);
+  
+  ion-chip {
+    margin: 0;
+  }
+}
+
+// Pull to refresh
+ion-refresher {
+  z-index: 1;
+}
+
+// Fix tab page height for scrolling
+app-home, app-deals, app-retailers {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
