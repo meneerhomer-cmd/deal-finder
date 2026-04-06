@@ -77,6 +77,17 @@
   &.colruyt { background: var(--retailer-colruyt); }
   &.aldi { background: var(--retailer-aldi); }
   &.kruidvat { background: var(--retailer-kruidvat); }
+  &.albert-heijn { background: var(--retailer-albert-heijn); }
+  &.jumbo { background: var(--retailer-jumbo); color: #333; }
+  &.spar { background: var(--retailer-spar); }
+  &.carrefour-market { background: var(--retailer-carrefour-market); }
+  &.intermarche { background: var(--retailer-intermarche); }
+  &.renmans { background: var(--retailer-renmans); }
+  &.bol-com { background: var(--retailer-bol-com); }
+  &.mediamarkt { background: var(--retailer-mediamarkt); }
+  &.ikea { background: var(--retailer-ikea); }
+  &.gamma { background: var(--retailer-gamma); }
+  &.brico-bricoplanit { background: var(--retailer-brico-bricoplanit); }
 }
 
 // Price display
