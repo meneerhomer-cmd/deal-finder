@@ -1,5 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
@@ -7,10 +8,19 @@ import {
   IonBadge, IonSpinner, IonChip, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline } from 'ionicons/icons';
+import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, trendingDown, trendingUp } from 'ionicons/icons';
+import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../models/deal.model';
+
+interface PriceHistoryEntry {
+  id: number;
+  price: number;
+  originalPrice: number | null;
+  discountPercentage: number | null;
+  recordedAt: string;
+}
 
 @Component({
   selector: 'app-deal-detail',
@@ -79,6 +89,41 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
           </ion-card-content>
         </ion-card>
 
+        @if (priceHistory().length > 1) {
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title class="section-title">
+                <ion-icon name="trending-down"></ion-icon>
+                Prijsgeschiedenis
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="price-history">
+                @for (entry of priceHistory(); track entry.id) {
+                  <div class="history-row">
+                    <span class="history-date">{{ entry.recordedAt | date:'d MMM yyyy' }}</span>
+                    <span class="history-price">€{{ entry.price | number:'1.2-2' }}</span>
+                    @if (entry.discountPercentage) {
+                      <span class="history-discount">-{{ entry.discountPercentage }}%</span>
+                    }
+                  </div>
+                }
+              </div>
+              @if (priceTrend()) {
+                <div class="trend-summary" [class]="priceTrend()">
+                  @if (priceTrend() === 'down') {
+                    <ion-icon name="trending-down"></ion-icon>
+                    Prijs is gedaald sinds eerste registratie
+                  } @else {
+                    <ion-icon name="trending-up"></ion-icon>
+                    Prijs is gestegen sinds eerste registratie
+                  }
+                </div>
+              }
+            </ion-card-content>
+          </ion-card>
+        }
+
         <ion-card>
           <ion-card-content>
             <div class="info-grid">
@@ -137,15 +182,12 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
       padding: 24px 0 16px;
     }
 
-    .hero-emoji {
-      font-size: 4rem;
-    }
+    .hero-emoji { font-size: 4rem; }
 
     .hero-discount {
       font-size: 2rem;
       font-weight: 700;
-      color: var(--ion-color-danger);
-      background: var(--ion-color-danger-tint);
+      background: var(--ion-color-danger);
       padding: 8px 16px;
       border-radius: 12px;
       color: white;
@@ -172,9 +214,7 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
       margin-bottom: 16px;
     }
 
-    .price-section {
-      text-align: center;
-    }
+    .price-section { text-align: center; }
 
     .current-price {
       font-size: 2.5rem;
@@ -196,6 +236,67 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
       font-weight: 500;
     }
 
+    .section-title {
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .price-history {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--ion-color-light);
+    }
+
+    .history-row:last-child { border-bottom: none; }
+
+    .history-date {
+      flex: 1;
+      font-size: 0.85rem;
+      color: var(--ion-color-medium);
+    }
+
+    .history-price {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .history-discount {
+      color: var(--ion-color-danger);
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+
+    .trend-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+
+      &.down {
+        background: var(--chip-multi-buy-bg);
+        color: var(--chip-multi-buy-text);
+      }
+
+      &.up {
+        background: var(--chip-price-drop-bg);
+        color: var(--chip-price-drop-text);
+      }
+    }
+
     .info-grid {
       display: flex;
       flex-direction: column;
@@ -207,13 +308,8 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
       justify-content: space-between;
     }
 
-    .info-label {
-      color: var(--ion-color-medium);
-    }
-
-    .info-value {
-      font-weight: 500;
-    }
+    .info-label { color: var(--ion-color-medium); }
+    .info-value { font-weight: 500; }
 
     .actions {
       margin-top: 16px;
@@ -225,16 +321,18 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
 })
 export class DealDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
+  private http = inject(HttpClient);
   private dealService = inject(DealService);
   private shoppingList = inject(ShoppingListService);
 
   deal: Deal | undefined;
+  priceHistory = signal<PriceHistoryEntry[]>([]);
 
   getCategoryEmoji = getCategoryEmoji;
   getPromoKindClass = getPromoKindClass;
 
   constructor() {
-    addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline });
+    addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, trendingDown, trendingUp });
   }
 
   ngOnInit() {
@@ -242,14 +340,26 @@ export class DealDetailPage implements OnInit {
     const existing = this.dealService.deals().find(d => d.id === id);
     if (existing) {
       this.deal = existing;
+      this.loadPriceHistory(id);
     } else {
       this.dealService.loadDeals().subscribe(deals => {
         this.deal = deals.find(d => d.id === id);
+        if (this.deal) this.loadPriceHistory(id);
       });
     }
     if (this.shoppingList.items().length === 0) {
       this.shoppingList.loadItems().subscribe();
     }
+  }
+
+  priceTrend(): 'up' | 'down' | null {
+    const history = this.priceHistory();
+    if (history.length < 2) return null;
+    const oldest = history[history.length - 1].price;
+    const newest = history[0].price;
+    if (newest < oldest) return 'down';
+    if (newest > oldest) return 'up';
+    return null;
   }
 
   getCategoryName(slug: string): string {
@@ -264,5 +374,13 @@ export class DealDetailPage implements OnInit {
   addToShoppingList() {
     if (!this.deal) return;
     this.shoppingList.addDeal(this.deal.id).subscribe();
+  }
+
+  private loadPriceHistory(dealId: number) {
+    this.http.get<PriceHistoryEntry[]>(`${environment.apiUrl}/deals/${dealId}/price-history`)
+      .subscribe({
+        next: history => this.priceHistory.set(history),
+        error: () => {} // silently ignore if no history
+      });
   }
 }
