@@ -53,11 +53,13 @@ import { Deal, getCategoryEmoji, getPromoKindClass } from '../../models/deal.mod
             <span class="retailer-badge" [class]="deal.retailerSlug">
               {{ deal.retailerName }}
             </span>
-            @if (deal.validUntil) {
-              <span class="valid-until">
-                t/m {{ deal.validUntil | date:'d MMM' }}
-              </span>
-            }
+            <span class="date-info">
+              @if (deal.expiringSoon) {
+                <span class="expiring-badge">Bijna verlopen!</span>
+              } @else if (deal.validUntil) {
+                <span class="valid-until">t/m {{ deal.validUntil | date:'d MMM' }}</span>
+              }
+            </span>
           </div>
         </div>
       </ion-card-content>
@@ -127,6 +129,16 @@ import { Deal, getCategoryEmoji, getPromoKindClass } from '../../models/deal.mod
     .valid-until {
       font-size: 0.8rem;
       color: var(--ion-color-medium);
+    }
+
+    .expiring-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--ion-color-warning-shade);
+      background: var(--ion-color-warning);
+      padding: 2px 8px;
+      border-radius: 8px;
+      color: #000;
     }
   `]
 })
