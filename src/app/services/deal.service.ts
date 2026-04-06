@@ -90,6 +90,7 @@ export class DealService {
 
   loadDealsByRetailer(slug: string): Observable<Deal[]> {
     this.loading.set(true);
+    this.error.set(null);
     return this.http.get<Deal[]>(`${this.apiUrl}/deals/retailer/${slug}`).pipe(
       tap(deals => {
         this.deals.set(deals);

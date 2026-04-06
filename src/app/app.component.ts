@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { home, pricetag, storefront, settings } from 'ionicons/icons';
+import { home, pricetag, storefront, cart } from 'ionicons/icons';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +24,10 @@ import { home, pricetag, storefront, settings } from 'ionicons/icons';
           <ion-icon name="storefront"></ion-icon>
           <ion-label>Winkels</ion-label>
         </ion-tab-button>
+        <ion-tab-button routerLink="/shopping-list" routerLinkActive="tab-selected">
+          <ion-icon name="cart"></ion-icon>
+          <ion-label>Lijst</ion-label>
+        </ion-tab-button>
       </ion-tab-bar>
     </ion-app>
   `,
@@ -44,6 +48,6 @@ import { home, pricetag, storefront, settings } from 'ionicons/icons';
 })
 export class AppComponent {
   constructor() {
-    addIcons({ home, pricetag, storefront, settings });
+    addIcons({ home, pricetag, storefront, cart });
   }
 }

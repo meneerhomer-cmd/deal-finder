@@ -1,70 +1,94 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-Ionic/Angular mobile app for browsing Belgian supermarket promotions. Requires the `deal-finder-api` Quarkus backend running at `http://localhost:8080`.
+Ionic/Angular mobile app for browsing Belgian supermarket promotions. Requires the `deal-finder-api` Quarkus backend at `http://localhost:8080`.
+
+## Tech Stack
+
+- **Framework**: Angular 17 (standalone components, signals)
+- **Mobile**: Ionic 7
+- **Styling**: SCSS
+- **Path aliases**: `@env` → `src/environments`, `@app` → `src/app` (defined but unused)
 
 ## Commands
 
 ```bash
-# Install dependencies
 npm install
-
-# Development server (use either)
-ionic serve
-ng serve
-
-# Production build
+ionic serve       # Dev server (port 8100)
+ng serve          # Alternative
 ionic build --prod
-
-# Mobile builds
-ionic capacitor build android
-ionic capacitor build ios
-
-# Run tests
-ng test
 ```
 
 ## Architecture
 
-This is an Angular 17 app using standalone components and signals for reactive state management.
+```
+src/app/
+├── components/deal-card/     # Deal card with emoji, discount badge, prices
+├── models/deal.model.ts      # Interfaces + 25 Dutch categories with emojis
+├── pages/home/               # Welcome, retailer chips, top 5 deals
+├── pages/deals/              # All deals + filter modal + search (also used for /retailer/:slug)
+├── pages/retailers/          # Retailer list with branded colors + deal counts
+├── services/deal.service.ts  # Central state via Angular signals + HTTP
+├── app.component.ts          # Root with 3-tab bar (Home/Deals/Winkels)
+└── app.routes.ts             # Flat routes, lazy-loaded
+```
 
-### State Management Pattern
+**State management**: `DealService` holds all state via signals (`deals`, `retailers`, `loading`, `error`, `filters`). `filteredDeals` is a computed signal applying all active filters.
 
-`DealService` (`src/app/services/deal.service.ts`) is the central state manager using Angular signals:
-- `deals`, `retailers`, `loading`, `error`, `filters` - reactive state signals
-- `filteredDeals` - computed signal that applies all active filters
-- HTTP calls via RxJS update signals via `tap()` operators
+**Routes**: `/home`, `/deals`, `/retailers`, `/retailer/:slug` (reuses DealsPage)
 
-### Routing
+## Known Bugs (Deep Scan April 2026)
 
-Tab-based navigation defined in `app.routes.ts` with lazy-loaded pages:
-- `/home` - Overview page
-- `/deals` - All deals with filtering
-- `/retailers` - Retailer list
-- `/retailer/:slug` - Retailer-specific deals (reuses DealsPage)
+| # | Severity | Issue |
+|---|----------|-------|
+| 1 | **Critical** | Category mismatch — FE has 25 Dutch slugs, BE has 12 English. **All category filtering broken. Emojis never display.** |
+| 2 | **High** | No deal detail page — cards are not tappable, dead-end UI |
+| 3 | **High** | Tab nav doesn't use `ion-tabs` — component destroyed/recreated on tab switch (loses scroll, search, filters) |
+| 4 | **Medium** | Dark mode incomplete — chips, filter backgrounds, retailer colors not adapted |
+| 5 | **Medium** | Dates display in English (no Dutch locale registered) |
+| 6 | **Medium** | `onSearch` uses `event.target.value` instead of Ionic `event.detail.value` |
+| 7 | **Medium** | No sorting options (key feature for a deal app) |
+| 8 | **Low** | `src/assets` dir missing but referenced in angular.json |
+| 9 | **Low** | No 404/wildcard route |
+| 10 | **Low** | Dead imports (settings icon, chevronForward, .skeleton-card CSS) |
+| 11 | **Low** | Mixed `*ngIf` and `@if` control flow syntax |
+| 12 | **Low** | Retailer colors duplicated in 4 places |
 
-### Models
+## Decisions
 
-`src/app/models/deal.model.ts` contains:
-- `Deal`, `Retailer`, `ScanStatus` interfaces matching backend API
-- `PromoKind` type: `'MULTI_BUY' | 'PERCENTAGE' | 'FIXED_PRICE' | 'PRICE_DROP'`
-- `CATEGORIES` constant with Dutch category names and emojis
+| Date | Decision | Why |
+|------|----------|-----|
+| Jan 2, 2026 | Angular 17 + Ionic 7 | Familiar stack, mobile-ready |
+| Jan 2, 2026 | Signals over NgRx | Lightweight for simple app |
+| Jan 2, 2026 | Single-file components | Fast iteration |
+| Jan 2, 2026 | Dutch UI | Target audience is Flemish |
 
-### API Integration
+## TODO (Priority Order)
 
-Backend endpoints (prefixed with `environment.apiUrl`):
-- `GET /deals` - All active deals
-- `GET /deals/retailer/{slug}` - Deals by retailer
-- `GET /retailers` - All retailers with deal counts
-- `GET /admin/status` - Scan status
-- `POST /admin/scan` - Trigger scan
+### Fix What's Broken (DONE — April 6, 2026)
+- [x] Fix category mismatch — backend now uses Dutch slugs matching frontend
+- [x] Register Dutch locale — `registerLocaleData(localeNl)` + `LOCALE_ID` in main.ts
+- [x] Fix `onSearch` — uses `event.detail.value` (CustomEvent)
+- [x] Add 404 route — wildcard redirects to home
+- [x] Create `src/assets/` directory
+- [x] Fix `loadDealsByRetailer` — clears error signal
 
-## Tech Stack
+### Core UX (DONE — April 6, 2026)
+- [x] Add deal detail page — cards are tappable, navigate to `/deal/:id`
+- [x] Add sorting options — cycle through discount/price/expiry/name
+- [x] Implement shopping list UI — new "Lijst" tab, session-based, active/purchased tabs
 
-- Angular 17 (standalone components, signals)
-- Ionic 7
-- SCSS for styling
-- Path alias: `@env` → `src/environments`
+### Polish (DONE — April 6, 2026)
+- [x] Complete dark mode — all chip/badge/retailer colors adapt via CSS vars
+- [x] Centralize retailer colors — single source of truth in variables.scss
+
+### Remaining
+- [ ] Fix tab navigation — switch to proper `ion-tabs` for state preservation
+- [ ] Add virtual scrolling for deal lists
+- [ ] PWA icons (192x192, 512x512)
+- [ ] Tests
+
+## External Docs
+
+Full project documentation: `~/Documents/Personal Projects/deal-finder/project.md`

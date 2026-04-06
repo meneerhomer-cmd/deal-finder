@@ -22,4 +22,16 @@ export const routes: Routes = [
     path: 'retailer/:slug',
     loadComponent: () => import('./pages/deals/deals.page').then(m => m.DealsPage),
   },
+  {
+    path: 'deal/:id',
+    loadComponent: () => import('./pages/deal-detail/deal-detail.page').then(m => m.DealDetailPage),
+  },
+  {
+    path: 'shopping-list',
+    loadComponent: () => import('./pages/shopping-list/shopping-list.page').then(m => m.ShoppingListPage),
+  },
+  {
+    path: '**',
+    redirectTo: 'home',
+  },
 ];

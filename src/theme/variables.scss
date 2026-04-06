@@ -8,7 +8,7 @@
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
 
-  // Success - Green for savings
+  // Success - Green for savings/prices
   --ion-color-success: #2dd36f;
   --ion-color-success-rgb: 45, 211, 111;
   --ion-color-success-contrast: #ffffff;
@@ -48,31 +48,75 @@
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
 
-  // Retailer colors
+  // Retailer brand colors (single source of truth)
   --retailer-carrefour: #0066CC;
   --retailer-lidl: #0050AA;
   --retailer-delhaize: #E31837;
   --retailer-colruyt: #F7941D;
   --retailer-aldi: #00447C;
   --retailer-kruidvat: #E91E8C;
+
+  // Deal type chip colors
+  --chip-multi-buy-bg: #dcfce7;
+  --chip-multi-buy-text: #166534;
+  --chip-percentage-bg: #dbeafe;
+  --chip-percentage-text: #1e40af;
+  --chip-fixed-price-bg: #fef3c7;
+  --chip-fixed-price-text: #92400e;
+  --chip-price-drop-bg: #fce7f3;
+  --chip-price-drop-text: #9d174d;
 }
 
 // Dark theme
 @media (prefers-color-scheme: dark) {
   :root {
     --ion-color-primary: #428cff;
-    --ion-color-primary-rgb: 66,140,255;
+    --ion-color-primary-rgb: 66, 140, 255;
     --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-contrast-rgb: 255,255,255;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
     --ion-color-primary-shade: #3a7be0;
     --ion-color-primary-tint: #5598ff;
 
+    --ion-color-success: #2fdf75;
+    --ion-color-success-contrast: #000000;
+
+    --ion-color-danger: #ff4961;
+    --ion-color-danger-contrast: #ffffff;
+
+    --ion-color-medium: #989aa2;
+    --ion-color-medium-contrast: #000000;
+
+    --ion-color-light: #2a2a2e;
+    --ion-color-light-rgb: 42, 42, 46;
+    --ion-color-light-contrast: #ffffff;
+
     --ion-background-color: #121212;
-    --ion-background-color-rgb: 18,18,18;
+    --ion-background-color-rgb: 18, 18, 18;
     --ion-text-color: #ffffff;
-    --ion-text-color-rgb: 255,255,255;
+    --ion-text-color-rgb: 255, 255, 255;
 
     --ion-card-background: #1e1e1e;
     --ion-item-background: #1e1e1e;
+    --ion-toolbar-background: #1a1a1a;
+    --ion-tab-bar-background: #1a1a1a;
+    --ion-border-color: #333;
+
+    // Retailer colors brighten slightly for dark backgrounds
+    --retailer-carrefour: #3388ee;
+    --retailer-lidl: #3377cc;
+    --retailer-delhaize: #ff3050;
+    --retailer-colruyt: #ffaa33;
+    --retailer-aldi: #3377aa;
+    --retailer-kruidvat: #ff40aa;
+
+    // Deal type chips adapt for dark mode
+    --chip-multi-buy-bg: #14532d;
+    --chip-multi-buy-text: #86efac;
+    --chip-percentage-bg: #1e3a5f;
+    --chip-percentage-text: #93c5fd;
+    --chip-fixed-price-bg: #451a03;
+    --chip-fixed-price-text: #fcd34d;
+    --chip-price-drop-bg: #4a0d2e;
+    --chip-price-drop-text: #f9a8d4;
   }
 }
