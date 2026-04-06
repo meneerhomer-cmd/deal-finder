@@ -1,6 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { Component, OnInit, inject, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
@@ -8,30 +7,14 @@ import {
   IonBadge, IonSpinner, IonSegment, IonSegmentButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { trashOutline, checkmarkCircle, cartOutline } from 'ionicons/icons';
-import { environment } from '@env/environment';
-
-interface ShoppingListItem {
-  id: number;
-  deal: {
-    id: number;
-    productName: string;
-    retailerName: string;
-    retailerSlug: string;
-    currentPrice: number | null;
-    discountPercentage: number;
-    categorySlug: string | null;
-  };
-  addedAt: string;
-  purchased: boolean;
-  purchasedAt: string | null;
-}
+import { trashOutline, cartOutline } from 'ionicons/icons';
+import { ShoppingListService, ShoppingListItem } from '../../services/shopping-list.service';
 
 @Component({
   selector: 'app-shopping-list',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe,
+    DecimalPipe,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
     IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
@@ -41,7 +24,7 @@ interface ShoppingListItem {
     <ion-header>
       <ion-toolbar color="primary">
         <ion-title>Boodschappenlijst</ion-title>
-        @if (items().length > 0) {
+        @if (shoppingList.items().length > 0) {
           <ion-buttons slot="end">
             <ion-button (click)="clearAll()">
               <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
@@ -53,8 +36,8 @@ interface ShoppingListItem {
         <ion-segment [value]="currentTab" (ionChange)="onTabChange($event)">
           <ion-segment-button value="active">
             Actief
-            @if (activeItems().length > 0) {
-              <ion-badge color="primary">{{ activeItems().length }}</ion-badge>
+            @if (shoppingList.activeCount() > 0) {
+              <ion-badge color="primary">{{ shoppingList.activeCount() }}</ion-badge>
             }
           </ion-segment-button>
           <ion-segment-button value="purchased">Gekocht</ion-segment-button>
@@ -67,7 +50,7 @@ interface ShoppingListItem {
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      @if (loading()) {
+      @if (shoppingList.loading()) {
         <div class="loading">
           <ion-spinner></ion-spinner>
         </div>
@@ -152,89 +135,44 @@ interface ShoppingListItem {
   `]
 })
 export class ShoppingListPage implements OnInit {
-  private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl;
-
-  items = signal<ShoppingListItem[]>([]);
-  loading = signal(false);
+  shoppingList = inject(ShoppingListService);
   currentTab: 'active' | 'purchased' = 'active';
 
-  private sessionId = this.getOrCreateSessionId();
-
-  activeItems = computed(() => this.items().filter(i => !i.purchased));
-  purchasedItems = computed(() => this.items().filter(i => i.purchased));
   displayedItems = computed(() =>
-    this.currentTab === 'active' ? this.activeItems() : this.purchasedItems()
+    this.currentTab === 'active' ? this.shoppingList.activeItems() : this.shoppingList.purchasedItems()
   );
 
   constructor() {
-    addIcons({ trashOutline, checkmarkCircle, cartOutline });
+    addIcons({ trashOutline, cartOutline });
   }
 
   ngOnInit() {
-    this.loadItems();
-  }
-
-  loadItems() {
-    this.loading.set(true);
-    this.http.get<ShoppingListItem[]>(`${this.apiUrl}/shopping-list`, {
-      headers: { 'X-Session-Id': this.sessionId }
-    }).subscribe({
-      next: items => {
-        this.items.set(items);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.shoppingList.loadItems().subscribe();
   }
 
   refresh(event: any) {
-    this.http.get<ShoppingListItem[]>(`${this.apiUrl}/shopping-list`, {
-      headers: { 'X-Session-Id': this.sessionId }
-    }).subscribe({
-      next: items => {
-        this.items.set(items);
-        event.target.complete();
-      },
-      error: () => event.target.complete(),
+    this.shoppingList.loadItems().subscribe({
+      complete: () => event.target.complete()
     });
   }
 
   togglePurchased(item: ShoppingListItem) {
     if (item.purchased) {
-      this.http.delete(`${this.apiUrl}/shopping-list/${item.deal.id}/purchased`, {
-        headers: { 'X-Session-Id': this.sessionId }
-      }).subscribe(() => this.loadItems());
+      this.shoppingList.markNotPurchased(item.deal.id).subscribe();
     } else {
-      this.http.patch(`${this.apiUrl}/shopping-list/${item.deal.id}/purchased`, {}, {
-        headers: { 'X-Session-Id': this.sessionId }
-      }).subscribe(() => this.loadItems());
+      this.shoppingList.markPurchased(item.deal.id).subscribe();
     }
   }
 
   removeItem(item: ShoppingListItem) {
-    this.http.delete(`${this.apiUrl}/shopping-list/${item.deal.id}`, {
-      headers: { 'X-Session-Id': this.sessionId }
-    }).subscribe(() => this.loadItems());
+    this.shoppingList.removeDeal(item.deal.id).subscribe();
   }
 
   clearAll() {
-    this.http.delete(`${this.apiUrl}/shopping-list`, {
-      headers: { 'X-Session-Id': this.sessionId }
-    }).subscribe(() => this.loadItems());
+    this.shoppingList.clearAll().subscribe();
   }
 
   onTabChange(event: CustomEvent) {
     this.currentTab = event.detail.value;
-  }
-
-  private getOrCreateSessionId(): string {
-    const key = 'deal-finder-session-id';
-    let id = localStorage.getItem(key);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(key, id);
-    }
-    return id;
   }
 }

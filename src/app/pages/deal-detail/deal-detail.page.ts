@@ -7,8 +7,9 @@ import {
   IonBadge, IonSpinner, IonChip, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cartOutline, openOutline, pricetagOutline } from 'ionicons/icons';
+import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
+import { ShoppingListService } from '../../services/shopping-list.service';
 import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../models/deal.model';
 
 @Component({
@@ -98,10 +99,17 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
         </ion-card>
 
         <div class="actions">
-          <ion-button expand="block" (click)="addToShoppingList()">
-            <ion-icon name="cart-outline" slot="start"></ion-icon>
-            Toevoegen aan boodschappenlijst
-          </ion-button>
+          @if (isInList()) {
+            <ion-button expand="block" color="success" disabled>
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              Op je boodschappenlijst
+            </ion-button>
+          } @else {
+            <ion-button expand="block" (click)="addToShoppingList()">
+              <ion-icon name="cart-outline" slot="start"></ion-icon>
+              Toevoegen aan boodschappenlijst
+            </ion-button>
+          }
           @if (deal.pageNumber) {
             <ion-button expand="block" fill="outline" color="medium">
               <ion-icon name="pricetag-outline" slot="start"></ion-icon>
@@ -218,6 +226,7 @@ import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../mod
 export class DealDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
   private dealService = inject(DealService);
+  private shoppingList = inject(ShoppingListService);
 
   deal: Deal | undefined;
 
@@ -225,7 +234,7 @@ export class DealDetailPage implements OnInit {
   getPromoKindClass = getPromoKindClass;
 
   constructor() {
-    addIcons({ cartOutline, openOutline, pricetagOutline });
+    addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline });
   }
 
   ngOnInit() {
@@ -238,6 +247,9 @@ export class DealDetailPage implements OnInit {
         this.deal = deals.find(d => d.id === id);
       });
     }
+    if (this.shoppingList.items().length === 0) {
+      this.shoppingList.loadItems().subscribe();
+    }
   }
 
   getCategoryName(slug: string): string {
@@ -245,8 +257,12 @@ export class DealDetailPage implements OnInit {
     return cat ? `${cat.emoji} ${cat.name}` : slug;
   }
 
+  isInList(): boolean {
+    return this.deal ? this.shoppingList.isInList(this.deal.id) : false;
+  }
+
   addToShoppingList() {
-    // TODO: integrate with shopping list service
-    alert('Toegevoegd aan je boodschappenlijst!');
+    if (!this.deal) return;
+    this.shoppingList.addDeal(this.deal.id).subscribe();
   }
 }
