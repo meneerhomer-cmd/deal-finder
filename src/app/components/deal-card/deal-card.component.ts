@@ -29,8 +29,11 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
           @if (deal.discountPercentage > 0) {
             <div class="deal-type">
               <span class="deal-type-chip" [class]="getDiscountClass(deal.discountPercentage)">
-                {{ deal.dealType || (deal.discountPercentage + '% korting') }}
+                {{ deal.discountPercentage }}% korting
               </span>
+              @if (deal.dealType) {
+                <span class="deal-hint">{{ deal.dealType }}</span>
+              }
             </div>
           }
 
@@ -70,6 +73,11 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     .discount-badge { flex-shrink: 0; }
     .deal-info { display: flex; flex-direction: column; gap: 12px; }
     .price-row { display: flex; align-items: baseline; gap: 12px; }
+    .deal-hint {
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+      font-style: italic;
+    }
     .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .valid-until { font-size: 0.8rem; color: var(--ion-color-medium); }
     .expiring-badge {
