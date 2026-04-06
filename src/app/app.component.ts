@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { home, pricetag, storefront, cart } from 'ionicons/icons';
+import { home, pricetag, storefront, cart, search } from 'ionicons/icons';
 import { ShoppingListService } from './services/shopping-list.service';
 
 @Component({
@@ -20,6 +20,10 @@ import { ShoppingListService } from './services/shopping-list.service';
         <ion-tab-button routerLink="/deals" routerLinkActive="tab-selected">
           <ion-icon name="pricetag"></ion-icon>
           <ion-label>Deals</ion-label>
+        </ion-tab-button>
+        <ion-tab-button routerLink="/search" routerLinkActive="tab-selected">
+          <ion-icon name="search"></ion-icon>
+          <ion-label>Vergelijk</ion-label>
         </ion-tab-button>
         <ion-tab-button routerLink="/retailers" routerLinkActive="tab-selected">
           <ion-icon name="storefront"></ion-icon>
@@ -54,7 +58,7 @@ export class AppComponent implements OnInit {
   shoppingList = inject(ShoppingListService);
 
   constructor() {
-    addIcons({ home, pricetag, storefront, cart });
+    addIcons({ home, pricetag, storefront, cart, search });
   }
 
   ngOnInit() {

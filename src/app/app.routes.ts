@@ -31,6 +31,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/shopping-list/shopping-list.page').then(m => m.ShoppingListPage),
   },
   {
+    path: 'search',
+    loadComponent: () => import('./pages/search/search.page').then(m => m.SearchPage),
+  },
+  {
     path: '**',
     redirectTo: 'home',
   },
