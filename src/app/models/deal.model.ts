@@ -1,20 +1,20 @@
 export interface Deal {
   id: number;
   productName: string;
-  brand: string | null;
-  category: string | null;
-  dealType: string;
-  promoKind: PromoKind;
-  effectiveDiscount: number;
-  price: number | null;
-  originalPrice: number | null;
-  quantity: string | null;
-  retailerSlug: string;
   retailerName: string;
+  retailerSlug: string;
+  retailerLogoUrl: string | null;
+  categoryName: string | null;
+  categorySlug: string | null;
+  currentPrice: number | null;
+  originalPrice: number | null;
+  discountPercentage: number;
   validFrom: string | null;
   validUntil: string | null;
-  pageNumber: number | null;
+  imageUrl: string | null;
+  sourceUrl: string | null;
   expired: boolean;
+  daysExpired: number;
   expiringSoon: boolean;
 }
 
@@ -72,10 +72,17 @@ export const CATEGORIES: Category[] = [
   { slug: 'andere', name: 'Andere', emoji: '📦' },
 ];
 
-export function getCategoryEmoji(slug: string | null): string {
-  if (!slug) return '📦';
-  const cat = CATEGORIES.find(c => c.slug === slug.toLowerCase());
+export function getCategoryEmoji(categorySlug: string | null): string {
+  if (!categorySlug) return '📦';
+  const cat = CATEGORIES.find(c => c.slug === categorySlug.toLowerCase());
   return cat?.emoji ?? '📦';
+}
+
+export function getDiscountClass(discount: number): string {
+  if (discount >= 50) return 'multi-buy';
+  if (discount >= 30) return 'percentage';
+  if (discount >= 20) return 'fixed-price';
+  return 'price-drop';
 }
 
 export function getPromoKindClass(kind: PromoKind): string {

@@ -70,7 +70,7 @@ import { Deal } from '../../models/deal.model';
             <ion-skeleton-text [animated]="true" style="height: 40px"></ion-skeleton-text>
           } @else {
             <div class="retailer-chips">
-              @for (retailer of dealService.retailers(); track retailer.slug) {
+              @for (retailer of activeRetailers(); track retailer.slug) {
                 <a [routerLink]="['/retailer', retailer.slug]" class="retailer-chip" [class]="retailer.slug">
                   {{ retailer.name }}
                   <ion-badge color="light">{{ retailer.dealCount }}</ion-badge>
@@ -219,6 +219,14 @@ import { Deal } from '../../models/deal.model';
       &.colruyt { background: var(--retailer-colruyt); }
       &.aldi { background: var(--retailer-aldi); }
       &.kruidvat { background: var(--retailer-kruidvat); }
+      &.albert-heijn { background: var(--retailer-albert-heijn); }
+      &.jumbo { background: var(--retailer-jumbo); color: #333; }
+      &.spar { background: var(--retailer-spar); }
+      &.intermarche { background: var(--retailer-intermarche); }
+      &.gamma { background: var(--retailer-gamma); }
+      &:not([class*="-"]):not(.carrefour):not(.lidl):not(.delhaize):not(.colruyt):not(.aldi):not(.kruidvat):not(.jumbo):not(.spar):not(.gamma) {
+        background: var(--ion-color-medium);
+      }
 
       ion-badge {
         --background: rgba(255,255,255,0.3);
@@ -265,7 +273,7 @@ export class HomePage implements OnInit {
 
   topDeals = computed(() =>
     [...this.dealService.deals()]
-      .sort((a, b) => b.effectiveDiscount - a.effectiveDiscount)
+      .sort((a, b) => b.discountPercentage - a.discountPercentage)
       .slice(0, 5)
   );
 
@@ -275,6 +283,10 @@ export class HomePage implements OnInit {
       .filter(d => !top5Ids.has(d.id))
       .slice(0, 3);
   });
+
+  activeRetailers = computed(() =>
+    this.dealService.retailers().filter(r => r.dealCount > 0)
+  );
 
   expiringDeals = computed(() =>
     this.dealService.deals()
@@ -286,7 +298,7 @@ export class HomePage implements OnInit {
   avgDiscount = computed(() => {
     const deals = this.dealService.deals();
     if (deals.length === 0) return 0;
-    const sum = deals.reduce((acc, d) => acc + d.effectiveDiscount, 0);
+    const sum = deals.reduce((acc, d) => acc + (d.discountPercentage || 0), 0);
     return Math.round(sum / deals.length);
   });
 

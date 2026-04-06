@@ -12,7 +12,7 @@ import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shar
 import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
-import { Deal, getCategoryEmoji, getPromoKindClass, CATEGORIES } from '../../models/deal.model';
+import { Deal, getCategoryEmoji, getDiscountClass, CATEGORIES } from '../../models/deal.model';
 
 interface PriceHistoryEntry {
   id: number;
@@ -49,24 +49,26 @@ interface PriceHistoryEntry {
         </div>
       } @else {
         <div class="deal-hero">
-          <span class="hero-emoji">{{ getCategoryEmoji(deal.category) }}</span>
-          @if (deal.effectiveDiscount) {
-            <span class="hero-discount">-{{ deal.effectiveDiscount }}%</span>
+          <span class="hero-emoji">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+          @if (deal.discountPercentage) {
+            <span class="hero-discount">-{{ deal.discountPercentage }}%</span>
           }
         </div>
 
         <h1 class="deal-title">{{ deal.productName }}</h1>
 
-        @if (deal.brand) {
-          <p class="deal-brand">{{ deal.brand }}</p>
+        @if (deal.categoryName) {
+          <p class="deal-brand">{{ deal.categoryName }}</p>
         }
 
         <div class="deal-meta">
           <span class="retailer-badge" [class]="deal.retailerSlug">{{ deal.retailerName }}</span>
-          <span class="deal-type-chip" [class]="getPromoKindClass(deal.promoKind)">{{ deal.dealType }}</span>
-          @if (deal.category) {
+          @if (deal.discountPercentage > 0) {
+            <span class="deal-type-chip" [class]="getDiscountClass(deal.discountPercentage)">{{ deal.discountPercentage }}% korting</span>
+          }
+          @if (deal.categorySlug) {
             <ion-chip>
-              <ion-label>{{ getCategoryName(deal.category) }}</ion-label>
+              <ion-label>{{ getCategoryName(deal.categorySlug!) }}</ion-label>
             </ion-chip>
           }
         </div>
@@ -74,15 +76,15 @@ interface PriceHistoryEntry {
         <ion-card>
           <ion-card-content>
             <div class="price-section">
-              @if (deal.price) {
-                <div class="current-price">€{{ deal.price | number:'1.2-2' }}</div>
+              @if (deal.currentPrice) {
+                <div class="current-price">€{{ deal.currentPrice | number:'1.2-2' }}</div>
               }
               @if (deal.originalPrice) {
                 <div class="original-price-large">€{{ deal.originalPrice | number:'1.2-2' }}</div>
               }
-              @if (deal.effectiveDiscount) {
+              @if (deal.discountPercentage) {
                 <div class="savings">
-                  Je bespaart {{ deal.effectiveDiscount }}%
+                  Je bespaart {{ deal.discountPercentage }}%
                 </div>
               }
             </div>
@@ -133,10 +135,10 @@ interface PriceHistoryEntry {
                   <span class="info-value">{{ deal.validUntil | date:'d MMMM yyyy' }}</span>
                 </div>
               }
-              @if (deal.quantity) {
+              @if (deal.categoryName) {
                 <div class="info-item">
-                  <span class="info-label">Hoeveelheid</span>
-                  <span class="info-value">{{ deal.quantity }}</span>
+                  <span class="info-label">Categorie</span>
+                  <span class="info-value">{{ deal.categoryName }}</span>
                 </div>
               }
             </div>
@@ -327,7 +329,7 @@ export class DealDetailPage implements OnInit {
   priceHistory = signal<PriceHistoryEntry[]>([]);
 
   getCategoryEmoji = getCategoryEmoji;
-  getPromoKindClass = getPromoKindClass;
+  getDiscountClass = getDiscountClass;
 
   constructor() {
     addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp });
@@ -376,7 +378,7 @@ export class DealDetailPage implements OnInit {
 
   async shareDeal() {
     if (!this.deal) return;
-    const text = `${this.deal.productName} - ${this.deal.effectiveDiscount}% korting bij ${this.deal.retailerName}!`;
+    const text = `${this.deal.productName} - ${this.deal.discountPercentage}% korting bij ${this.deal.retailerName}!`;
     if (navigator.share) {
       await navigator.share({ title: 'Deal Finder', text });
     } else {

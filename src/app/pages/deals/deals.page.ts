@@ -9,9 +9,9 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { filter, close, checkmark, swapVertical } from 'ionicons/icons';
-import { DealService, DealFilters } from '../../services/deal.service';
+import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { CATEGORIES, PromoKind } from '../../models/deal.model';
+import { CATEGORIES } from '../../models/deal.model';
 
 @Component({
   selector: 'app-deals',
@@ -66,12 +66,6 @@ import { CATEGORIES, PromoKind } from '../../models/deal.model';
               <ion-icon name="close"></ion-icon>
             </ion-chip>
           }
-          @if (dealService.filters().promoKind) {
-            <ion-chip (click)="dealService.clearFilter('promoKind')">
-              <ion-label>{{ getPromoKindName(dealService.filters().promoKind!) }}</ion-label>
-              <ion-icon name="close"></ion-icon>
-            </ion-chip>
-          }
           @if (dealService.filters().minDiscount) {
             <ion-chip (click)="dealService.clearFilter('minDiscount')">
               <ion-label>≥{{ dealService.filters().minDiscount }}%</ion-label>
@@ -121,19 +115,6 @@ import { CATEGORIES, PromoKind } from '../../models/deal.model';
             </ion-toolbar>
           </ion-header>
           <ion-content>
-            <ion-list>
-              <ion-item>
-                <ion-label><strong>Promo type</strong></ion-label>
-              </ion-item>
-              <ion-radio-group [value]="dealService.filters().promoKind || ''" (ionChange)="onPromoKindChange($event)">
-                <ion-item><ion-radio value="">Alle types</ion-radio></ion-item>
-                <ion-item><ion-radio value="MULTI_BUY">Multi-buy (1+1, 2+1, etc.)</ion-radio></ion-item>
-                <ion-item><ion-radio value="PERCENTAGE">Percentage (-20%, -30%)</ion-radio></ion-item>
-                <ion-item><ion-radio value="FIXED_PRICE">Vaste prijs (3 voor €5)</ion-radio></ion-item>
-                <ion-item><ion-radio value="PRICE_DROP">Prijsverlaging</ion-radio></ion-item>
-              </ion-radio-group>
-            </ion-list>
-
             <ion-list>
               <ion-item>
                 <ion-label><strong>Minimum korting</strong></ion-label>
@@ -235,9 +216,9 @@ export class DealsPage implements OnInit {
     const deals = [...this.dealService.filteredDeals()];
     switch (this.currentSort) {
       case 'discount':
-        return deals.sort((a, b) => b.effectiveDiscount - a.effectiveDiscount);
+        return deals.sort((a, b) => b.discountPercentage - a.discountPercentage);
       case 'price':
-        return deals.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+        return deals.sort((a, b) => (a.currentPrice ?? 0) - (b.currentPrice ?? 0));
       case 'expiry':
         return deals.sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''));
       case 'name':
@@ -285,10 +266,6 @@ export class DealsPage implements OnInit {
     this.dealService.setFilter('search', value);
   }
 
-  onPromoKindChange(event: CustomEvent) {
-    this.dealService.setFilter('promoKind', event.detail.value || undefined);
-  }
-
   onMinDiscountChange(event: CustomEvent) {
     const value = event.detail.value;
     this.dealService.setFilter('minDiscount', value > 0 ? value : undefined);
@@ -303,13 +280,4 @@ export class DealsPage implements OnInit {
     return cat ? `${cat.emoji} ${cat.name}` : slug;
   }
 
-  getPromoKindName(kind: PromoKind): string {
-    switch (kind) {
-      case 'MULTI_BUY': return 'Multi-buy';
-      case 'PERCENTAGE': return 'Percentage';
-      case 'FIXED_PRICE': return 'Vaste prijs';
-      case 'PRICE_DROP': return 'Prijsverlaging';
-      default: return kind;
-    }
-  }
 }

@@ -2,12 +2,11 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
-import { Deal, Retailer, ScanStatus, PromoKind } from '../models/deal.model';
+import { Deal, Retailer, ScanStatus } from '../models/deal.model';
 
 export interface DealFilters {
   retailer?: string;
   category?: string;
-  promoKind?: PromoKind;
   minDiscount?: number;
   search?: string;
 }
@@ -32,14 +31,11 @@ export class DealService {
     
     return allDeals.filter(deal => {
       if (f.retailer && deal.retailerSlug !== f.retailer) return false;
-      if (f.category && deal.category?.toLowerCase() !== f.category.toLowerCase()) return false;
-      if (f.promoKind && deal.promoKind !== f.promoKind) return false;
-      if (f.minDiscount && deal.effectiveDiscount < f.minDiscount) return false;
+      if (f.category && deal.categorySlug?.toLowerCase() !== f.category.toLowerCase()) return false;
+      if (f.minDiscount && deal.discountPercentage < f.minDiscount) return false;
       if (f.search) {
         const searchLower = f.search.toLowerCase();
-        const matchesProduct = deal.productName.toLowerCase().includes(searchLower);
-        const matchesBrand = deal.brand?.toLowerCase().includes(searchLower);
-        if (!matchesProduct && !matchesBrand) return false;
+        if (!deal.productName.toLowerCase().includes(searchLower)) return false;
       }
       return true;
     });
@@ -52,7 +48,6 @@ export class DealService {
     let count = 0;
     if (f.retailer) count++;
     if (f.category) count++;
-    if (f.promoKind) count++;
     if (f.minDiscount) count++;
     if (f.search) count++;
     return count;
@@ -64,7 +59,7 @@ export class DealService {
     this.loading.set(true);
     this.error.set(null);
     
-    return this.http.get<Deal[]>(`${this.apiUrl}/deals`).pipe(
+    return this.http.get<Deal[]>(`${this.apiUrl}/deals?lang=nl`).pipe(
       tap(deals => {
         this.deals.set(deals);
         this.loading.set(false);
@@ -91,7 +86,7 @@ export class DealService {
   loadDealsByRetailer(slug: string): Observable<Deal[]> {
     this.loading.set(true);
     this.error.set(null);
-    return this.http.get<Deal[]>(`${this.apiUrl}/deals/retailer/${slug}`).pipe(
+    return this.http.get<Deal[]>(`${this.apiUrl}/deals/retailer/${slug}?lang=nl`).pipe(
       tap(deals => {
         this.deals.set(deals);
         this.loading.set(false);
