@@ -1,16 +1,17 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { 
+import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
   IonList, IonItem, IonLabel, IonBadge, IonSkeletonText, IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { refresh, arrowForward, pricetag, storefront } from 'ionicons/icons';
+import { refresh, arrowForward, pricetag, storefront, sparkles, syncOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
+import { ShoppingListService } from '../../services/shopping-list.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { Deal, Retailer } from '../../models/deal.model';
+import { Deal } from '../../models/deal.model';
 
 @Component({
   selector: 'app-home',
@@ -25,29 +26,38 @@ import { Deal, Retailer } from '../../models/deal.model';
   template: `
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>🏷️ Deal Finder</ion-title>
+        <ion-title>Deal Finder</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
-      <ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+      <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <!-- Welcome card -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Welkom!</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p>Vind de beste multi-buy promoties bij Belgische supermarkten.</p>
-          <p class="stats" *ngIf="!dealService.loading()">
-            <strong>{{ dealService.totalDeals() }}</strong> actieve deals beschikbaar
-          </p>
-        </ion-card-content>
-      </ion-card>
+      <!-- Stats row -->
+      @if (!dealService.loading()) {
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-value">{{ dealService.totalDeals() }}</span>
+            <span class="stat-label">Deals</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">{{ dealService.retailers().length }}</span>
+            <span class="stat-label">Winkels</span>
+          </div>
+          <div class="stat-card accent">
+            <span class="stat-value">{{ avgDiscount() }}%</span>
+            <span class="stat-label">Gem. korting</span>
+          </div>
+          <div class="stat-card success">
+            <span class="stat-value">{{ shoppingList.activeCount() }}</span>
+            <span class="stat-label">Op lijst</span>
+          </div>
+        </div>
+      }
 
-      <!-- Retailers overview -->
+      <!-- Retailers -->
       <ion-card>
         <ion-card-header>
           <ion-card-title>
@@ -76,7 +86,7 @@ import { Deal, Retailer } from '../../models/deal.model';
         <ion-card-header>
           <div class="section-header">
             <ion-card-title>
-              <ion-icon name="pricetag"></ion-icon>
+              <ion-icon name="sparkles"></ion-icon>
               Beste Deals
             </ion-card-title>
             <ion-button fill="clear" routerLink="/deals" size="small">
@@ -90,35 +100,91 @@ import { Deal, Retailer } from '../../models/deal.model';
               <ion-spinner></ion-spinner>
               <p>Deals laden...</p>
             </div>
-          } @else if (topDeals.length === 0) {
+          } @else if (topDeals().length === 0) {
             <div class="empty">
               <p>Nog geen deals beschikbaar.</p>
               <ion-button fill="outline" (click)="triggerScan()">
-                <ion-icon name="refresh" slot="start"></ion-icon>
+                <ion-icon name="sync-outline" slot="start"></ion-icon>
                 Scan starten
               </ion-button>
             </div>
           } @else {
-            @for (deal of topDeals; track deal.id) {
+            @for (deal of topDeals(); track deal.id) {
               <app-deal-card [deal]="deal"></app-deal-card>
             }
           }
         </ion-card-content>
       </ion-card>
+
+      <!-- Recently added -->
+      @if (recentDeals().length > 0) {
+        <ion-card>
+          <ion-card-header>
+            <div class="section-header">
+              <ion-card-title>
+                <ion-icon name="pricetag"></ion-icon>
+                Recent Toegevoegd
+              </ion-card-title>
+              <ion-button fill="clear" routerLink="/deals" size="small">
+                Alles <ion-icon name="arrow-forward" slot="end"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-card-header>
+          <ion-card-content class="deals-content">
+            @for (deal of recentDeals(); track deal.id) {
+              <app-deal-card [deal]="deal"></app-deal-card>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
     </ion-content>
   `,
   styles: [`
-    .stats {
-      margin-top: 12px;
-      color: var(--ion-color-medium);
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 12px;
     }
-    
+
+    .stat-card {
+      background: var(--ion-card-background, white);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--ion-color-primary);
+    }
+
+    .stat-card.accent .stat-value {
+      color: var(--ion-color-danger);
+    }
+
+    .stat-card.success .stat-value {
+      color: var(--ion-color-success);
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--ion-color-medium);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     .retailer-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
-    
+
     .retailer-chip {
       display: inline-flex;
       align-items: center;
@@ -129,35 +195,35 @@ import { Deal, Retailer } from '../../models/deal.model';
       color: white;
       font-weight: 500;
       font-size: 0.9rem;
-      
+
       &.carrefour { background: var(--retailer-carrefour); }
       &.lidl { background: var(--retailer-lidl); }
       &.delhaize { background: var(--retailer-delhaize); }
       &.colruyt { background: var(--retailer-colruyt); }
       &.aldi { background: var(--retailer-aldi); }
       &.kruidvat { background: var(--retailer-kruidvat); }
-      
+
       ion-badge {
         --background: rgba(255,255,255,0.3);
         --color: white;
       }
     }
-    
+
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
+
     ion-card-title ion-icon {
       margin-right: 8px;
       vertical-align: middle;
     }
-    
+
     .deals-content {
       padding: 0;
     }
-    
+
     .loading, .empty {
       display: flex;
       flex-direction: column;
@@ -170,16 +236,30 @@ import { Deal, Retailer } from '../../models/deal.model';
 })
 export class HomePage implements OnInit {
   dealService = inject(DealService);
-  
-  get topDeals(): Deal[] {
-    // Get top 5 deals sorted by discount
-    return [...this.dealService.deals()]
+  shoppingList = inject(ShoppingListService);
+
+  topDeals = computed(() =>
+    [...this.dealService.deals()]
       .sort((a, b) => b.effectiveDiscount - a.effectiveDiscount)
-      .slice(0, 5);
-  }
+      .slice(0, 5)
+  );
+
+  recentDeals = computed(() => {
+    const top5Ids = new Set(this.topDeals().map(d => d.id));
+    return [...this.dealService.deals()]
+      .filter(d => !top5Ids.has(d.id))
+      .slice(0, 3);
+  });
+
+  avgDiscount = computed(() => {
+    const deals = this.dealService.deals();
+    if (deals.length === 0) return 0;
+    const sum = deals.reduce((acc, d) => acc + d.effectiveDiscount, 0);
+    return Math.round(sum / deals.length);
+  });
 
   constructor() {
-    addIcons({ refresh, arrowForward, pricetag, storefront });
+    addIcons({ refresh, arrowForward, pricetag, storefront, sparkles, syncOutline });
   }
 
   ngOnInit() {
@@ -191,16 +271,17 @@ export class HomePage implements OnInit {
     this.dealService.loadRetailers().subscribe();
   }
 
-  refresh(event: any) {
+  doRefresh(event: any) {
     this.dealService.loadDeals().subscribe({
       complete: () => event.target.complete()
     });
+    this.dealService.loadRetailers().subscribe();
   }
 
   triggerScan() {
     this.dealService.triggerScan().subscribe({
       next: () => {
-        setTimeout(() => this.loadData(), 2000);
+        setTimeout(() => this.loadData(), 3000);
       }
     });
   }
