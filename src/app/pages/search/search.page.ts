@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import {
@@ -215,8 +216,9 @@ interface SearchResponse {
     }
   `]
 })
-export class SearchPage {
+export class SearchPage implements OnInit {
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute);
 
   results = signal<SearchResult[]>([]);
   loading = signal(false);
@@ -225,6 +227,13 @@ export class SearchPage {
 
   constructor() {
     addIcons({ searchOutline, trophyOutline });
+  }
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const q = params['q'];
+      if (q) this.doSearch(q);
+    });
   }
 
   cheapest(): SearchResult | null {
@@ -241,7 +250,10 @@ export class SearchPage {
       this.hasSearched.set(false);
       return;
     }
+    this.doSearch(query);
+  }
 
+  doSearch(query: string) {
     this.loading.set(true);
     this.hasSearched.set(true);
     this.lastQuery.set(query);

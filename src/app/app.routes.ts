@@ -35,6 +35,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/search/search.page').then(m => m.SearchPage),
   },
   {
+    path: 'brands',
+    loadComponent: () => import('./pages/brands/brands.page').then(m => m.BrandsPage),
+  },
+  {
+    path: 'flyer/:shopSlug/:brochureId',
+    loadComponent: () => import('./pages/flyer-viewer/flyer-viewer.page').then(m => m.FlyerViewerPage),
+  },
+  {
     path: '**',
     redirectTo: 'home',
   },
