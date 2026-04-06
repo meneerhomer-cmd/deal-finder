@@ -57,6 +57,20 @@ import { Deal } from '../../models/deal.model';
         </div>
       }
 
+      @if (dealService.totalDeals() === 0 && !dealService.loading()) {
+        <ion-card class="scraping-banner">
+          <ion-card-content>
+            <div class="scraping-info">
+              <ion-spinner name="crescent"></ion-spinner>
+              <div>
+                <strong>Deals worden geladen...</strong>
+                <p>De server verzamelt de nieuwste promoties. Dit duurt ongeveer een minuut.</p>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      }
+
       <!-- Retailers -->
       <ion-card>
         <ion-card-header>
@@ -249,6 +263,19 @@ import { Deal } from '../../models/deal.model';
       padding: 0;
     }
 
+    .scraping-banner {
+      border-left: 4px solid var(--ion-color-primary);
+    }
+
+    .scraping-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
+      ion-spinner { flex-shrink: 0; }
+    }
+
     .expiring-card {
       border-left: 4px solid var(--ion-color-warning);
     }
@@ -306,13 +333,27 @@ export class HomePage implements OnInit {
     addIcons({ refresh, arrowForward, pricetag, storefront, sparkles, syncOutline, timerOutline });
   }
 
+  private pollInterval: any;
+
   ngOnInit() {
     this.loadData();
+    this.startPollingIfEmpty();
   }
 
   loadData() {
     this.dealService.loadDeals().subscribe();
     this.dealService.loadRetailers().subscribe();
+  }
+
+  private startPollingIfEmpty() {
+    this.pollInterval = setInterval(() => {
+      if (this.dealService.totalDeals() === 0) {
+        this.dealService.loadDeals().subscribe();
+        this.dealService.loadRetailers().subscribe();
+      } else {
+        clearInterval(this.pollInterval);
+      }
+    }, 10000);
   }
 
   doRefresh(event: any) {
