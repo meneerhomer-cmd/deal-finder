@@ -18,8 +18,6 @@ export interface Deal {
   expiringSoon: boolean;
 }
 
-export type PromoKind = 'MULTI_BUY' | 'PERCENTAGE' | 'FIXED_PRICE' | 'PRICE_DROP';
-
 export interface Retailer {
   id: number;
   slug: string;
@@ -85,12 +83,3 @@ export function getDiscountClass(discount: number): string {
   return 'price-drop';
 }
 
-export function getPromoKindClass(kind: PromoKind): string {
-  switch (kind) {
-    case 'MULTI_BUY': return 'multi-buy';
-    case 'PERCENTAGE': return 'percentage';
-    case 'FIXED_PRICE': return 'fixed-price';
-    case 'PRICE_DROP': return 'price-drop';
-    default: return '';
-  }
-}
