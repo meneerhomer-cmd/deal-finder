@@ -29,7 +29,7 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
           @if (deal.discountPercentage > 0) {
             <div class="deal-type">
               <span class="deal-type-chip" [class]="getDiscountClass(deal.discountPercentage)">
-                {{ deal.discountPercentage }}% korting
+                {{ deal.dealType || (deal.discountPercentage + '% korting') }}
               </span>
             </div>
           }

@@ -9,6 +9,7 @@ export interface Deal {
   currentPrice: number | null;
   originalPrice: number | null;
   discountPercentage: number;
+  dealType: string | null;
   validFrom: string | null;
   validUntil: string | null;
   imageUrl: string | null;
