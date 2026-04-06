@@ -8,7 +8,7 @@ import {
   IonBadge, IonSpinner, IonChip, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, trendingDown, trendingUp } from 'ionicons/icons';
+import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
@@ -155,12 +155,10 @@ interface PriceHistoryEntry {
               Toevoegen aan boodschappenlijst
             </ion-button>
           }
-          @if (deal.pageNumber) {
-            <ion-button expand="block" fill="outline" color="medium">
-              <ion-icon name="pricetag-outline" slot="start"></ion-icon>
-              Pagina {{ deal.pageNumber }} in folder
-            </ion-button>
-          }
+          <ion-button expand="block" fill="outline" (click)="shareDeal()">
+            <ion-icon name="share-outline" slot="start"></ion-icon>
+            Deel deze deal
+          </ion-button>
         </div>
       }
     </ion-content>
@@ -332,7 +330,7 @@ export class DealDetailPage implements OnInit {
   getPromoKindClass = getPromoKindClass;
 
   constructor() {
-    addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, trendingDown, trendingUp });
+    addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp });
   }
 
   ngOnInit() {
@@ -374,6 +372,16 @@ export class DealDetailPage implements OnInit {
   addToShoppingList() {
     if (!this.deal) return;
     this.shoppingList.addDeal(this.deal.id).subscribe();
+  }
+
+  async shareDeal() {
+    if (!this.deal) return;
+    const text = `${this.deal.productName} - ${this.deal.effectiveDiscount}% korting bij ${this.deal.retailerName}!`;
+    if (navigator.share) {
+      await navigator.share({ title: 'Deal Finder', text });
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
   }
 
   private loadPriceHistory(dealId: number) {

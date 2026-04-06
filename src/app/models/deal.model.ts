@@ -14,6 +14,8 @@ export interface Deal {
   validFrom: string | null;
   validUntil: string | null;
   pageNumber: number | null;
+  expired: boolean;
+  expiringSoon: boolean;
 }
 
 export type PromoKind = 'MULTI_BUY' | 'PERCENTAGE' | 'FIXED_PRICE' | 'PRICE_DROP';

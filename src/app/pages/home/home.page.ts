@@ -7,7 +7,7 @@ import {
   IonList, IonItem, IonLabel, IonBadge, IonSkeletonText, IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { refresh, arrowForward, pricetag, storefront, sparkles, syncOutline } from 'ionicons/icons';
+import { refresh, arrowForward, pricetag, storefront, sparkles, syncOutline, timerOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
@@ -115,6 +115,23 @@ import { Deal } from '../../models/deal.model';
           }
         </ion-card-content>
       </ion-card>
+
+      <!-- Expiring soon -->
+      @if (expiringDeals().length > 0) {
+        <ion-card class="expiring-card">
+          <ion-card-header>
+            <ion-card-title class="expiring-title">
+              <ion-icon name="timer-outline"></ion-icon>
+              Bijna verlopen!
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="deals-content">
+            @for (deal of expiringDeals(); track deal.id) {
+              <app-deal-card [deal]="deal"></app-deal-card>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
 
       <!-- Recently added -->
       @if (recentDeals().length > 0) {
@@ -224,6 +241,14 @@ import { Deal } from '../../models/deal.model';
       padding: 0;
     }
 
+    .expiring-card {
+      border-left: 4px solid var(--ion-color-warning);
+    }
+
+    .expiring-title {
+      color: var(--ion-color-warning-shade);
+    }
+
     .loading, .empty {
       display: flex;
       flex-direction: column;
@@ -251,6 +276,13 @@ export class HomePage implements OnInit {
       .slice(0, 3);
   });
 
+  expiringDeals = computed(() =>
+    this.dealService.deals()
+      .filter(d => d.expiringSoon)
+      .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
+      .slice(0, 3)
+  );
+
   avgDiscount = computed(() => {
     const deals = this.dealService.deals();
     if (deals.length === 0) return 0;
@@ -259,7 +291,7 @@ export class HomePage implements OnInit {
   });
 
   constructor() {
-    addIcons({ refresh, arrowForward, pricetag, storefront, sparkles, syncOutline });
+    addIcons({ refresh, arrowForward, pricetag, storefront, sparkles, syncOutline, timerOutline });
   }
 
   ngOnInit() {
