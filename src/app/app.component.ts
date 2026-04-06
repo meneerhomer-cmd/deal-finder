@@ -1,13 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
+import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { home, pricetag, storefront, cart } from 'ionicons/icons';
+import { ShoppingListService } from './services/shopping-list.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, RouterLink, RouterLinkActive],
+  imports: [IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge, RouterLink, RouterLinkActive],
   template: `
     <ion-app>
       <ion-router-outlet></ion-router-outlet>
@@ -27,6 +28,9 @@ import { home, pricetag, storefront, cart } from 'ionicons/icons';
         <ion-tab-button routerLink="/shopping-list" routerLinkActive="tab-selected">
           <ion-icon name="cart"></ion-icon>
           <ion-label>Lijst</ion-label>
+          @if (shoppingList.activeCount() > 0) {
+            <ion-badge color="danger">{{ shoppingList.activeCount() }}</ion-badge>
+          }
         </ion-tab-button>
       </ion-tab-bar>
     </ion-app>
@@ -46,8 +50,14 @@ import { home, pricetag, storefront, cart } from 'ionicons/icons';
     }
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  shoppingList = inject(ShoppingListService);
+
   constructor() {
     addIcons({ home, pricetag, storefront, cart });
+  }
+
+  ngOnInit() {
+    this.shoppingList.loadItems().subscribe();
   }
 }

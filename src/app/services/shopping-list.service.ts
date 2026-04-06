@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { ToastController } from '@ionic/angular/standalone';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
 
@@ -24,6 +25,7 @@ export interface ShoppingListItem {
 })
 export class ShoppingListService {
   private http = inject(HttpClient);
+  private toastCtrl = inject(ToastController);
   private apiUrl = environment.apiUrl;
 
   items = signal<ShoppingListItem[]>([]);
@@ -68,7 +70,14 @@ export class ShoppingListService {
       `${this.apiUrl}/shopping-list/${dealId}`, {},
       { headers: this.headers }
     ).pipe(
-      tap(() => this.loadItems().subscribe())
+      tap(item => {
+        this.loadItems().subscribe();
+        this.showToast('Toegevoegd aan je lijst', 'success');
+      }),
+      catchError(err => {
+        this.showToast('Kon niet toevoegen', 'danger');
+        return of(err);
+      })
     );
   }
 
@@ -77,7 +86,10 @@ export class ShoppingListService {
       `${this.apiUrl}/shopping-list/${dealId}`,
       { headers: this.headers }
     ).pipe(
-      tap(() => this.loadItems().subscribe())
+      tap(() => {
+        this.loadItems().subscribe();
+        this.showToast('Verwijderd van je lijst', 'medium');
+      })
     );
   }
 
@@ -103,11 +115,24 @@ export class ShoppingListService {
     return this.http.delete<void>(`${this.apiUrl}/shopping-list`, {
       headers: this.headers
     }).pipe(
-      tap(() => this.loadItems().subscribe())
+      tap(() => {
+        this.loadItems().subscribe();
+        this.showToast('Lijst gewist', 'medium');
+      })
     );
   }
 
   isInList(dealId: number): boolean {
     return this.items().some(item => item.deal.id === dealId);
+  }
+
+  private async showToast(message: string, color: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 1500,
+      position: 'bottom',
+      color,
+    });
+    await toast.present();
   }
 }
