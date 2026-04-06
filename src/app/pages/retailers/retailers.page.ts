@@ -1,26 +1,23 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { 
+import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonList, IonItem, IonLabel, IonBadge, IonIcon, IonSkeletonText, IonNote
 } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { chevronForward } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 
 @Component({
   selector: 'app-retailers',
   standalone: true,
   imports: [
-    CommonModule, RouterLink,
+    RouterLink,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonList, IonItem, IonLabel, IonBadge, IonIcon, IonSkeletonText, IonNote
   ],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>🏪 Winkels</ion-title>
+        <ion-title>Winkels</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -29,15 +26,26 @@ import { DealService } from '../../services/deal.service';
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <ion-list>
-        @if (dealService.retailers().length === 0) {
+      @if (dealService.loading()) {
+        <ion-list>
           @for (i of [1,2,3,4,5,6]; track i) {
             <ion-item>
               <ion-skeleton-text [animated]="true" style="width: 100%; height: 48px"></ion-skeleton-text>
             </ion-item>
           }
-        } @else {
-          @for (retailer of dealService.retailers(); track retailer.slug) {
+        </ion-list>
+      } @else if (sortedRetailers().length === 0) {
+        <div class="empty-state">
+          <h2>Geen winkels beschikbaar</h2>
+          <p>Probeer later opnieuw</p>
+        </div>
+      } @else {
+        <div class="summary-bar">
+          <span>{{ sortedRetailers().length }} winkels</span>
+          <span>{{ totalDeals() }} actieve deals</span>
+        </div>
+        <ion-list>
+          @for (retailer of sortedRetailers(); track retailer.slug) {
             <ion-item [routerLink]="['/retailer', retailer.slug]" [detail]="true">
               <div class="retailer-logo" [class]="retailer.slug" slot="start">
                 {{ retailer.name.charAt(0) }}
@@ -51,11 +59,20 @@ import { DealService } from '../../services/deal.service';
               </ion-badge>
             </ion-item>
           }
-        }
-      </ion-list>
+        </ion-list>
+      }
     </ion-content>
   `,
   styles: [`
+    .summary-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: var(--ion-color-medium);
+      border-bottom: 1px solid var(--ion-color-light);
+    }
+
     .retailer-logo {
       width: 48px;
       height: 48px;
@@ -67,7 +84,7 @@ import { DealService } from '../../services/deal.service';
       font-weight: bold;
       color: white;
       margin-right: 16px;
-      
+
       &.carrefour { background: var(--retailer-carrefour); }
       &.lidl { background: var(--retailer-lidl); }
       &.delhaize { background: var(--retailer-delhaize); }
@@ -75,12 +92,12 @@ import { DealService } from '../../services/deal.service';
       &.aldi { background: var(--retailer-aldi); }
       &.kruidvat { background: var(--retailer-kruidvat); }
     }
-    
+
     ion-badge {
       font-size: 1rem;
       padding: 8px 12px;
       border-radius: 12px;
-      
+
       &.carrefour { --background: var(--retailer-carrefour); }
       &.lidl { --background: var(--retailer-lidl); }
       &.delhaize { --background: var(--retailer-delhaize); }
@@ -88,7 +105,7 @@ import { DealService } from '../../services/deal.service';
       &.aldi { --background: var(--retailer-aldi); }
       &.kruidvat { --background: var(--retailer-kruidvat); }
     }
-    
+
     ion-item h2 {
       font-weight: 600;
     }
@@ -97,9 +114,13 @@ import { DealService } from '../../services/deal.service';
 export class RetailersPage implements OnInit {
   dealService = inject(DealService);
 
-  constructor() {
-    addIcons({ chevronForward });
-  }
+  sortedRetailers = computed(() =>
+    [...this.dealService.retailers()].sort((a, b) => b.dealCount - a.dealCount)
+  );
+
+  totalDeals = computed(() =>
+    this.dealService.retailers().reduce((sum, r) => sum + r.dealCount, 0)
+  );
 
   ngOnInit() {
     if (this.dealService.retailers().length === 0) {
