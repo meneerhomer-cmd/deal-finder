@@ -1,14 +1,15 @@
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
-  IonButton, IonIcon, IonBadge, IonSkeletonText, IonSpinner
+  IonButton, IonIcon, IonBadge, IonSkeletonText, IonSpinner, IonButtons,
+  IonSearchbar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowForward, sparkles, syncOutline, timerOutline, searchOutline } from 'ionicons/icons';
+import { arrowForward, timerOutline, searchOutline, close,
+         pricetagsOutline, heartOutline, eyeOutline, flashOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
-import { ShoppingListService } from '../../services/shopping-list.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { Deal, FOOD_SLUGS } from '../../models/deal.model';
 
@@ -18,13 +19,30 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
   imports: [
     CommonModule, RouterLink,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
-    IonButton, IonIcon, IonBadge, IonSkeletonText, IonSpinner,
-    DealCardComponent
+    IonButton, IonIcon, IonBadge, IonSkeletonText, IonSpinner, IonButtons,
+    IonSearchbar, DealCardComponent
   ],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Deal Finder</ion-title>
+        @if (searchOpen()) {
+          <ion-searchbar
+            placeholder="Zoek een product of merk..."
+            [debounce]="400"
+            (ionInput)="onSearch($event)"
+            (ionCancel)="searchOpen.set(false)"
+            [showCancelButton]="'always'"
+            cancelButtonText="X"
+            animated
+          ></ion-searchbar>
+        } @else {
+          <ion-title>Deal Finder</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="searchOpen.set(true)">
+              <ion-icon name="search-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        }
       </ion-toolbar>
     </ion-header>
 
@@ -43,60 +61,28 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
         </div>
       }
 
-      <!-- Search shortcut -->
-      <a routerLink="/search" class="search-bar-shortcut">
-        <ion-icon name="search-outline"></ion-icon>
-        <span>Zoek een product of merk...</span>
-      </a>
+      <!-- Retailers row (top) -->
+      @if (activeRetailers().length > 0) {
+        <div class="retailer-scroll">
+          @for (retailer of activeRetailers(); track retailer.slug) {
+            <a [routerLink]="['/retailer', retailer.slug]" class="retailer-bubble">
+              <img [src]="getRetailerLogo(retailer.slug)" [alt]="retailer.name" class="retailer-logo" />
+              <ion-badge>{{ retailer.dealCount }}</ion-badge>
+            </a>
+          }
+        </div>
+      }
 
-      <!-- Top Food Deals carousel -->
+      <!-- Top Food Deals -->
       @if (topFoodDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>Beste voedingsdeals</h2>
-            <a routerLink="/deals" class="see-all">
-              Alles <ion-icon name="arrow-forward"></ion-icon>
-            </a>
+            <h2>Beste deals</h2>
+            <a routerLink="/deals" class="see-all">Alles <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
             @for (deal of topFoodDeals(); track deal.id) {
-              <div class="carousel-item">
-                <app-deal-card [deal]="deal"></app-deal-card>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Retailers row -->
-      @if (activeRetailers().length > 0) {
-        <div class="section">
-          <div class="section-header">
-            <h2>Winkels</h2>
-          </div>
-          <div class="retailer-scroll">
-            @for (retailer of activeRetailers(); track retailer.slug) {
-              <a [routerLink]="['/retailer', retailer.slug]" class="retailer-bubble">
-                <img [src]="getRetailerLogo(retailer.slug)" [alt]="retailer.name" class="retailer-logo" />
-                <span class="retailer-name">{{ retailer.name }}</span>
-                <ion-badge>{{ retailer.dealCount }}</ion-badge>
-              </a>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Expiring soon -->
-      @if (expiringDeals().length > 0) {
-        <div class="section">
-          <div class="section-header expiring">
-            <h2><ion-icon name="timer-outline"></ion-icon> Bijna verlopen!</h2>
-          </div>
-          <div class="deal-carousel">
-            @for (deal of expiringDeals(); track deal.id) {
-              <div class="carousel-item">
-                <app-deal-card [deal]="deal"></app-deal-card>
-              </div>
+              <div class="carousel-item"><app-deal-card [deal]="deal"></app-deal-card></div>
             }
           </div>
         </div>
@@ -107,37 +93,47 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
         <div class="section">
           <div class="section-header">
             <h2>Recent toegevoegd</h2>
-            <a routerLink="/deals" class="see-all">
-              Alles <ion-icon name="arrow-forward"></ion-icon>
-            </a>
+            <a routerLink="/deals" class="see-all">Alles <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
             @for (deal of recentDeals(); track deal.id) {
-              <div class="carousel-item">
-                <app-deal-card [deal]="deal"></app-deal-card>
-              </div>
+              <div class="carousel-item"><app-deal-card [deal]="deal"></app-deal-card></div>
             }
           </div>
         </div>
       }
 
-      <!-- Quick links -->
-      <div class="quick-links">
-        <a routerLink="/categories" class="quick-link">
-          <span class="ql-icon">🏷️</span>
+      <!-- Expiring soon -->
+      @if (expiringDeals().length > 0) {
+        <div class="section">
+          <div class="section-header expiring">
+            <h2><ion-icon name="timer-outline"></ion-icon> Bijna verlopen</h2>
+          </div>
+          <div class="deal-carousel">
+            @for (deal of expiringDeals(); track deal.id) {
+              <div class="carousel-item"><app-deal-card [deal]="deal"></app-deal-card></div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Quick links (compact icons) -->
+      <div class="quick-row">
+        <a routerLink="/categories" class="qr-item">
+          <ion-icon name="pricetags-outline"></ion-icon>
           <span>Categorieën</span>
         </a>
-        <a routerLink="/brands" class="quick-link">
-          <span class="ql-icon">⭐</span>
+        <a routerLink="/brands" class="qr-item">
+          <ion-icon name="heart-outline"></ion-icon>
           <span>Merken</span>
         </a>
-        <a routerLink="/watchlist" class="quick-link">
-          <span class="ql-icon">👁️</span>
-          <span>Mijn producten</span>
+        <a routerLink="/watchlist" class="qr-item">
+          <ion-icon name="eye-outline"></ion-icon>
+          <span>Producten</span>
         </a>
-        <a routerLink="/optimizer" class="quick-link">
-          <span class="ql-icon">🧠</span>
-          <span>Slimme route</span>
+        <a routerLink="/optimizer" class="qr-item">
+          <ion-icon name="flash-outline"></ion-icon>
+          <span>Route</span>
         </a>
       </div>
 
@@ -147,6 +143,14 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
   styles: [`
     ion-content { --background: var(--ion-color-light, #f4f5f8); }
 
+    ion-searchbar {
+      --background: rgba(255,255,255,0.15);
+      --color: white;
+      --placeholder-color: rgba(255,255,255,0.7);
+      --icon-color: rgba(255,255,255,0.8);
+      --cancel-button-color: white;
+    }
+
     .scraping-banner {
       display: flex; align-items: center; gap: 16px;
       margin: 12px; padding: 16px; border-radius: 14px;
@@ -155,67 +159,10 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
     }
     .scraping-banner p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
 
-    .search-bar-shortcut {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0 12px 12px;
-      padding: 12px 16px;
-      background: var(--ion-card-background, white);
-      border-radius: 12px;
-      text-decoration: none;
-      color: var(--ion-color-medium);
-      font-size: 0.9rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-    .search-bar-shortcut ion-icon { font-size: 1.2rem; }
-
-    .section { margin-bottom: 8px; }
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px 4px;
-    }
-    .section-header h2 {
-      margin: 0;
-      font-size: 1.05rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .section-header.expiring h2 { color: #e65100; }
-    .see-all {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--ion-color-primary);
-      text-decoration: none;
-    }
-
-    .deal-carousel {
-      display: flex;
-      gap: 10px;
-      padding: 4px 12px 8px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      scroll-snap-type: x mandatory;
-    }
-    .deal-carousel::-webkit-scrollbar { display: none; }
-    .carousel-item {
-      flex-shrink: 0;
-      width: 145px;
-      scroll-snap-align: start;
-    }
-
     .retailer-scroll {
       display: flex;
-      gap: 16px;
-      padding: 8px 16px 12px;
+      gap: 12px;
+      padding: 12px 14px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
@@ -227,81 +174,86 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
       align-items: center;
       gap: 4px;
       text-decoration: none;
-      color: var(--ion-text-color);
       flex-shrink: 0;
+      position: relative;
     }
     .retailer-logo {
-      width: 52px; height: 52px;
+      width: 48px; height: 48px;
       border-radius: 50%;
       object-fit: contain;
       background: white;
-      padding: 4px;
+      padding: 3px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
-    .retailer-name {
-      font-size: 0.65rem; font-weight: 500; text-align: center;
-      max-width: 56px; overflow: hidden; text-overflow: ellipsis;
-      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
-    }
     .retailer-bubble ion-badge {
-      font-size: 0.6rem;
-      --padding-start: 5px; --padding-end: 5px;
+      position: absolute;
+      top: -2px; right: -4px;
+      font-size: 0.55rem;
+      --padding-start: 4px; --padding-end: 4px;
       --padding-top: 1px; --padding-bottom: 1px;
     }
 
-    .quick-links {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      padding: 8px 12px;
+    .section { margin-bottom: 4px; }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px 2px;
     }
-    .quick-link {
+    .section-header h2 {
+      margin: 0; font-size: 1rem; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .section-header.expiring h2 { color: #e65100; }
+    .see-all {
+      display: flex; align-items: center; gap: 3px;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--ion-color-primary); text-decoration: none;
+    }
+
+    .deal-carousel {
+      display: flex;
+      gap: 8px;
+      padding: 6px 14px 10px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      scroll-snap-type: x mandatory;
+    }
+    .deal-carousel::-webkit-scrollbar { display: none; }
+    .carousel-item {
+      flex-shrink: 0;
+      width: 140px;
+      scroll-snap-align: start;
+    }
+
+    .quick-row {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 12px;
+      margin: 4px 12px;
+      background: var(--ion-card-background, white);
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .qr-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      padding: 14px 4px;
-      background: var(--ion-card-background, white);
-      border-radius: 14px;
+      gap: 4px;
       text-decoration: none;
-      color: var(--ion-text-color);
-      font-size: 0.72rem;
-      font-weight: 500;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      color: var(--ion-color-medium-shade);
+      padding: 8px 4px;
     }
-    .ql-icon { font-size: 1.6rem; }
+    .qr-item ion-icon { font-size: 1.3rem; color: var(--ion-color-primary); }
+    .qr-item span { font-size: 0.62rem; font-weight: 500; }
   `]
 })
 export class HomePage implements OnInit {
   dealService = inject(DealService);
-  shoppingList = inject(ShoppingListService);
+  private router = inject(Router);
 
-  topFoodDeals = computed(() =>
-    [...this.dealService.deals()]
-      .filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
-      .sort((a, b) => b.discountPercentage - a.discountPercentage)
-      .slice(0, 8)
-  );
-
-  recentDeals = computed(() => {
-    const topIds = new Set(this.topFoodDeals().map(d => d.id));
-    return [...this.dealService.deals()]
-      .filter(d => !topIds.has(d.id))
-      .slice(0, 4);
-  });
-
-  activeRetailers = computed(() =>
-    this.dealService.retailers().filter(r => r.dealCount > 0)
-      .sort((a, b) => b.dealCount - a.dealCount)
-  );
-
-  expiringDeals = computed(() =>
-    this.dealService.deals()
-      .filter(d => d.expiringSoon && d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
-      .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
-      .slice(0, 6)
-  );
+  searchOpen = signal(false);
 
   private retailerLogos: Record<string, string> = {
     'lidl': 'https://cdn.jafolders.com/shops/3edf1b56-8ba7-4ae3-8a9f-91a482933067/small.png?v=63931455152',
@@ -309,7 +261,6 @@ export class HomePage implements OnInit {
     'carrefour': 'https://cdn.jafolders.com/shops/bee9decf-340a-4f48-8777-60335ad8cc57/small.png?v=63931453348',
     'delhaize': 'https://cdn.jafolders.com/shops/1898f67e-c834-4606-9f93-9f427df4468f/small.png?v=63931453833',
     'aldi': 'https://cdn.jafolders.com/shops/83bb328e-de66-47bc-8676-eb6a64ab1459/small.png?v=63931452771',
-    'colruyt': 'https://cdn.jafolders.com/shops/bee9decf-340a-4f48-8777-60335ad8cc57/small.png?v=63931453348',
     'albert-heijn': 'https://cdn.jafolders.com/shops/74c1e78c-ac4c-48dc-84cc-a7ebb61be62a/small.png?v=63931452692',
     'jumbo': 'https://cdn.jafolders.com/shops/cafd54d7-c55b-4f09-8a61-81e1c5045c0c/small.png?v=63931454955',
     'spar': 'https://cdn.jafolders.com/shops/9d399cc4-dcfe-4f58-a666-a9fc239dfbc5/small.png?v=63931455726',
@@ -327,8 +278,35 @@ export class HomePage implements OnInit {
     return this.retailerLogos[slug] || '';
   }
 
+  topFoodDeals = computed(() =>
+    [...this.dealService.deals()]
+      .filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
+      .sort((a, b) => b.discountPercentage - a.discountPercentage)
+      .slice(0, 10)
+  );
+
+  recentDeals = computed(() => {
+    const topIds = new Set(this.topFoodDeals().map(d => d.id));
+    return [...this.dealService.deals()]
+      .filter(d => !topIds.has(d.id))
+      .slice(0, 8);
+  });
+
+  activeRetailers = computed(() =>
+    this.dealService.retailers().filter(r => r.dealCount > 0)
+      .sort((a, b) => b.dealCount - a.dealCount)
+  );
+
+  expiringDeals = computed(() =>
+    this.dealService.deals()
+      .filter(d => d.expiringSoon && d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
+      .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
+      .slice(0, 6)
+  );
+
   constructor() {
-    addIcons({ arrowForward, sparkles, syncOutline, timerOutline, searchOutline });
+    addIcons({ arrowForward, timerOutline, searchOutline, close,
+               pricetagsOutline, heartOutline, eyeOutline, flashOutline });
   }
 
   private pollInterval: any;
@@ -359,5 +337,13 @@ export class HomePage implements OnInit {
       complete: () => event.target.complete()
     });
     this.dealService.loadRetailers().subscribe();
+  }
+
+  onSearch(event: CustomEvent) {
+    const q = event.detail.value?.trim();
+    if (q && q.length >= 2) {
+      this.searchOpen.set(false);
+      this.router.navigate(['/search'], { queryParams: { q } });
+    }
   }
 }
