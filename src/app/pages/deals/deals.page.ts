@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
@@ -8,7 +8,7 @@ import {
   IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { filter, close, checkmark, swapVertical } from 'ionicons/icons';
+import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { CATEGORIES } from '../../models/deal.model';
@@ -34,6 +34,11 @@ import { CATEGORIES } from '../../models/deal.model';
         }
         <ion-title>{{ pageTitle }}</ion-title>
         <ion-buttons slot="end">
+          @if (retailerSlug) {
+            <ion-button (click)="openFlyer()">
+              <ion-icon name="book-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          }
           <ion-button (click)="showFilterModal = true">
             <ion-icon name="filter" slot="icon-only"></ion-icon>
             @if (dealService.activeFiltersCount() > 0) {
@@ -187,6 +192,7 @@ import { CATEGORIES } from '../../models/deal.model';
 export class DealsPage implements OnInit {
   dealService = inject(DealService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   showFilterModal = false;
   retailerSlug: string | null = null;
@@ -234,7 +240,7 @@ export class DealsPage implements OnInit {
   }
 
   constructor() {
-    addIcons({ filter, close, checkmark, swapVertical });
+    addIcons({ filter, close, checkmark, swapVertical, bookOutline });
   }
 
   ngOnInit() {
@@ -280,4 +286,14 @@ export class DealsPage implements OnInit {
     return cat ? `${cat.emoji} ${cat.name}` : slug;
   }
 
+  openFlyer() {
+    if (!this.retailerSlug) return;
+    this.dealService.loadFlyers(this.retailerSlug).subscribe({
+      next: data => {
+        if (data.flyers?.length > 0) {
+          this.router.navigate(['/flyer', this.retailerSlug, data.flyers[0].id]);
+        }
+      }
+    });
+  }
 }

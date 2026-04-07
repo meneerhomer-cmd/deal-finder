@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
@@ -7,14 +8,14 @@ import {
   IonBadge, IonSpinner, IonSegment, IonSegmentButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { trashOutline, cartOutline } from 'ionicons/icons';
+import { trashOutline, cartOutline, sparklesOutline } from 'ionicons/icons';
 import { ShoppingListService, ShoppingListItem } from '../../services/shopping-list.service';
 
 @Component({
   selector: 'app-shopping-list',
   standalone: true,
   imports: [
-    DecimalPipe,
+    RouterLink, DecimalPipe,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
     IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
@@ -49,6 +50,15 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
       <ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
+
+      @if (shoppingList.activeCount() > 0 && currentTab === 'active') {
+        <div class="optimize-bar">
+          <ion-button expand="block" fill="outline" routerLink="/optimizer">
+            <ion-icon name="sparkles-outline" slot="start"></ion-icon>
+            Vind de goedkoopste route
+          </ion-button>
+        </div>
+      }
 
       @if (shoppingList.loading()) {
         <div class="loading">
@@ -93,6 +103,10 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
     </ion-content>
   `,
   styles: [`
+    .optimize-bar {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--ion-color-light);
+    }
     .loading {
       display: flex;
       justify-content: center;
@@ -143,7 +157,7 @@ export class ShoppingListPage implements OnInit {
   );
 
   constructor() {
-    addIcons({ trashOutline, cartOutline });
+    addIcons({ trashOutline, cartOutline, sparklesOutline });
   }
 
   ngOnInit() {

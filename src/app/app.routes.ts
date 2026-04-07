@@ -43,6 +43,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/flyer-viewer/flyer-viewer.page').then(m => m.FlyerViewerPage),
   },
   {
+    path: 'optimizer',
+    loadComponent: () => import('./pages/optimizer/optimizer.page').then(m => m.OptimizerPage),
+  },
+  {
     path: '**',
     redirectTo: 'home',
   },
