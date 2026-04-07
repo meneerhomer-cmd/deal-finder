@@ -2,13 +2,14 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
-import { Deal, Retailer, ScanStatus } from '../models/deal.model';
+import { Deal, Retailer, ScanStatus, FOOD_SLUGS } from '../models/deal.model';
 
 export interface DealFilters {
   retailer?: string;
   category?: string;
   minDiscount?: number;
   search?: string;
+  foodOnly?: boolean;
 }
 
 @Injectable({
@@ -37,6 +38,7 @@ export class DealService {
         const searchLower = f.search.toLowerCase();
         if (!deal.productName.toLowerCase().includes(searchLower)) return false;
       }
+      if (f.foodOnly && (!deal.categorySlug || !FOOD_SLUGS.has(deal.categorySlug))) return false;
       return true;
     });
   });
@@ -114,10 +116,10 @@ export class DealService {
     return this.http.post<{ message: string }>(url, {});
   }
 
-  setFilter(key: keyof DealFilters, value: string | number | undefined) {
+  setFilter(key: keyof DealFilters, value: string | number | boolean | undefined) {
     this.filters.update(f => ({
       ...f,
-      [key]: value || undefined
+      [key]: value ?? undefined
     }));
   }
 

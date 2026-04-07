@@ -87,6 +87,19 @@ export const CATEGORIES: Category[] = [
   { slug: 'andere', name: 'Andere', emoji: '📦' },
 ];
 
+export const FOOD_SLUGS = new Set([
+  'vlees', 'vis', 'zuivel', 'kaas', 'charcuterie', 'groenten', 'fruit',
+  'dranken', 'bier', 'wijn', 'snoep', 'chips', 'ontbijt', 'brood',
+  'diepvries', 'conserven', 'pasta', 'sauzen', 'kruiden'
+]);
+
+export const FOOD_CATEGORIES = CATEGORIES.filter(c => FOOD_SLUGS.has(c.slug));
+export const NON_FOOD_CATEGORIES = CATEGORIES.filter(c => !FOOD_SLUGS.has(c.slug));
+
+export function isFoodDeal(deal: Deal): boolean {
+  return deal.categorySlug ? FOOD_SLUGS.has(deal.categorySlug) : false;
+}
+
 export function getCategoryEmoji(categorySlug: string | null): string {
   if (!categorySlug) return '📦';
   const cat = CATEGORIES.find(c => c.slug === categorySlug.toLowerCase());

@@ -63,6 +63,13 @@ import { CATEGORIES } from '../../models/deal.model';
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
+      <div class="type-toggle">
+        <ion-segment [value]="dealType" (ionChange)="onTypeChange($event)">
+          <ion-segment-button value="all">Alles</ion-segment-button>
+          <ion-segment-button value="food">Voeding</ion-segment-button>
+        </ion-segment>
+      </div>
+
       @if (dealService.activeFiltersCount() > 0) {
         <div class="filter-chips">
           @if (dealService.filters().category) {
@@ -181,6 +188,8 @@ import { CATEGORIES } from '../../models/deal.model';
       color: var(--ion-color-medium);
     }
 
+    .type-toggle { padding: 8px 12px; }
+    .type-toggle ion-segment { --background: var(--ion-color-light); }
     .skeleton-list { padding: 12px; }
     .skeleton-card {
       display: flex; gap: 12px; align-items: flex-start;
@@ -207,6 +216,7 @@ export class DealsPage implements OnInit {
   retailerSlug: string | null = null;
   categories = CATEGORIES;
   currentSort: 'discount' | 'price' | 'expiry' | 'name' = 'discount';
+  dealType: 'all' | 'food' = 'all';
 
   private sortOptions: Array<{ key: string; label: string }> = [
     { key: 'discount', label: 'Korting' },
@@ -293,6 +303,11 @@ export class DealsPage implements OnInit {
   getCategoryName(slug: string): string {
     const cat = CATEGORIES.find(c => c.slug === slug);
     return cat ? `${cat.emoji} ${cat.name}` : slug;
+  }
+
+  onTypeChange(event: CustomEvent) {
+    this.dealType = event.detail.value;
+    this.dealService.setFilter('foodOnly', this.dealType === 'food' ? true : undefined);
   }
 
   openFlyer() {
