@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
@@ -8,7 +8,7 @@ import {
   IonBadge, IonSpinner, IonChip, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp } from 'ionicons/icons';
+import { arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
@@ -35,7 +35,9 @@ interface PriceHistoryEntry {
     <ion-header>
       <ion-toolbar color="primary">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/deals"></ion-back-button>
+          <ion-button (click)="goBack()">
+            <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+          </ion-button>
         </ion-buttons>
         <ion-title>Deal Details</ion-title>
       </ion-toolbar>
@@ -396,6 +398,7 @@ interface PriceHistoryEntry {
 })
 export class DealDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private http = inject(HttpClient);
   private dealService = inject(DealService);
   private shoppingList = inject(ShoppingListService);
@@ -408,7 +411,7 @@ export class DealDetailPage implements OnInit {
   getDiscountClass = getDiscountClass;
 
   constructor() {
-    addIcons({ cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp });
+    addIcons({ arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp });
   }
 
   ngOnInit() {
@@ -450,6 +453,14 @@ export class DealDetailPage implements OnInit {
   addToShoppingList() {
     if (!this.deal) return;
     this.shoppingList.addDeal(this.deal.id).subscribe();
+  }
+
+  goBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 
   async shareDeal() {
