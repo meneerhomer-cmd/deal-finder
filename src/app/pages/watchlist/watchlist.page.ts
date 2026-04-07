@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import {
@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, searchOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
+import { UserDataService } from '../../services/user-data.service';
 
 interface WatchItem {
   name: string;
@@ -111,6 +112,7 @@ interface WatchItem {
 })
 export class WatchlistPage implements OnInit {
   private http = inject(HttpClient);
+  userData = inject(UserDataService);
 
   items = signal<WatchItem[]>([]);
   loading = signal(false);
@@ -118,34 +120,32 @@ export class WatchlistPage implements OnInit {
 
   constructor() {
     addIcons({ addOutline, trashOutline, searchOutline });
+    effect(() => {
+      const products = this.userData.watchlist();
+      if (products.length > 0 || this.items().length > 0) {
+        this.refreshPrices(products);
+      }
+    });
   }
 
   ngOnInit() {
-    this.refreshAll();
+    this.refreshPrices(this.userData.watchlist());
   }
 
-  addProduct() {
+  async addProduct() {
     const name = this.newProduct.trim();
     if (!name) return;
-
-    const saved = this.getSaved();
-    if (!saved.includes(name)) {
-      saved.push(name);
-      this.saveSaved(saved);
-    }
+    await this.userData.addToWatchlist(name);
     this.newProduct = '';
-    this.refreshAll();
   }
 
-  removeProduct(name: string) {
-    const saved = this.getSaved().filter(n => n !== name);
-    this.saveSaved(saved);
+  async removeProduct(name: string) {
+    await this.userData.removeFromWatchlist(name);
     this.items.update(items => items.filter(i => i.name !== name));
   }
 
-  private refreshAll() {
-    const saved = this.getSaved();
-    if (saved.length === 0) {
+  private refreshPrices(products: string[]) {
+    if (products.length === 0) {
       this.items.set([]);
       return;
     }
@@ -154,7 +154,7 @@ export class WatchlistPage implements OnInit {
     let completed = 0;
     const results: WatchItem[] = [];
 
-    for (const name of saved) {
+    for (const name of products) {
       this.http.get<any>(`${environment.apiUrl}/search`, { params: { q: name, limit: '5' } })
         .subscribe({
           next: data => {
@@ -173,21 +173,12 @@ export class WatchlistPage implements OnInit {
           },
           complete: () => {
             completed++;
-            if (completed === saved.length) {
+            if (completed === products.length) {
               this.items.set(results.sort((a, b) => a.name.localeCompare(b.name)));
               this.loading.set(false);
             }
           }
         });
     }
-  }
-
-  private getSaved(): string[] {
-    const data = localStorage.getItem('product-watchlist');
-    return data ? JSON.parse(data) : [];
-  }
-
-  private saveSaved(items: string[]) {
-    localStorage.setItem('product-watchlist', JSON.stringify(items));
   }
 }

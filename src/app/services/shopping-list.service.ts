@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ToastController } from '@ionic/angular/standalone';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
+import { UserDataService } from './user-data.service';
 
 export interface ShoppingListItem {
   id: number;
@@ -26,6 +27,7 @@ export interface ShoppingListItem {
 export class ShoppingListService {
   private http = inject(HttpClient);
   private toastCtrl = inject(ToastController);
+  private userData = inject(UserDataService);
   private apiUrl = environment.apiUrl;
 
   items = signal<ShoppingListItem[]>([]);
@@ -35,18 +37,8 @@ export class ShoppingListService {
   purchasedItems = computed(() => this.items().filter(i => i.purchased));
   activeCount = computed(() => this.activeItems().length);
 
-  private get sessionId(): string {
-    const key = 'deal-finder-session-id';
-    let id = localStorage.getItem(key);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(key, id);
-    }
-    return id;
-  }
-
   private get headers() {
-    return { 'X-Session-Id': this.sessionId };
+    return { 'X-Session-Id': this.userData.getSessionId() };
   }
 
   loadItems(): Observable<ShoppingListItem[]> {

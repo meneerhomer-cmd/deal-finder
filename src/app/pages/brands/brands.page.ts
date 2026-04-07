@@ -9,6 +9,7 @@ import {
 import { addIcons } from 'ionicons';
 import { heartOutline, heart, searchOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
+import { UserDataService } from '../../services/user-data.service';
 
 interface Brand {
   name: string;
@@ -118,11 +119,11 @@ interface Brand {
 export class BrandsPage implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  userData = inject(UserDataService);
 
   allBrands = signal<Brand[]>([]);
   loading = signal(true);
   searchTerm = signal('');
-  favorites = signal<Set<string>>(this.loadFavorites());
 
   filteredBrands = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -132,7 +133,7 @@ export class BrandsPage implements OnInit {
   });
 
   favoriteBrands = computed(() => {
-    const favs = this.favorites();
+    const favs = this.userData.favoriteBrands();
     return this.allBrands().filter(b => favs.has(b.name));
   });
 
@@ -159,27 +160,11 @@ export class BrandsPage implements OnInit {
   }
 
   isFavorite(brandName: string): boolean {
-    return this.favorites().has(brandName);
+    return this.userData.isFavoriteBrand(brandName);
   }
 
   toggleFavorite(brandName: string, event: Event) {
     event.stopPropagation();
-    const favs = new Set(this.favorites());
-    if (favs.has(brandName)) {
-      favs.delete(brandName);
-    } else {
-      favs.add(brandName);
-    }
-    this.favorites.set(favs);
-    this.saveFavorites(favs);
-  }
-
-  private loadFavorites(): Set<string> {
-    const stored = localStorage.getItem('favorite-brands');
-    return stored ? new Set(JSON.parse(stored)) : new Set();
-  }
-
-  private saveFavorites(favs: Set<string>) {
-    localStorage.setItem('favorite-brands', JSON.stringify([...favs]));
+    this.userData.toggleFavoriteBrand(brandName);
   }
 }
