@@ -5,10 +5,10 @@ import { DecimalPipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonList, IonItem, IonLabel, IonNote,
-  IonBadge, IonSpinner, IonIcon, IonChip
+  IonBadge, IonSpinner, IonIcon, IonChip, IonButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { searchOutline, trophyOutline } from 'ionicons/icons';
+import { searchOutline, trophyOutline, timeOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 
 interface SearchResult {
@@ -35,7 +35,7 @@ interface SearchResponse {
     DecimalPipe,
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonSearchbar, IonList, IonItem, IonLabel, IonNote,
-    IonBadge, IonSpinner, IonIcon, IonChip
+    IonBadge, IonSpinner, IonIcon, IonChip, IonButton
   ],
   template: `
     <ion-header>
@@ -59,6 +59,32 @@ interface SearchResponse {
           <h2>Vergelijk prijzen</h2>
           <p>Zoek een product en ontdek waar het het goedkoopst is bij alle Belgische winkels.</p>
         </div>
+        @if (recentSearches.length > 0) {
+          <div class="recent-section">
+            <div class="recent-header">
+              <span>Recente zoekopdrachten</span>
+              <ion-button fill="clear" size="small" (click)="clearRecent()">Wis</ion-button>
+            </div>
+            <div class="recent-chips">
+              @for (term of recentSearches; track term) {
+                <ion-chip (click)="doSearch(term)">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <ion-label>{{ term }}</ion-label>
+                </ion-chip>
+              }
+            </div>
+          </div>
+          <div class="popular-section">
+            <div class="recent-header"><span>Populair</span></div>
+            <div class="recent-chips">
+              @for (term of popularSearches; track term) {
+                <ion-chip color="primary" (click)="doSearch(term)">
+                  <ion-label>{{ term }}</ion-label>
+                </ion-chip>
+              }
+            </div>
+          </div>
+        }
       } @else if (loading()) {
         <div class="loading">
           <ion-spinner></ion-spinner>
@@ -214,6 +240,16 @@ interface SearchResponse {
       text-decoration: line-through;
       color: var(--ion-color-medium);
     }
+
+    .recent-section, .popular-section { padding: 0 16px 12px; }
+    .recent-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem; font-weight: 600; color: var(--ion-color-medium);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+    }
+    .recent-chips {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
   `]
 })
 export class SearchPage implements OnInit {
@@ -225,8 +261,11 @@ export class SearchPage implements OnInit {
   hasSearched = signal(false);
   lastQuery = signal('');
 
+  recentSearches: string[] = JSON.parse(localStorage.getItem('recent-searches') || '[]');
+  popularSearches = ['Coca-Cola', 'Pampers', 'Nutella', 'Dash', 'Pringles', 'Fairy'];
+
   constructor() {
-    addIcons({ searchOutline, trophyOutline });
+    addIcons({ searchOutline, trophyOutline, timeOutline });
   }
 
   ngOnInit() {
@@ -257,6 +296,7 @@ export class SearchPage implements OnInit {
     this.loading.set(true);
     this.hasSearched.set(true);
     this.lastQuery.set(query);
+    this.saveRecentSearch(query);
 
     this.http.get<SearchResponse>(`${environment.apiUrl}/search`, {
       params: { q: query, limit: '50' }
@@ -270,5 +310,15 @@ export class SearchPage implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  clearRecent() {
+    this.recentSearches = [];
+    localStorage.removeItem('recent-searches');
+  }
+
+  private saveRecentSearch(query: string) {
+    this.recentSearches = [query, ...this.recentSearches.filter(q => q !== query)].slice(0, 8);
+    localStorage.setItem('recent-searches', JSON.stringify(this.recentSearches));
   }
 }

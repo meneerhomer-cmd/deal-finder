@@ -7,6 +7,7 @@ import {
   IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
   IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText
 } from '@ionic/angular/standalone';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { addIcons } from 'ionicons';
 import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
@@ -22,7 +23,7 @@ import { CATEGORIES } from '../../models/deal.model';
     IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
     IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
     IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText,
-    DealCardComponent
+    ScrollingModule, DealCardComponent
   ],
   template: `
     <ion-header>
@@ -110,9 +111,11 @@ import { CATEGORIES } from '../../models/deal.model';
           <p>Probeer andere filters of zoektermen</p>
         </div>
       } @else {
-        @for (deal of sortedDeals(); track deal.id) {
-          <app-deal-card [deal]="deal"></app-deal-card>
-        }
+        <cdk-virtual-scroll-viewport itemSize="140" minBufferPx="600" maxBufferPx="1200" class="deal-scroll">
+          @for (deal of sortedDeals(); track deal.id) {
+            <app-deal-card [deal]="deal"></app-deal-card>
+          }
+        </cdk-virtual-scroll-viewport>
       }
 
       <ion-modal [isOpen]="showFilterModal" (didDismiss)="showFilterModal = false">
@@ -189,6 +192,7 @@ import { CATEGORIES } from '../../models/deal.model';
       border-radius: 14px;
     }
     .skeleton-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .deal-scroll { height: 100%; width: 100%; }
 
     ion-badge {
       position: absolute;
