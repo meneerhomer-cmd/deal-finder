@@ -55,7 +55,8 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
 
     .card-image {
       position: relative;
-      aspect-ratio: 1;
+      aspect-ratio: 4/3;
+      max-height: 100px;
       background: var(--ion-color-light, #f4f5f8);
       display: flex;
       align-items: center;
@@ -66,10 +67,10 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       width: 100%;
       height: 100%;
       object-fit: contain;
-      padding: 8px;
+      padding: 6px;
     }
     .fallback-emoji {
-      font-size: 3rem;
+      font-size: 2rem;
     }
     .discount-tag {
       position: absolute;
@@ -84,10 +85,10 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     }
 
     .card-body {
-      padding: 10px 12px 12px;
+      padding: 8px 10px 10px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
     .retailer-pill {
       align-self: flex-start;
@@ -117,7 +118,7 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
 
     .product-name {
       margin: 0;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       line-height: 1.3;
       display: -webkit-box;
@@ -137,7 +138,7 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       margin-top: 2px;
     }
     .current-price {
-      font-size: 1.15rem;
+      font-size: 1rem;
       font-weight: 800;
       color: var(--ion-color-success, #2dd36f);
     }
