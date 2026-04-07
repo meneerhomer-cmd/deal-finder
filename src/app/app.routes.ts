@@ -43,6 +43,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/flyer-viewer/flyer-viewer.page').then(m => m.FlyerViewerPage),
   },
   {
+    path: 'more',
+    loadComponent: () => import('./pages/more/more.page').then(m => m.MorePage),
+  },
+  {
     path: 'categories',
     loadComponent: () => import('./pages/categories/categories.page').then(m => m.CategoriesPage),
   },
