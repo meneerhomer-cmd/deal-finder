@@ -242,7 +242,7 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
     .deal-carousel::-webkit-scrollbar { display: none; }
     .carousel-item {
       flex-shrink: 0;
-      width: 160px;
+      width: 145px;
       scroll-snap-align: start;
     }
 
@@ -294,7 +294,11 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
     .retailer-avatar.intermarche { background: var(--retailer-intermarche); }
     .retailer-avatar.gamma { background: var(--retailer-gamma); }
     .retailer-avatar.brico-bricoplanit { background: var(--retailer-brico-bricoplanit); }
-    .retailer-name { font-size: 0.7rem; font-weight: 500; text-align: center; max-width: 60px; }
+    .retailer-name {
+      font-size: 0.65rem; font-weight: 500; text-align: center;
+      max-width: 56px; overflow: hidden; text-overflow: ellipsis;
+      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+    }
     .retailer-bubble ion-badge {
       font-size: 0.6rem;
       --padding-start: 5px; --padding-end: 5px;
@@ -350,7 +354,7 @@ export class HomePage implements OnInit {
 
   expiringDeals = computed(() =>
     this.dealService.deals()
-      .filter(d => d.expiringSoon)
+      .filter(d => d.expiringSoon && d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
       .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
       .slice(0, 6)
   );
