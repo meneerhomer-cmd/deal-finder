@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -8,10 +8,10 @@ import {
   IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
+import { filter, close, checkmark, swapVertical, bookOutline, chevronDown, chevronUp } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { CATEGORIES } from '../../models/deal.model';
+import { CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
 
 @Component({
   selector: 'app-deals',
@@ -63,13 +63,6 @@ import { CATEGORIES } from '../../models/deal.model';
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <div class="type-toggle">
-        <ion-segment [value]="dealType" (ionChange)="onTypeChange($event)">
-          <ion-segment-button value="all">Alles</ion-segment-button>
-          <ion-segment-button value="food">Voeding</ion-segment-button>
-        </ion-segment>
-      </div>
-
       @if (dealService.activeFiltersCount() > 0) {
         <div class="filter-chips">
           @if (dealService.filters().category) {
@@ -91,7 +84,7 @@ import { CATEGORIES } from '../../models/deal.model';
       }
 
       <div class="results-bar">
-        <span class="results-count">{{ dealService.filteredDeals().length }} deals gevonden</span>
+        <span class="results-count">{{ foodDeals().length }} voedingsdeals</span>
         <ion-button fill="clear" size="small" (click)="cycleSort()">
           <ion-icon name="swap-vertical" slot="start"></ion-icon>
           {{ sortLabel }}
@@ -117,8 +110,23 @@ import { CATEGORIES } from '../../models/deal.model';
           <p>Probeer andere filters of zoektermen</p>
         </div>
       } @else {
-        @for (deal of sortedDeals(); track deal.id) {
+        @for (deal of foodDeals(); track deal.id) {
           <app-deal-card [deal]="deal"></app-deal-card>
+        }
+
+        @if (nonFoodDeals().length > 0) {
+          <div class="bonus-section" (click)="showNonFood = !showNonFood">
+            <div class="bonus-header">
+              <span>Andere aanbiedingen</span>
+              <ion-badge color="medium">{{ nonFoodDeals().length }}</ion-badge>
+              <ion-icon [name]="showNonFood ? 'chevron-up' : 'chevron-down'"></ion-icon>
+            </div>
+          </div>
+          @if (showNonFood) {
+            @for (deal of nonFoodDeals(); track deal.id) {
+              <app-deal-card [deal]="deal"></app-deal-card>
+            }
+          }
         }
       }
 
@@ -188,8 +196,25 @@ import { CATEGORIES } from '../../models/deal.model';
       color: var(--ion-color-medium);
     }
 
-    .type-toggle { padding: 8px 12px; }
-    .type-toggle ion-segment { --background: var(--ion-color-light); }
+    .bonus-section {
+      margin: 16px 12px 8px;
+      cursor: pointer;
+    }
+    .bonus-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--ion-color-light);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--ion-color-medium-shade);
+    }
+    .bonus-header ion-icon {
+      margin-left: auto;
+      font-size: 1.1rem;
+    }
     .skeleton-list { padding: 12px; }
     .skeleton-card {
       display: flex; gap: 12px; align-items: flex-start;
@@ -213,10 +238,10 @@ export class DealsPage implements OnInit {
   private router = inject(Router);
 
   showFilterModal = false;
+  showNonFood = false;
   retailerSlug: string | null = null;
   categories = CATEGORIES;
   currentSort: 'discount' | 'price' | 'expiry' | 'name' = 'discount';
-  dealType: 'all' | 'food' = 'all';
 
   private sortOptions: Array<{ key: string; label: string }> = [
     { key: 'discount', label: 'Korting' },
@@ -253,13 +278,23 @@ export class DealsPage implements OnInit {
     }
   }
 
+  foodDeals = computed(() => {
+    const sorted = this.sortedDeals();
+    return sorted.filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug));
+  });
+
+  nonFoodDeals = computed(() => {
+    const sorted = this.sortedDeals();
+    return sorted.filter(d => !d.categorySlug || !FOOD_SLUGS.has(d.categorySlug));
+  });
+
   cycleSort() {
     const idx = this.sortOptions.findIndex(o => o.key === this.currentSort);
     this.currentSort = this.sortOptions[(idx + 1) % this.sortOptions.length].key as typeof this.currentSort;
   }
 
   constructor() {
-    addIcons({ filter, close, checkmark, swapVertical, bookOutline });
+    addIcons({ filter, close, checkmark, swapVertical, bookOutline, chevronDown, chevronUp });
   }
 
   ngOnInit() {
@@ -303,11 +338,6 @@ export class DealsPage implements OnInit {
   getCategoryName(slug: string): string {
     const cat = CATEGORIES.find(c => c.slug === slug);
     return cat ? `${cat.emoji} ${cat.name}` : slug;
-  }
-
-  onTypeChange(event: CustomEvent) {
-    this.dealType = event.detail.value;
-    this.dealService.setFilter('foodOnly', this.dealType === 'food' ? true : undefined);
   }
 
   openFlyer() {
