@@ -1,141 +1,160 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular/standalone';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.model';
 
 @Component({
   selector: 'app-deal-card',
   standalone: true,
-  imports: [RouterLink, IonCard, IonCardHeader, IonCardTitle, IonCardContent, DatePipe, DecimalPipe],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   template: `
-    <ion-card [routerLink]="['/deal', deal.id]" button>
-      <ion-card-header>
-        <div class="card-header-row">
-          @if (deal.imageUrl && !imgError) {
-            <img [src]="deal.imageUrl" [alt]="deal.productName" class="deal-thumb" loading="lazy" (error)="imgError = true" />
-          } @else {
-            <span class="category-icon">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+    <a [routerLink]="['/deal', deal.id]" class="deal-card">
+      <div class="card-image">
+        @if (deal.imageUrl && !imgError) {
+          <img [src]="deal.imageUrl" [alt]="deal.productName" loading="lazy" (error)="imgError = true" />
+        } @else {
+          <span class="fallback-emoji">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+        }
+        @if (deal.discountPercentage > 0) {
+          <span class="discount-tag">-{{ deal.discountPercentage }}%</span>
+        }
+      </div>
+      <div class="card-body">
+        <span class="retailer-pill" [class]="deal.retailerSlug">{{ deal.retailerName }}</span>
+        <h3 class="product-name">{{ deal.productName }}</h3>
+        @if (deal.dealType) {
+          <span class="deal-type-label">{{ deal.dealType }}</span>
+        }
+        <div class="price-area">
+          @if (deal.currentPrice) {
+            <span class="current-price">€{{ deal.currentPrice | number:'1.2-2' }}</span>
           }
-          <div class="header-content">
-            <ion-card-title>{{ deal.productName }}</ion-card-title>
-          </div>
-          @if (deal.discountPercentage > 0) {
-            <span class="discount-badge">
-              -{{ deal.discountPercentage }}%
-            </span>
+          @if (deal.originalPrice && deal.originalPrice !== deal.currentPrice) {
+            <span class="was-price">€{{ deal.originalPrice | number:'1.2-2' }}</span>
           }
         </div>
-      </ion-card-header>
-
-      <ion-card-content>
-        <div class="deal-info">
-          @if (deal.discountPercentage > 0) {
-            <div class="deal-type">
-              <span class="deal-type-chip" [class]="getDiscountClass(deal.discountPercentage)">
-                {{ deal.discountPercentage }}% korting
-              </span>
-              @if (deal.dealType) {
-                <span class="deal-hint">{{ deal.dealType }}</span>
-              }
-            </div>
-          }
-
-          @if (deal.quantity || deal.conditions) {
-            <div class="deal-extra">
-              @if (deal.quantity) {
-                <span>{{ deal.quantity }}</span>
-              }
-              @if (deal.conditions) {
-                <span>{{ deal.conditions }}</span>
-              }
-            </div>
-          }
-
-          @if (deal.currentPrice || deal.originalPrice) {
-            <div class="price-row">
-              @if (deal.currentPrice) {
-                <span class="price">€{{ deal.currentPrice | number:'1.2-2' }}</span>
-              }
-              @if (deal.originalPrice && deal.originalPrice !== deal.currentPrice) {
-                <span class="original-price">€{{ deal.originalPrice | number:'1.2-2' }}</span>
-              }
-            </div>
-          }
-
-          <div class="meta-row">
-            <span class="retailer-badge" [class]="deal.retailerSlug">
-              {{ deal.retailerName }}
-            </span>
-            <span class="date-info">
-              @if (deal.expiringSoon) {
-                <span class="expiring-badge">Bijna verlopen!</span>
-              } @else if (deal.validUntil) {
-                <span class="valid-until">t/m {{ deal.validUntil | date:'d MMM' }}</span>
-              }
-            </span>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
+        @if (deal.expiringSoon) {
+          <span class="expiring">Bijna verlopen!</span>
+        }
+      </div>
+    </a>
   `,
   styles: [`
-    ion-card {
-      margin: 8px 12px;
-      border-radius: 14px;
-      cursor: pointer;
-      --background: var(--ion-card-background, white);
+    .deal-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--ion-card-background, white);
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      color: var(--ion-text-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.15s ease;
     }
-    .card-header-row { display: flex; align-items: flex-start; gap: 12px; }
-    .deal-thumb {
-      width: 56px; height: 56px; border-radius: 10px;
-      object-fit: cover; flex-shrink: 0;
-      background: var(--ion-color-light);
+    .deal-card:active { transform: scale(0.97); }
+
+    .card-image {
+      position: relative;
+      aspect-ratio: 1;
+      background: var(--ion-color-light, #f4f5f8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    .category-icon { font-size: 1.8rem; flex-shrink: 0; margin-top: 2px; }
-    .header-content { flex: 1; min-width: 0; }
-    ion-card-title {
-      font-size: 0.95rem;
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+    }
+    .fallback-emoji {
+      font-size: 3rem;
+    }
+    .discount-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #e53935;
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 8px;
+    }
+
+    .card-body {
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .retailer-pill {
+      align-self: flex-start;
+      font-size: 0.65rem;
       font-weight: 600;
-      line-height: 1.35;
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .retailer-pill.carrefour { background: var(--retailer-carrefour); }
+    .retailer-pill.lidl { background: var(--retailer-lidl); }
+    .retailer-pill.delhaize { background: var(--retailer-delhaize); }
+    .retailer-pill.colruyt { background: var(--retailer-colruyt); }
+    .retailer-pill.aldi { background: var(--retailer-aldi); }
+    .retailer-pill.kruidvat { background: var(--retailer-kruidvat); }
+    .retailer-pill.albert-heijn { background: var(--retailer-albert-heijn); }
+    .retailer-pill.jumbo { background: var(--retailer-jumbo); color: #333; }
+    .retailer-pill.spar { background: var(--retailer-spar); }
+    .retailer-pill.carrefour-market { background: var(--retailer-carrefour-market); }
+    .retailer-pill.intermarche { background: var(--retailer-intermarche); }
+    .retailer-pill.gamma { background: var(--retailer-gamma); }
+    .retailer-pill.brico-bricoplanit { background: var(--retailer-brico-bricoplanit); }
+    .retailer-pill.mediamarkt { background: var(--retailer-mediamarkt); }
+    .retailer-pill.ikea { background: var(--retailer-ikea); }
+
+    .product-name {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      line-height: 1.3;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .discount-badge { flex-shrink: 0; font-size: 13px; padding: 4px 10px; }
-    .deal-info { display: flex; flex-direction: column; gap: 8px; }
-    .price-row { display: flex; align-items: baseline; gap: 10px; }
-    .deal-type { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .deal-extra {
+    .deal-type-label {
+      font-size: 0.72rem;
+      color: var(--ion-color-success-shade, #1b9e4b);
+      font-weight: 600;
+    }
+    .price-area {
       display: flex;
-      gap: 8px;
-      font-size: 0.8rem;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .current-price {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--ion-color-success, #2dd36f);
+    }
+    .was-price {
+      font-size: 0.78rem;
+      text-decoration: line-through;
       color: var(--ion-color-medium);
     }
-    .deal-hint {
-      font-size: 0.75rem;
-      color: var(--ion-color-medium);
-      font-style: italic;
-    }
-    .meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding-top: 4px;
-      border-top: 1px solid var(--ion-border-color, rgba(0,0,0,0.06));
-    }
-    .valid-until { font-size: 0.78rem; color: var(--ion-color-medium); }
-    .expiring-badge {
-      font-size: 0.72rem; font-weight: 600;
-      background: var(--ion-color-warning); padding: 3px 8px;
-      border-radius: 8px; color: #000;
+    .expiring {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #e65100;
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      50% { opacity: 0.6; }
     }
   `]
 })
