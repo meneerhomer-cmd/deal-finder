@@ -141,6 +141,31 @@
   }
 }
 
+// Smooth transitions
+ion-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Page enter animation
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+ion-content > :first-child {
+  animation: fadeSlideIn 0.3s ease;
+}
+
 // Pull to refresh
 ion-refresher {
   z-index: 1;

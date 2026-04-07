@@ -76,14 +76,28 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     </ion-card>
   `,
   styles: [`
-    ion-card { margin: 8px; cursor: pointer; }
+    ion-card {
+      margin: 8px 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      --background: var(--ion-card-background, white);
+    }
     .card-header-row { display: flex; align-items: flex-start; gap: 12px; }
-    .category-icon { font-size: 2rem; flex-shrink: 0; }
+    .category-icon { font-size: 1.8rem; flex-shrink: 0; margin-top: 2px; }
     .header-content { flex: 1; min-width: 0; }
-    ion-card-title { font-size: 1rem; font-weight: 600; line-height: 1.3; }
-    .discount-badge { flex-shrink: 0; }
-    .deal-info { display: flex; flex-direction: column; gap: 12px; }
-    .price-row { display: flex; align-items: baseline; gap: 12px; }
+    ion-card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .discount-badge { flex-shrink: 0; font-size: 13px; padding: 4px 10px; }
+    .deal-info { display: flex; flex-direction: column; gap: 8px; }
+    .price-row { display: flex; align-items: baseline; gap: 10px; }
+    .deal-type { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .deal-extra {
       display: flex;
       gap: 8px;
@@ -95,12 +109,24 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       color: var(--ion-color-medium);
       font-style: italic;
     }
-    .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .valid-until { font-size: 0.8rem; color: var(--ion-color-medium); }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 4px;
+      border-top: 1px solid var(--ion-border-color, rgba(0,0,0,0.06));
+    }
+    .valid-until { font-size: 0.78rem; color: var(--ion-color-medium); }
     .expiring-badge {
-      font-size: 0.75rem; font-weight: 600;
-      background: var(--ion-color-warning); padding: 2px 8px;
+      font-size: 0.72rem; font-weight: 600;
+      background: var(--ion-color-warning); padding: 3px 8px;
       border-radius: 8px; color: #000;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
   `]
 })

@@ -5,7 +5,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
   IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
-  IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton
+  IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
@@ -21,7 +21,7 @@ import { CATEGORIES } from '../../models/deal.model';
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
     IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
-    IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton,
+    IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText,
     DealCardComponent
   ],
   template: `
@@ -92,9 +92,17 @@ import { CATEGORIES } from '../../models/deal.model';
       </div>
 
       @if (dealService.loading()) {
-        <div class="loading">
-          <ion-spinner></ion-spinner>
-          <p>Deals laden...</p>
+        <div class="skeleton-list">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="skeleton-card">
+              <ion-skeleton-text [animated]="true" style="width: 40px; height: 40px; border-radius: 8px;"></ion-skeleton-text>
+              <div class="skeleton-content">
+                <ion-skeleton-text [animated]="true" style="width: 70%; height: 16px;"></ion-skeleton-text>
+                <ion-skeleton-text [animated]="true" style="width: 50%; height: 14px;"></ion-skeleton-text>
+                <ion-skeleton-text [animated]="true" style="width: 30%; height: 20px;"></ion-skeleton-text>
+              </div>
+            </div>
+          }
         </div>
       } @else if (dealService.filteredDeals().length === 0) {
         <div class="empty-state">
@@ -173,13 +181,14 @@ import { CATEGORIES } from '../../models/deal.model';
       color: var(--ion-color-medium);
     }
 
-    .loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 48px;
-      color: var(--ion-color-medium);
+    .skeleton-list { padding: 12px; }
+    .skeleton-card {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 16px; margin-bottom: 8px;
+      background: var(--ion-card-background, white);
+      border-radius: 14px;
     }
+    .skeleton-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 
     ion-badge {
       position: absolute;

@@ -3,16 +3,30 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
-  },
-  {
-    path: 'home',
-    loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
-  },
-  {
-    path: 'deals',
-    loadComponent: () => import('./pages/deals/deals.page').then(m => m.DealsPage),
+    loadComponent: () => import('./pages/tabs/tabs.page').then(m => m.TabsPage),
+    children: [
+      {
+        path: 'home',
+        loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage),
+      },
+      {
+        path: 'deals',
+        loadComponent: () => import('./pages/deals/deals.page').then(m => m.DealsPage),
+      },
+      {
+        path: 'search',
+        loadComponent: () => import('./pages/search/search.page').then(m => m.SearchPage),
+      },
+      {
+        path: 'more',
+        loadComponent: () => import('./pages/more/more.page').then(m => m.MorePage),
+      },
+      {
+        path: '',
+        redirectTo: 'home',
+        pathMatch: 'full',
+      },
+    ],
   },
   {
     path: 'retailers',
@@ -31,20 +45,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/shopping-list/shopping-list.page').then(m => m.ShoppingListPage),
   },
   {
-    path: 'search',
-    loadComponent: () => import('./pages/search/search.page').then(m => m.SearchPage),
-  },
-  {
     path: 'brands',
     loadComponent: () => import('./pages/brands/brands.page').then(m => m.BrandsPage),
   },
   {
     path: 'flyer/:shopSlug/:brochureId',
     loadComponent: () => import('./pages/flyer-viewer/flyer-viewer.page').then(m => m.FlyerViewerPage),
-  },
-  {
-    path: 'more',
-    loadComponent: () => import('./pages/more/more.page').then(m => m.MorePage),
   },
   {
     path: 'categories',
