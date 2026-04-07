@@ -22,7 +22,7 @@ import { AlertService } from '../../services/alert.service';
         </ion-tab-button>
         <ion-tab-button tab="search">
           <ion-icon name="search"></ion-icon>
-          <ion-label>Vergelijk</ion-label>
+          <ion-label>Zoek</ion-label>
         </ion-tab-button>
         <ion-tab-button tab="more">
           <ion-icon name="ellipsis-horizontal"></ion-icon>

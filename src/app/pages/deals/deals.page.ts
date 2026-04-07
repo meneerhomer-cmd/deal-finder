@@ -8,7 +8,7 @@ import {
   IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { filter, close, checkmark, swapVertical, bookOutline, chevronDown, chevronUp } from 'ionicons/icons';
+import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
@@ -56,6 +56,12 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
           (ionInput)="onSearch($event)"
         ></ion-searchbar>
       </ion-toolbar>
+      @if (!retailerSlug) {
+        <div class="mode-toggle">
+          <button class="mode-btn" [class.active]="dealMode === 'food'" (click)="setMode('food')">Voeding</button>
+          <button class="mode-btn" [class.active]="dealMode === 'nonfood'" (click)="setMode('nonfood')">Non-food</button>
+        </div>
+      }
     </ion-header>
 
     <ion-content>
@@ -77,7 +83,7 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
       </div>
 
       <div class="results-bar">
-        <span class="results-count">{{ foodDeals().length }} voedingsdeals</span>
+        <span class="results-count">{{ modeDeals().length }} {{ dealMode === 'food' ? 'voedingsdeals' : 'non-food deals' }}</span>
         <ion-button fill="clear" size="small" (click)="cycleSort()">
           <ion-icon name="swap-vertical" slot="start"></ion-icon>
           {{ sortLabel }}
@@ -101,27 +107,10 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
         </div>
       } @else {
         <div class="deal-grid">
-          @for (deal of foodDeals(); track deal.id) {
+          @for (deal of modeDeals(); track deal.id) {
             <app-deal-card [deal]="deal"></app-deal-card>
           }
         </div>
-
-        @if (nonFoodDeals().length > 0) {
-          <div class="bonus-section" (click)="showNonFood = !showNonFood">
-            <div class="bonus-header">
-              <span>Andere aanbiedingen</span>
-              <ion-badge color="medium">{{ nonFoodDeals().length }}</ion-badge>
-              <ion-icon [name]="showNonFood ? 'chevron-up' : 'chevron-down'"></ion-icon>
-            </div>
-          </div>
-          @if (showNonFood) {
-            <div class="deal-grid">
-              @for (deal of nonFoodDeals(); track deal.id) {
-                <app-deal-card [deal]="deal"></app-deal-card>
-              }
-            </div>
-          }
-        }
       }
 
       <ion-modal [isOpen]="showFilterModal" (didDismiss)="showFilterModal = false">
@@ -190,6 +179,21 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
       color: var(--ion-color-medium);
     }
 
+    .mode-toggle {
+      display: flex;
+      background: var(--ion-color-primary);
+      padding: 0 14px 10px;
+    }
+    .mode-btn {
+      flex: 1; padding: 7px 0; border: none;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
+      transition: all 0.2s ease;
+    }
+    .mode-btn:first-child { border-radius: 8px 0 0 8px; }
+    .mode-btn:last-child { border-radius: 0 8px 8px 0; }
+    .mode-btn.active { background: white; color: var(--ion-color-primary); }
+
     .category-scroll {
       display: flex;
       gap: 8px;
@@ -224,26 +228,6 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
       padding: 8px 12px;
     }
 
-    .bonus-section {
-      margin: 12px 12px 8px;
-      cursor: pointer;
-    }
-    .bonus-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: var(--ion-color-light);
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--ion-color-medium-shade);
-    }
-    .bonus-header ion-icon {
-      margin-left: auto;
-      font-size: 1.1rem;
-    }
-
     .skeleton-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -270,7 +254,7 @@ export class DealsPage implements OnInit {
   private router = inject(Router);
 
   showFilterModal = false;
-  showNonFood = false;
+  dealMode: 'food' | 'nonfood' = 'food';
   retailerSlug: string | null = null;
   categories = CATEGORIES;
   currentSort: 'discount' | 'price' | 'expiry' | 'name' = 'discount';
@@ -310,6 +294,14 @@ export class DealsPage implements OnInit {
     }
   }
 
+  modeDeals = computed(() => {
+    const sorted = this.sortedDeals();
+    if (this.retailerSlug) return sorted;
+    return this.dealMode === 'food'
+      ? sorted.filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
+      : sorted.filter(d => !d.categorySlug || !FOOD_SLUGS.has(d.categorySlug));
+  });
+
   topCategories = computed(() => {
     const deals = this.dealService.filteredDeals();
     const counts = new Map<string, number>();
@@ -338,7 +330,7 @@ export class DealsPage implements OnInit {
   }
 
   constructor() {
-    addIcons({ filter, close, checkmark, swapVertical, bookOutline, chevronDown, chevronUp });
+    addIcons({ filter, close, checkmark, swapVertical, bookOutline });
   }
 
   ngOnInit() {
@@ -382,6 +374,10 @@ export class DealsPage implements OnInit {
   getCategoryName(slug: string): string {
     const cat = CATEGORIES.find(c => c.slug === slug);
     return cat ? `${cat.emoji} ${cat.name}` : slug;
+  }
+
+  setMode(mode: 'food' | 'nonfood') {
+    this.dealMode = mode;
   }
 
   openFlyer() {
