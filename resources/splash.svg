@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#3880ff"/>
+      <stop offset="100%" stop-color="#1a56db"/>
+    </linearGradient>
+  </defs>
+  <rect width="2732" height="2732" fill="url(#bg)"/>
+  <!-- Price tag -->
+  <g transform="translate(1366,1200) rotate(-30)">
+    <rect x="-180" y="-250" width="360" height="430" rx="36" fill="white" opacity="0.95"/>
+    <circle cx="0" cy="-160" r="45" fill="none" stroke="#3880ff" stroke-width="14"/>
+  </g>
+  <!-- Percentage -->
+  <text x="1366" y="1490" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="250" fill="white" text-anchor="middle">%</text>
+  <!-- Arrow -->
+  <polygon points="1366,1620 1318,1565 1346,1565 1346,1520 1386,1520 1386,1565 1414,1565" fill="#2dd36f"/>
+  <!-- App name -->
+  <text x="1366" y="1800" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="100" fill="white" text-anchor="middle" opacity="0.9">Deal Finder</text>
+</svg>

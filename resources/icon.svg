@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3880ff"/>
+      <stop offset="100%" stop-color="#1a56db"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="200" fill="url(#bg)"/>
+  <!-- Price tag shape -->
+  <g transform="translate(512,512) rotate(-30)">
+    <rect x="-200" y="-280" width="400" height="480" rx="40" fill="white" opacity="0.95"/>
+    <circle cx="0" cy="-180" r="50" fill="none" stroke="#3880ff" stroke-width="16"/>
+  </g>
+  <!-- Percentage symbol -->
+  <text x="512" y="620" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="280" fill="white" text-anchor="middle">%</text>
+  <!-- Down arrow (price drop) -->
+  <polygon points="512,780 460,720 490,720 490,670 534,670 534,720 564,720" fill="#2dd36f"/>
+</svg>
