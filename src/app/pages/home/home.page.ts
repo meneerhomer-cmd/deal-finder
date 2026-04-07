@@ -43,20 +43,6 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
         </div>
       }
 
-      <!-- Hero savings card -->
-      @if (dealService.totalDeals() > 0) {
-        <div class="hero-card">
-          <div class="hero-left">
-            <span class="hero-number">{{ dealService.totalDeals() }}</span>
-            <span class="hero-label">deals bij {{ activeRetailers().length }} winkels</span>
-          </div>
-          <div class="hero-right">
-            <span class="hero-discount">{{ avgDiscount() }}%</span>
-            <span class="hero-label">gem. korting</span>
-          </div>
-        </div>
-      }
-
       <!-- Search shortcut -->
       <a routerLink="/search" class="search-bar-shortcut">
         <ion-icon name="search-outline"></ion-icon>
@@ -91,9 +77,7 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
           <div class="retailer-scroll">
             @for (retailer of activeRetailers(); track retailer.slug) {
               <a [routerLink]="['/retailer', retailer.slug]" class="retailer-bubble">
-                <div class="retailer-avatar" [class]="retailer.slug">
-                  {{ retailer.name.charAt(0) }}
-                </div>
+                <img [src]="getRetailerLogo(retailer.slug)" [alt]="retailer.name" class="retailer-logo" />
                 <span class="retailer-name">{{ retailer.name }}</span>
                 <ion-badge>{{ retailer.dealCount }}</ion-badge>
               </a>
@@ -127,9 +111,11 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
               Alles <ion-icon name="arrow-forward"></ion-icon>
             </a>
           </div>
-          <div class="deal-grid-small">
+          <div class="deal-carousel">
             @for (deal of recentDeals(); track deal.id) {
-              <app-deal-card [deal]="deal"></app-deal-card>
+              <div class="carousel-item">
+                <app-deal-card [deal]="deal"></app-deal-card>
+              </div>
             }
           </div>
         </div>
@@ -168,26 +154,6 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
       border-left: 4px solid var(--ion-color-primary);
     }
     .scraping-banner p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
-
-    .hero-card {
-      display: flex;
-      margin: 12px;
-      border-radius: 16px;
-      overflow: hidden;
-      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #43a047 100%);
-      color: white;
-      padding: 20px;
-      gap: 16px;
-    }
-    .hero-left, .hero-right {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .hero-number { font-size: 2.2rem; font-weight: 800; }
-    .hero-discount { font-size: 2.2rem; font-weight: 800; }
-    .hero-label { font-size: 0.75rem; opacity: 0.85; text-align: center; margin-top: 2px; }
 
     .search-bar-shortcut {
       display: flex;
@@ -246,13 +212,6 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
       scroll-snap-align: start;
     }
 
-    .deal-grid-small {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      padding: 4px 12px 8px;
-    }
-
     .retailer-scroll {
       display: flex;
       gap: 16px;
@@ -271,29 +230,14 @@ import { Deal, FOOD_SLUGS } from '../../models/deal.model';
       color: var(--ion-text-color);
       flex-shrink: 0;
     }
-    .retailer-avatar {
+    .retailer-logo {
       width: 52px; height: 52px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: white;
+      object-fit: contain;
+      background: white;
+      padding: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
-    .retailer-avatar.carrefour { background: var(--retailer-carrefour); }
-    .retailer-avatar.lidl { background: var(--retailer-lidl); }
-    .retailer-avatar.delhaize { background: var(--retailer-delhaize); }
-    .retailer-avatar.colruyt { background: var(--retailer-colruyt); }
-    .retailer-avatar.aldi { background: var(--retailer-aldi); }
-    .retailer-avatar.kruidvat { background: var(--retailer-kruidvat); }
-    .retailer-avatar.albert-heijn { background: var(--retailer-albert-heijn); }
-    .retailer-avatar.jumbo { background: var(--retailer-jumbo); color: #333; }
-    .retailer-avatar.spar { background: var(--retailer-spar); }
-    .retailer-avatar.carrefour-market { background: var(--retailer-carrefour-market); }
-    .retailer-avatar.intermarche { background: var(--retailer-intermarche); }
-    .retailer-avatar.gamma { background: var(--retailer-gamma); }
-    .retailer-avatar.brico-bricoplanit { background: var(--retailer-brico-bricoplanit); }
     .retailer-name {
       font-size: 0.65rem; font-weight: 500; text-align: center;
       max-width: 56px; overflow: hidden; text-overflow: ellipsis;
@@ -359,12 +303,29 @@ export class HomePage implements OnInit {
       .slice(0, 6)
   );
 
-  avgDiscount = computed(() => {
-    const deals = this.dealService.deals();
-    if (deals.length === 0) return 0;
-    const sum = deals.reduce((acc, d) => acc + (d.discountPercentage || 0), 0);
-    return Math.round(sum / deals.length);
-  });
+  private retailerLogos: Record<string, string> = {
+    'lidl': 'https://cdn.jafolders.com/shops/3edf1b56-8ba7-4ae3-8a9f-91a482933067/small.png?v=63931455152',
+    'kruidvat': 'https://cdn.jafolders.com/shops/6f42f980-41b1-4016-9b39-c2d668616e9f/small.png?v=63931455078',
+    'carrefour': 'https://cdn.jafolders.com/shops/bee9decf-340a-4f48-8777-60335ad8cc57/small.png?v=63931453348',
+    'delhaize': 'https://cdn.jafolders.com/shops/1898f67e-c834-4606-9f93-9f427df4468f/small.png?v=63931453833',
+    'aldi': 'https://cdn.jafolders.com/shops/83bb328e-de66-47bc-8676-eb6a64ab1459/small.png?v=63931452771',
+    'colruyt': 'https://cdn.jafolders.com/shops/bee9decf-340a-4f48-8777-60335ad8cc57/small.png?v=63931453348',
+    'albert-heijn': 'https://cdn.jafolders.com/shops/74c1e78c-ac4c-48dc-84cc-a7ebb61be62a/small.png?v=63931452692',
+    'jumbo': 'https://cdn.jafolders.com/shops/cafd54d7-c55b-4f09-8a61-81e1c5045c0c/small.png?v=63931454955',
+    'spar': 'https://cdn.jafolders.com/shops/9d399cc4-dcfe-4f58-a666-a9fc239dfbc5/small.png?v=63931455726',
+    'carrefour-market': 'https://cdn.jafolders.com/shops/f97d2dd4-27d6-4cb9-bc72-3d454a02e468/small.png?v=63931453359',
+    'intermarche': 'https://cdn.jafolders.com/shops/64cf36b0-c448-4714-b197-8c88acb44c0e/small.png?v=63931454929',
+    'gamma': 'https://cdn.jafolders.com/shops/102b4525-b46b-4095-b8ed-c8b831e09647/small.png?v=63931454094',
+    'brico-bricoplanit': 'https://cdn.jafolders.com/shops/60b0026c-1f32-4b62-9a7d-dcac1ef05644/small.png?v=63931453056',
+    'mediamarkt': 'https://cdn.jafolders.com/shops/21a3343f-b472-4bca-a2ca-76fe56258c4c/small.png?v=63931455331',
+    'ikea': 'https://cdn.jafolders.com/shops/869aa8ce-3645-4223-bf66-65e82f01522c/small.png?v=63931454918',
+    'renmans': 'https://cdn.jafolders.com/shops/b767e806-b139-4f31-893a-74bab5e6e7b9/small.png?v=63931455703',
+    'bol-com': 'https://cdn.jafolders.com/shops/32c6e714-939e-4a51-b1cd-fba5989f889c/small.png?v=63931453081',
+  };
+
+  getRetailerLogo(slug: string): string {
+    return this.retailerLogos[slug] || '';
+  }
 
   constructor() {
     addIcons({ arrowForward, sparkles, syncOutline, timerOutline, searchOutline });
