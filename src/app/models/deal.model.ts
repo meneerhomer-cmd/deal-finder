@@ -77,6 +77,13 @@ export const CATEGORIES: Category[] = [
   { slug: 'verzorging', name: 'Verzorging', emoji: '🧴' },
   { slug: 'baby', name: 'Baby', emoji: '👶' },
   { slug: 'huisdier', name: 'Huisdier', emoji: '🐕' },
+  { slug: 'kleding', name: 'Kleding', emoji: '👕' },
+  { slug: 'elektronica', name: 'Elektronica', emoji: '📱' },
+  { slug: 'keuken', name: 'Keuken & Apparaten', emoji: '🍳' },
+  { slug: 'tuin', name: 'Tuin & Buiten', emoji: '🌱' },
+  { slug: 'vrije-tijd', name: 'Vrije Tijd', emoji: '🎢' },
+  { slug: 'doe-het-zelf', name: 'Doe-het-zelf', emoji: '🔧' },
+  { slug: 'auto', name: 'Auto', emoji: '🚗' },
   { slug: 'andere', name: 'Andere', emoji: '📦' },
 ];
 
