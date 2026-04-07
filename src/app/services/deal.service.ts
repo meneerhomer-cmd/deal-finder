@@ -99,6 +99,10 @@ export class DealService {
     );
   }
 
+  loadFlyers(shopSlug: string): Observable<{ flyers: Array<{ id: string; name: string; coverImage: string }> }> {
+    return this.http.get<any>(`${this.apiUrl}/flyers/${shopSlug}`);
+  }
+
   getStatus(): Observable<ScanStatus> {
     return this.http.get<ScanStatus>(`${this.apiUrl}/admin/status`);
   }
