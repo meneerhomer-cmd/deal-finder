@@ -95,6 +95,26 @@ import { Deal } from '../../models/deal.model';
         </ion-card-content>
       </ion-card>
 
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <a routerLink="/categories" class="quick-action">
+          <span class="qa-icon">🏷️</span>
+          <span>Categorieën</span>
+        </a>
+        <a routerLink="/brands" class="quick-action">
+          <span class="qa-icon">⭐</span>
+          <span>Merken</span>
+        </a>
+        <a routerLink="/watchlist" class="quick-action">
+          <span class="qa-icon">👁️</span>
+          <span>Mijn producten</span>
+        </a>
+        <a routerLink="/search" class="quick-action">
+          <span class="qa-icon">🔍</span>
+          <span>Vergelijk</span>
+        </a>
+      </div>
+
       <!-- Top deals -->
       <ion-card>
         <ion-card-header>
@@ -261,6 +281,31 @@ import { Deal } from '../../models/deal.model';
 
     .deals-content {
       padding: 0;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .quick-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 4px;
+      background: var(--ion-card-background, white);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      text-decoration: none;
+      color: var(--ion-text-color);
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-align: center;
+
+      .qa-icon { font-size: 1.5rem; }
     }
 
     .scraping-banner {
