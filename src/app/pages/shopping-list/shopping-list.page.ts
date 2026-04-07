@@ -52,10 +52,20 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
       </ion-refresher>
 
       @if (shoppingList.activeCount() > 0 && currentTab === 'active') {
-        <div class="optimize-bar">
-          <ion-button expand="block" fill="outline" routerLink="/optimizer">
+        <div class="summary-bar">
+          <div class="summary-stats">
+            <div class="summary-item">
+              <span class="summary-label">Totaal</span>
+              <span class="summary-value">€{{ totalPrice() | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Besparing</span>
+              <span class="summary-value savings">€{{ totalSavings() | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          <ion-button expand="block" fill="outline" routerLink="/optimizer" size="small">
             <ion-icon name="sparkles-outline" slot="start"></ion-icon>
-            Vind de goedkoopste route
+            Goedkoopste route
           </ion-button>
         </div>
       }
@@ -103,10 +113,18 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
     </ion-content>
   `,
   styles: [`
-    .optimize-bar {
-      padding: 8px 16px;
+    .summary-bar {
+      padding: 12px 16px;
       border-bottom: 1px solid var(--ion-color-light);
+      background: var(--ion-color-light);
     }
+    .summary-stats {
+      display: flex; justify-content: space-around; margin-bottom: 8px;
+    }
+    .summary-item { text-align: center; }
+    .summary-label { display: block; font-size: 0.75rem; color: var(--ion-color-medium); text-transform: uppercase; }
+    .summary-value { display: block; font-size: 1.2rem; font-weight: 700; color: var(--ion-color-primary); }
+    .summary-value.savings { color: var(--ion-color-success); }
     .loading {
       display: flex;
       justify-content: center;
@@ -154,6 +172,17 @@ export class ShoppingListPage implements OnInit {
 
   displayedItems = computed(() =>
     this.currentTab === 'active' ? this.shoppingList.activeItems() : this.shoppingList.purchasedItems()
+  );
+
+  totalPrice = computed(() =>
+    this.shoppingList.activeItems().reduce((sum, i) => sum + (i.deal.currentPrice || 0), 0)
+  );
+
+  totalSavings = computed(() =>
+    this.shoppingList.activeItems().reduce((sum, i) => {
+      const orig = (i.deal.currentPrice || 0) / (1 - (i.deal.discountPercentage || 0) / 100);
+      return sum + (orig - (i.deal.currentPrice || 0));
+    }, 0)
   );
 
   constructor() {
