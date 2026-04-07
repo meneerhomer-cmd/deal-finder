@@ -37,6 +37,17 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
             </div>
           }
 
+          @if (deal.quantity || deal.conditions) {
+            <div class="deal-extra">
+              @if (deal.quantity) {
+                <span>{{ deal.quantity }}</span>
+              }
+              @if (deal.conditions) {
+                <span>{{ deal.conditions }}</span>
+              }
+            </div>
+          }
+
           @if (deal.currentPrice || deal.originalPrice) {
             <div class="price-row">
               @if (deal.currentPrice) {
@@ -73,6 +84,12 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     .discount-badge { flex-shrink: 0; }
     .deal-info { display: flex; flex-direction: column; gap: 12px; }
     .price-row { display: flex; align-items: baseline; gap: 12px; }
+    .deal-extra {
+      display: flex;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+    }
     .deal-hint {
       font-size: 0.75rem;
       color: var(--ion-color-medium);
