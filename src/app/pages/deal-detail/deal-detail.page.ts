@@ -129,6 +129,42 @@ interface PriceHistoryEntry {
         <ion-card>
           <ion-card-content>
             <div class="info-grid">
+              @if (deal.dealType) {
+                <div class="info-item">
+                  <span class="info-label">Type deal</span>
+                  <span class="info-value">{{ deal.dealType }}</span>
+                </div>
+              }
+              @if (deal.brand) {
+                <div class="info-item">
+                  <span class="info-label">Merk</span>
+                  <span class="info-value">{{ deal.brand }}</span>
+                </div>
+              }
+              @if (deal.quantity) {
+                <div class="info-item">
+                  <span class="info-label">Hoeveelheid</span>
+                  <span class="info-value">{{ deal.quantity }}</span>
+                </div>
+              }
+              @if (deal.unitPrice) {
+                <div class="info-item">
+                  <span class="info-label">Eenheidsprijs</span>
+                  <span class="info-value">{{ deal.unitPrice }}</span>
+                </div>
+              }
+              @if (deal.conditions) {
+                <div class="info-item">
+                  <span class="info-label">Voorwaarden</span>
+                  <span class="info-value">{{ deal.conditions }}</span>
+                </div>
+              }
+              @if (deal.loyaltyCard) {
+                <div class="info-item">
+                  <span class="info-label">Klantenkaart</span>
+                  <span class="info-value loyalty">{{ deal.loyaltyCard }}</span>
+                </div>
+              }
               @if (deal.validUntil) {
                 <div class="info-item">
                   <span class="info-label">Geldig tot</span>
@@ -309,7 +345,8 @@ interface PriceHistoryEntry {
     }
 
     .info-label { color: var(--ion-color-medium); }
-    .info-value { font-weight: 500; }
+    .info-value { font-weight: 500; text-align: right; max-width: 60%; }
+    .info-value.loyalty { color: var(--ion-color-warning-shade); }
 
     .actions {
       margin-top: 16px;
@@ -378,11 +415,12 @@ export class DealDetailPage implements OnInit {
 
   async shareDeal() {
     if (!this.deal) return;
+    const url = `${window.location.origin}/deal/${this.deal.id}`;
     const text = `${this.deal.productName} - ${this.deal.discountPercentage}% korting bij ${this.deal.retailerName}!`;
     if (navigator.share) {
-      await navigator.share({ title: 'Deal Finder', text });
+      await navigator.share({ title: 'Deal Finder', text, url });
     } else {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(`${text}\n${url}`);
     }
   }
 

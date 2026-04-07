@@ -1,0 +1,60 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/assets/**",
+          "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "deals-api",
+      "urls": [
+        "https://deal-finder-api-927801911058.europe-west1.run.app/api/v1/deals*",
+        "https://deal-finder-api-927801911058.europe-west1.run.app/api/v1/retailers",
+        "https://deal-finder-api-927801911058.europe-west1.run.app/api/v1/stats",
+        "https://deal-finder-api-927801911058.europe-west1.run.app/api/v1/categories"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 50,
+        "maxAge": "1h",
+        "timeout": "5s"
+      }
+    },
+    {
+      "name": "search-api",
+      "urls": [
+        "https://deal-finder-api-927801911058.europe-west1.run.app/api/v1/search*",
+        "https://deal-finder-api-927801911058.europe-west1.run.app/api/v1/brands*"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 30,
+        "maxAge": "30m",
+        "timeout": "3s"
+      }
+    }
+  ]
+}

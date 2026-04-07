@@ -14,6 +14,11 @@ export interface Deal {
   unitPrice: string | null;
   brand: string | null;
   conditions: string | null;
+  minPurchase: string | null;
+  variants: string | null;
+  loyaltyCard: string | null;
+  department: string | null;
+  validDays: string | null;
   validFrom: string | null;
   validUntil: string | null;
   imageUrl: string | null;
