@@ -3,15 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
-  IonList, IonItem, IonLabel, IonBadge, IonSkeletonText, IonSpinner
+  IonButton, IonIcon, IonBadge, IonSkeletonText, IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { refresh, arrowForward, pricetag, storefront, sparkles, syncOutline, timerOutline } from 'ionicons/icons';
+import { arrowForward, sparkles, syncOutline, timerOutline, searchOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { Deal } from '../../models/deal.model';
+import { Deal, FOOD_SLUGS } from '../../models/deal.model';
 
 @Component({
   selector: 'app-home',
@@ -19,8 +18,7 @@ import { Deal } from '../../models/deal.model';
   imports: [
     CommonModule, RouterLink,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
-    IonList, IonItem, IonLabel, IonBadge, IonSkeletonText, IonSpinner,
+    IonButton, IonIcon, IonBadge, IonSkeletonText, IonSpinner,
     DealCardComponent
   ],
   template: `
@@ -35,336 +33,326 @@ import { Deal } from '../../models/deal.model';
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <!-- Stats row -->
-      @if (!dealService.loading()) {
-        <div class="stats-row">
-          <div class="stat-card">
-            <span class="stat-value">{{ dealService.totalDeals() }}</span>
-            <span class="stat-label">Deals</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-value">{{ dealService.retailers().length }}</span>
-            <span class="stat-label">Winkels</span>
-          </div>
-          <div class="stat-card accent">
-            <span class="stat-value">{{ avgDiscount() }}%</span>
-            <span class="stat-label">Gem. korting</span>
-          </div>
-          <div class="stat-card success">
-            <span class="stat-value">{{ shoppingList.activeCount() }}</span>
-            <span class="stat-label">Op lijst</span>
+      @if (dealService.totalDeals() === 0 && !dealService.loading()) {
+        <div class="scraping-banner">
+          <ion-spinner name="crescent"></ion-spinner>
+          <div>
+            <strong>Deals worden geladen...</strong>
+            <p>De server verzamelt de nieuwste promoties.</p>
           </div>
         </div>
       }
 
-      @if (dealService.totalDeals() === 0 && !dealService.loading()) {
-        <ion-card class="scraping-banner">
-          <ion-card-content>
-            <div class="scraping-info">
-              <ion-spinner name="crescent"></ion-spinner>
-              <div>
-                <strong>Deals worden geladen...</strong>
-                <p>De server verzamelt de nieuwste promoties. Dit duurt ongeveer een minuut.</p>
-              </div>
-            </div>
-          </ion-card-content>
-        </ion-card>
+      <!-- Hero savings card -->
+      @if (dealService.totalDeals() > 0) {
+        <div class="hero-card">
+          <div class="hero-left">
+            <span class="hero-number">{{ dealService.totalDeals() }}</span>
+            <span class="hero-label">deals bij {{ activeRetailers().length }} winkels</span>
+          </div>
+          <div class="hero-right">
+            <span class="hero-discount">{{ avgDiscount() }}%</span>
+            <span class="hero-label">gem. korting</span>
+          </div>
+        </div>
       }
 
-      <!-- Retailers -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>
-            <ion-icon name="storefront"></ion-icon>
-            Winkels
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          @if (dealService.retailers().length === 0) {
-            <ion-skeleton-text [animated]="true" style="height: 40px"></ion-skeleton-text>
-          } @else {
-            <div class="retailer-chips">
-              @for (retailer of activeRetailers(); track retailer.slug) {
-                <a [routerLink]="['/retailer', retailer.slug]" class="retailer-chip" [class]="retailer.slug">
-                  {{ retailer.name }}
-                  <ion-badge color="light">{{ retailer.dealCount }}</ion-badge>
-                </a>
-              }
-            </div>
-          }
-        </ion-card-content>
-      </ion-card>
+      <!-- Search shortcut -->
+      <a routerLink="/search" class="search-bar-shortcut">
+        <ion-icon name="search-outline"></ion-icon>
+        <span>Zoek een product of merk...</span>
+      </a>
 
-      <!-- Quick actions -->
-      <div class="quick-actions">
-        <a routerLink="/categories" class="quick-action">
-          <span class="qa-icon">🏷️</span>
-          <span>Categorieën</span>
-        </a>
-        <a routerLink="/brands" class="quick-action">
-          <span class="qa-icon">⭐</span>
-          <span>Merken</span>
-        </a>
-        <a routerLink="/watchlist" class="quick-action">
-          <span class="qa-icon">👁️</span>
-          <span>Mijn producten</span>
-        </a>
-        <a routerLink="/search" class="quick-action">
-          <span class="qa-icon">🔍</span>
-          <span>Vergelijk</span>
-        </a>
-      </div>
-
-      <!-- Top deals -->
-      <ion-card>
-        <ion-card-header>
+      <!-- Top Food Deals carousel -->
+      @if (topFoodDeals().length > 0) {
+        <div class="section">
           <div class="section-header">
-            <ion-card-title>
-              <ion-icon name="sparkles"></ion-icon>
-              Beste Deals
-            </ion-card-title>
-            <ion-button fill="clear" routerLink="/deals" size="small">
-              Alles <ion-icon name="arrow-forward" slot="end"></ion-icon>
-            </ion-button>
+            <h2>Beste voedingsdeals</h2>
+            <a routerLink="/deals" class="see-all">
+              Alles <ion-icon name="arrow-forward"></ion-icon>
+            </a>
           </div>
-        </ion-card-header>
-        <ion-card-content class="deals-content">
-          @if (dealService.loading()) {
-            <div class="loading">
-              <ion-spinner></ion-spinner>
-              <p>Deals laden...</p>
-            </div>
-          } @else if (topDeals().length === 0) {
-            <div class="empty">
-              <p>Nog geen deals beschikbaar.</p>
-              <ion-button fill="outline" (click)="triggerScan()">
-                <ion-icon name="sync-outline" slot="start"></ion-icon>
-                Scan starten
-              </ion-button>
-            </div>
-          } @else {
-            @for (deal of topDeals(); track deal.id) {
-              <app-deal-card [deal]="deal"></app-deal-card>
+          <div class="deal-carousel">
+            @for (deal of topFoodDeals(); track deal.id) {
+              <div class="carousel-item">
+                <app-deal-card [deal]="deal"></app-deal-card>
+              </div>
             }
-          }
-        </ion-card-content>
-      </ion-card>
+          </div>
+        </div>
+      }
+
+      <!-- Retailers row -->
+      @if (activeRetailers().length > 0) {
+        <div class="section">
+          <div class="section-header">
+            <h2>Winkels</h2>
+          </div>
+          <div class="retailer-scroll">
+            @for (retailer of activeRetailers(); track retailer.slug) {
+              <a [routerLink]="['/retailer', retailer.slug]" class="retailer-bubble">
+                <div class="retailer-avatar" [class]="retailer.slug">
+                  {{ retailer.name.charAt(0) }}
+                </div>
+                <span class="retailer-name">{{ retailer.name }}</span>
+                <ion-badge>{{ retailer.dealCount }}</ion-badge>
+              </a>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Expiring soon -->
       @if (expiringDeals().length > 0) {
-        <ion-card class="expiring-card">
-          <ion-card-header>
-            <ion-card-title class="expiring-title">
-              <ion-icon name="timer-outline"></ion-icon>
-              Bijna verlopen!
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content class="deals-content">
+        <div class="section">
+          <div class="section-header expiring">
+            <h2><ion-icon name="timer-outline"></ion-icon> Bijna verlopen!</h2>
+          </div>
+          <div class="deal-carousel">
             @for (deal of expiringDeals(); track deal.id) {
-              <app-deal-card [deal]="deal"></app-deal-card>
+              <div class="carousel-item">
+                <app-deal-card [deal]="deal"></app-deal-card>
+              </div>
             }
-          </ion-card-content>
-        </ion-card>
+          </div>
+        </div>
       }
 
       <!-- Recently added -->
       @if (recentDeals().length > 0) {
-        <ion-card>
-          <ion-card-header>
-            <div class="section-header">
-              <ion-card-title>
-                <ion-icon name="pricetag"></ion-icon>
-                Recent Toegevoegd
-              </ion-card-title>
-              <ion-button fill="clear" routerLink="/deals" size="small">
-                Alles <ion-icon name="arrow-forward" slot="end"></ion-icon>
-              </ion-button>
-            </div>
-          </ion-card-header>
-          <ion-card-content class="deals-content">
+        <div class="section">
+          <div class="section-header">
+            <h2>Recent toegevoegd</h2>
+            <a routerLink="/deals" class="see-all">
+              Alles <ion-icon name="arrow-forward"></ion-icon>
+            </a>
+          </div>
+          <div class="deal-grid-small">
             @for (deal of recentDeals(); track deal.id) {
               <app-deal-card [deal]="deal"></app-deal-card>
             }
-          </ion-card-content>
-        </ion-card>
+          </div>
+        </div>
       }
+
+      <!-- Quick links -->
+      <div class="quick-links">
+        <a routerLink="/categories" class="quick-link">
+          <span class="ql-icon">🏷️</span>
+          <span>Categorieën</span>
+        </a>
+        <a routerLink="/brands" class="quick-link">
+          <span class="ql-icon">⭐</span>
+          <span>Merken</span>
+        </a>
+        <a routerLink="/watchlist" class="quick-link">
+          <span class="ql-icon">👁️</span>
+          <span>Mijn producten</span>
+        </a>
+        <a routerLink="/optimizer" class="quick-link">
+          <span class="ql-icon">🧠</span>
+          <span>Slimme route</span>
+        </a>
+      </div>
+
+      <div style="height: 16px;"></div>
     </ion-content>
   `,
   styles: [`
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      padding: 12px;
-    }
+    ion-content { --background: var(--ion-color-light, #f4f5f8); }
 
-    .stat-card {
+    .scraping-banner {
+      display: flex; align-items: center; gap: 16px;
+      margin: 12px; padding: 16px; border-radius: 14px;
+      background: var(--ion-card-background, white);
+      border-left: 4px solid var(--ion-color-primary);
+    }
+    .scraping-banner p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
+
+    .hero-card {
+      display: flex;
+      margin: 12px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #43a047 100%);
+      color: white;
+      padding: 20px;
+      gap: 16px;
+    }
+    .hero-left, .hero-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .hero-number { font-size: 2.2rem; font-weight: 800; }
+    .hero-discount { font-size: 2.2rem; font-weight: 800; }
+    .hero-label { font-size: 0.75rem; opacity: 0.85; text-align: center; margin-top: 2px; }
+
+    .search-bar-shortcut {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 12px 12px;
+      padding: 12px 16px;
       background: var(--ion-card-background, white);
       border-radius: 12px;
-      padding: 12px 8px;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .stat-value {
-      display: block;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--ion-color-primary);
-    }
-
-    .stat-card.accent .stat-value {
-      color: var(--ion-color-danger);
-    }
-
-    .stat-card.success .stat-value {
-      color: var(--ion-color-success);
-    }
-
-    .stat-label {
-      display: block;
-      font-size: 0.7rem;
-      color: var(--ion-color-medium);
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .retailer-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .retailer-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 20px;
       text-decoration: none;
-      color: white;
-      font-weight: 500;
+      color: var(--ion-color-medium);
       font-size: 0.9rem;
-
-      &.carrefour { background: var(--retailer-carrefour); }
-      &.lidl { background: var(--retailer-lidl); }
-      &.delhaize { background: var(--retailer-delhaize); }
-      &.colruyt { background: var(--retailer-colruyt); }
-      &.aldi { background: var(--retailer-aldi); }
-      &.kruidvat { background: var(--retailer-kruidvat); }
-      &.albert-heijn { background: var(--retailer-albert-heijn); }
-      &.jumbo { background: var(--retailer-jumbo); color: #333; }
-      &.spar { background: var(--retailer-spar); }
-      &.intermarche { background: var(--retailer-intermarche); }
-      &.gamma { background: var(--retailer-gamma); }
-      &:not([class*="-"]):not(.carrefour):not(.lidl):not(.delhaize):not(.colruyt):not(.aldi):not(.kruidvat):not(.jumbo):not(.spar):not(.gamma) {
-        background: var(--ion-color-medium);
-      }
-
-      ion-badge {
-        --background: rgba(255,255,255,0.3);
-        --color: white;
-      }
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
+    .search-bar-shortcut ion-icon { font-size: 1.2rem; }
 
+    .section { margin-bottom: 8px; }
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 12px 16px 4px;
+    }
+    .section-header h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-header.expiring h2 { color: #e65100; }
+    .see-all {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+      text-decoration: none;
     }
 
-    ion-card-title ion-icon {
-      margin-right: 8px;
-      vertical-align: middle;
+    .deal-carousel {
+      display: flex;
+      gap: 10px;
+      padding: 4px 12px 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      scroll-snap-type: x mandatory;
+    }
+    .deal-carousel::-webkit-scrollbar { display: none; }
+    .carousel-item {
+      flex-shrink: 0;
+      width: 160px;
+      scroll-snap-align: start;
     }
 
-    .deals-content {
-      padding: 0;
-    }
-
-    .quick-actions {
+    .deal-grid-small {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      padding: 0 12px 12px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 4px 12px 8px;
     }
 
-    .quick-action {
+    .retailer-scroll {
+      display: flex;
+      gap: 16px;
+      padding: 8px 16px 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .retailer-scroll::-webkit-scrollbar { display: none; }
+    .retailer-bubble {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 4px;
-      padding: 12px 4px;
-      background: var(--ion-card-background, white);
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       text-decoration: none;
       color: var(--ion-text-color);
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-align: center;
-
-      .qa-icon { font-size: 1.5rem; }
+      flex-shrink: 0;
     }
-
-    .scraping-banner {
-      border-left: 4px solid var(--ion-color-primary);
-    }
-
-    .scraping-info {
+    .retailer-avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 16px;
-
-      p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
-      ion-spinner { flex-shrink: 0; }
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+    }
+    .retailer-avatar.carrefour { background: var(--retailer-carrefour); }
+    .retailer-avatar.lidl { background: var(--retailer-lidl); }
+    .retailer-avatar.delhaize { background: var(--retailer-delhaize); }
+    .retailer-avatar.colruyt { background: var(--retailer-colruyt); }
+    .retailer-avatar.aldi { background: var(--retailer-aldi); }
+    .retailer-avatar.kruidvat { background: var(--retailer-kruidvat); }
+    .retailer-avatar.albert-heijn { background: var(--retailer-albert-heijn); }
+    .retailer-avatar.jumbo { background: var(--retailer-jumbo); color: #333; }
+    .retailer-avatar.spar { background: var(--retailer-spar); }
+    .retailer-avatar.carrefour-market { background: var(--retailer-carrefour-market); }
+    .retailer-avatar.intermarche { background: var(--retailer-intermarche); }
+    .retailer-avatar.gamma { background: var(--retailer-gamma); }
+    .retailer-avatar.brico-bricoplanit { background: var(--retailer-brico-bricoplanit); }
+    .retailer-name { font-size: 0.7rem; font-weight: 500; text-align: center; max-width: 60px; }
+    .retailer-bubble ion-badge {
+      font-size: 0.6rem;
+      --padding-start: 5px; --padding-end: 5px;
+      --padding-top: 1px; --padding-bottom: 1px;
     }
 
-    .expiring-card {
-      border-left: 4px solid var(--ion-color-warning);
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 8px 12px;
     }
-
-    .expiring-title {
-      color: var(--ion-color-warning-shade);
-    }
-
-    .loading, .empty {
+    .quick-link {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 32px;
+      gap: 6px;
+      padding: 14px 4px;
+      background: var(--ion-card-background, white);
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--ion-text-color);
+      font-size: 0.72rem;
+      font-weight: 500;
       text-align: center;
-      color: var(--ion-color-medium);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
+    .ql-icon { font-size: 1.6rem; }
   `]
 })
 export class HomePage implements OnInit {
   dealService = inject(DealService);
   shoppingList = inject(ShoppingListService);
 
-  topDeals = computed(() =>
+  topFoodDeals = computed(() =>
     [...this.dealService.deals()]
+      .filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
       .sort((a, b) => b.discountPercentage - a.discountPercentage)
-      .slice(0, 5)
+      .slice(0, 8)
   );
 
   recentDeals = computed(() => {
-    const top5Ids = new Set(this.topDeals().map(d => d.id));
+    const topIds = new Set(this.topFoodDeals().map(d => d.id));
     return [...this.dealService.deals()]
-      .filter(d => !top5Ids.has(d.id))
-      .slice(0, 3);
+      .filter(d => !topIds.has(d.id))
+      .slice(0, 4);
   });
 
   activeRetailers = computed(() =>
     this.dealService.retailers().filter(r => r.dealCount > 0)
+      .sort((a, b) => b.dealCount - a.dealCount)
   );
 
   expiringDeals = computed(() =>
     this.dealService.deals()
       .filter(d => d.expiringSoon)
       .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
-      .slice(0, 3)
+      .slice(0, 6)
   );
 
   avgDiscount = computed(() => {
@@ -375,7 +363,7 @@ export class HomePage implements OnInit {
   });
 
   constructor() {
-    addIcons({ refresh, arrowForward, pricetag, storefront, sparkles, syncOutline, timerOutline });
+    addIcons({ arrowForward, sparkles, syncOutline, timerOutline, searchOutline });
   }
 
   private pollInterval: any;
@@ -406,13 +394,5 @@ export class HomePage implements OnInit {
       complete: () => event.target.complete()
     });
     this.dealService.loadRetailers().subscribe();
-  }
-
-  triggerScan() {
-    this.dealService.triggerScan().subscribe({
-      next: () => {
-        setTimeout(() => this.loadData(), 3000);
-      }
-    });
   }
 }
