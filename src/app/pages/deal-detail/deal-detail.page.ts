@@ -48,12 +48,21 @@ interface PriceHistoryEntry {
           <p>Deal laden...</p>
         </div>
       } @else {
-        <div class="deal-hero">
-          <span class="hero-emoji">{{ getCategoryEmoji(deal.categorySlug) }}</span>
-          @if (deal.discountPercentage) {
-            <span class="hero-discount">-{{ deal.discountPercentage }}%</span>
-          }
-        </div>
+        @if (deal.imageUrl) {
+          <div class="deal-image-container">
+            <img [src]="deal.imageUrl" [alt]="deal.productName" class="deal-image" (error)="imageError = true" [hidden]="imageError" />
+            @if (deal.discountPercentage) {
+              <span class="image-discount-badge">-{{ deal.discountPercentage }}%</span>
+            }
+          </div>
+        } @else {
+          <div class="deal-hero">
+            <span class="hero-emoji">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+            @if (deal.discountPercentage) {
+              <span class="hero-discount">-{{ deal.discountPercentage }}%</span>
+            }
+          </div>
+        }
 
         <h1 class="deal-title">{{ deal.productName }}</h1>
 
@@ -210,6 +219,35 @@ interface PriceHistoryEntry {
       color: var(--ion-color-medium);
     }
 
+    .deal-image-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background: var(--ion-color-light);
+      border-radius: 16px;
+      margin-bottom: 16px;
+    }
+
+    .deal-image {
+      max-width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .image-discount-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: var(--ion-color-danger);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 12px;
+    }
+
     .deal-hero {
       display: flex;
       align-items: center;
@@ -363,6 +401,7 @@ export class DealDetailPage implements OnInit {
   private shoppingList = inject(ShoppingListService);
 
   deal: Deal | undefined;
+  imageError = false;
   priceHistory = signal<PriceHistoryEntry[]>([]);
 
   getCategoryEmoji = getCategoryEmoji;

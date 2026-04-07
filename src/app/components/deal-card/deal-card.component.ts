@@ -12,7 +12,11 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     <ion-card [routerLink]="['/deal', deal.id]" button>
       <ion-card-header>
         <div class="card-header-row">
-          <span class="category-icon">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+          @if (deal.imageUrl) {
+            <img [src]="deal.imageUrl" [alt]="deal.productName" class="deal-thumb" loading="lazy" />
+          } @else {
+            <span class="category-icon">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+          }
           <div class="header-content">
             <ion-card-title>{{ deal.productName }}</ion-card-title>
           </div>
@@ -83,6 +87,11 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       --background: var(--ion-card-background, white);
     }
     .card-header-row { display: flex; align-items: flex-start; gap: 12px; }
+    .deal-thumb {
+      width: 56px; height: 56px; border-radius: 10px;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--ion-color-light);
+    }
     .category-icon { font-size: 1.8rem; flex-shrink: 0; margin-top: 2px; }
     .header-content { flex: 1; min-width: 0; }
     ion-card-title {
