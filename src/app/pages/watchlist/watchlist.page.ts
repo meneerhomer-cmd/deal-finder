@@ -11,6 +11,7 @@ import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, searchOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { UserDataService } from '../../services/user-data.service';
+import { AlertService } from '../../services/alert.service';
 
 interface WatchItem {
   name: string;
@@ -38,6 +39,29 @@ interface WatchItem {
     </ion-header>
 
     <ion-content>
+      @if (alertService.alerts().length > 0) {
+        <div class="alerts-section">
+          <div class="alerts-header">
+            <span>Prijsdalingen</span>
+            <ion-button fill="clear" size="small" (click)="alertService.markAllSeen()">
+              Markeer gelezen
+            </ion-button>
+          </div>
+          @for (alert of alertService.alerts(); track alert.productName) {
+            <div class="alert-card" [class.unseen]="!alert.seen">
+              <div class="alert-info">
+                <strong>{{ alert.productName }}</strong>
+                <p>{{ alert.retailer }} &middot; -{{ alert.priceDrop }}% gedaald</p>
+              </div>
+              <div class="alert-prices">
+                <span class="old-price">{{ alert.previousPrice | number:'1.2-2' }}</span>
+                <span class="new-price">{{ alert.currentPrice | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <div class="add-bar">
         <ion-input
           placeholder="Product toevoegen (bv. Pampers, Coca-Cola...)"
@@ -108,11 +132,28 @@ interface WatchItem {
     .watch-price { font-weight: 700; font-size: 1.1rem; color: var(--ion-color-success); }
     .watch-discount { color: var(--ion-color-danger); font-weight: 600; margin-left: 4px; }
     .not-found { color: var(--ion-color-medium); font-style: italic; }
+    .alerts-section { padding: 12px; }
+    .alerts-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
+      color: var(--ion-color-medium); letter-spacing: 0.5px; margin-bottom: 8px;
+    }
+    .alert-card {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; margin-bottom: 8px; border-radius: 10px;
+      background: var(--ion-color-success-tint, #e8f5e9);
+    }
+    .alert-card.unseen { border-left: 3px solid var(--ion-color-success); }
+    .alert-info p { margin: 2px 0 0; font-size: 0.8rem; color: var(--ion-color-medium); }
+    .alert-prices { text-align: right; }
+    .old-price { text-decoration: line-through; color: var(--ion-color-medium); font-size: 0.85rem; display: block; }
+    .new-price { font-weight: 700; color: var(--ion-color-success); font-size: 1.1rem; }
   `]
 })
 export class WatchlistPage implements OnInit {
   private http = inject(HttpClient);
   userData = inject(UserDataService);
+  alertService = inject(AlertService);
 
   items = signal<WatchItem[]>([]);
   loading = signal(false);

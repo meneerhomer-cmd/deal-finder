@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IonApp, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { home, pricetag, search, ellipsisHorizontal } from 'ionicons/icons';
 import { ShoppingListService } from './services/shopping-list.service';
+import { AlertService } from './services/alert.service';
 
 @Component({
   selector: 'app-root',
@@ -28,8 +29,8 @@ import { ShoppingListService } from './services/shopping-list.service';
         <ion-tab-button routerLink="/more" routerLinkActive="tab-selected">
           <ion-icon name="ellipsis-horizontal"></ion-icon>
           <ion-label>Meer</ion-label>
-          @if (shoppingList.activeCount() > 0) {
-            <ion-badge color="danger">{{ shoppingList.activeCount() }}</ion-badge>
+          @if (totalBadge() > 0) {
+            <ion-badge color="danger">{{ totalBadge() }}</ion-badge>
           }
         </ion-tab-button>
       </ion-tab-bar>
@@ -43,6 +44,9 @@ import { ShoppingListService } from './services/shopping-list.service';
 })
 export class AppComponent implements OnInit {
   shoppingList = inject(ShoppingListService);
+  alertService = inject(AlertService);
+
+  totalBadge = computed(() => this.shoppingList.activeCount() + this.alertService.unseenCount());
 
   constructor() {
     addIcons({ home, pricetag, search, ellipsisHorizontal });
@@ -50,5 +54,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.shoppingList.loadItems().subscribe();
+    this.alertService.checkForAlerts();
   }
 }
