@@ -1,16 +1,24 @@
 {
-  "name": "Deal Finder",
-  "short_name": "Deals",
-  "description": "Vind de beste multi-buy promoties in België",
+  "name": "Deal Finder - Belgische Promoties",
+  "short_name": "Deal Finder",
+  "description": "Vergelijk prijzen bij alle Belgische winkels",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3880ff",
+  "lang": "nl-BE",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64",
-      "type": "image/x-icon"
+      "src": "assets/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
