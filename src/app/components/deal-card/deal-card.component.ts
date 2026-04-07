@@ -12,8 +12,8 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     <ion-card [routerLink]="['/deal', deal.id]" button>
       <ion-card-header>
         <div class="card-header-row">
-          @if (deal.imageUrl) {
-            <img [src]="deal.imageUrl" [alt]="deal.productName" class="deal-thumb" loading="lazy" />
+          @if (deal.imageUrl && !imgError) {
+            <img [src]="deal.imageUrl" [alt]="deal.productName" class="deal-thumb" loading="lazy" (error)="imgError = true" />
           } @else {
             <span class="category-icon">{{ getCategoryEmoji(deal.categorySlug) }}</span>
           }
@@ -141,6 +141,7 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
 })
 export class DealCardComponent {
   @Input({ required: true }) deal!: Deal;
+  imgError = false;
   getCategoryEmoji = getCategoryEmoji;
   getDiscountClass = getDiscountClass;
 }

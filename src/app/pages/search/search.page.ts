@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
@@ -59,14 +59,14 @@ interface SearchResponse {
           <h2>Vergelijk prijzen</h2>
           <p>Zoek een product en ontdek waar het het goedkoopst is bij alle Belgische winkels.</p>
         </div>
-        @if (recentSearches.length > 0) {
+        @if (recentSearches().length > 0) {
           <div class="recent-section">
             <div class="recent-header">
               <span>Recente zoekopdrachten</span>
               <ion-button fill="clear" size="small" (click)="clearRecent()">Wis</ion-button>
             </div>
             <div class="recent-chips">
-              @for (term of recentSearches; track term) {
+              @for (term of recentSearches(); track term) {
                 <ion-chip (click)="doSearch(term)">
                   <ion-icon name="time-outline"></ion-icon>
                   <ion-label>{{ term }}</ion-label>
@@ -261,7 +261,7 @@ export class SearchPage implements OnInit {
   hasSearched = signal(false);
   lastQuery = signal('');
 
-  recentSearches: string[] = JSON.parse(localStorage.getItem('recent-searches') || '[]');
+  recentSearches = signal<string[]>(JSON.parse(localStorage.getItem('recent-searches') || '[]'));
   popularSearches = ['Coca-Cola', 'Pampers', 'Nutella', 'Dash', 'Pringles', 'Fairy'];
 
   constructor() {
@@ -313,12 +313,13 @@ export class SearchPage implements OnInit {
   }
 
   clearRecent() {
-    this.recentSearches = [];
+    this.recentSearches.set([]);
     localStorage.removeItem('recent-searches');
   }
 
   private saveRecentSearch(query: string) {
-    this.recentSearches = [query, ...this.recentSearches.filter(q => q !== query)].slice(0, 8);
-    localStorage.setItem('recent-searches', JSON.stringify(this.recentSearches));
+    const updated = [query, ...this.recentSearches().filter(q => q !== query)].slice(0, 8);
+    this.recentSearches.set(updated);
+    localStorage.setItem('recent-searches', JSON.stringify(updated));
   }
 }

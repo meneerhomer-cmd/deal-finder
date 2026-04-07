@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
 import { environment } from '@env/environment';
 import { AuthService } from './auth.service';
@@ -39,20 +40,14 @@ export class AlertService {
     const newAlerts: PriceAlert[] = [];
     const updatedPrices: StoredPrices = { ...storedPrices };
 
-    let completed = 0;
-    const total = products.length;
-
     for (const name of products) {
       try {
-        const data = await this.http.get<any>(
+        const data = await firstValueFrom(this.http.get<any>(
           `${environment.apiUrl}/search`, { params: { q: name, limit: '3' } }
-        ).toPromise();
+        ));
 
         const best = data?.results?.[0];
-        if (!best?.currentPrice) {
-          completed++;
-          continue;
-        }
+        if (!best?.currentPrice) continue;
 
         const stored = storedPrices[name];
         if (stored && best.currentPrice < stored.price) {
@@ -72,20 +67,13 @@ export class AlertService {
           retailer: best.retailerName || '',
           checkedAt: new Date().toISOString()
         };
-
-        completed++;
-        if (completed === total) {
-          this.alerts.set(newAlerts);
-          await this.saveStoredPrices(updatedPrices);
-        }
       } catch {
-        completed++;
-        if (completed === total) {
-          this.alerts.set(newAlerts);
-          await this.saveStoredPrices(updatedPrices);
-        }
+        // skip failed lookups
       }
     }
+
+    this.alerts.set(newAlerts);
+    await this.saveStoredPrices(updatedPrices);
   }
 
   markAllSeen() {

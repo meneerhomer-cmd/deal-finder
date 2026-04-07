@@ -18,17 +18,17 @@ export class UserDataService {
   private initialized = false;
 
   constructor() {
+    this.loadFromLocalStorage();
     effect(() => {
       const user = this.auth.currentUser();
       if (user && !this.initialized) {
         this.initialized = true;
         this.migrateAndLoad(user.uid);
-      } else if (!user) {
+      } else if (!user && this.initialized) {
         this.initialized = false;
         this.loadFromLocalStorage();
       }
     });
-    this.loadFromLocalStorage();
   }
 
   private loadFromLocalStorage() {
