@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonList, IonItem, IonLabel, IonBadge,
-  IonSpinner, IonIcon, IonChip
+  IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { heartOutline, heart, searchOutline } from 'ionicons/icons';
@@ -23,11 +23,14 @@ interface Brand {
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonSearchbar, IonList, IonItem, IonLabel, IonBadge,
-    IonSpinner, IonIcon, IonChip
+    IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton
   ],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
+        <ion-buttons slot="start">
+          <ion-back-button defaultHref="/more"></ion-back-button>
+        </ion-buttons>
         <ion-title>Merken</ion-title>
       </ion-toolbar>
       <ion-toolbar>

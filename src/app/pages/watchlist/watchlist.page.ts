@@ -34,6 +34,9 @@ interface WatchItem {
   template: `
     <ion-header>
       <ion-toolbar color="primary">
+        <ion-buttons slot="start">
+          <ion-back-button defaultHref="/more"></ion-back-button>
+        </ion-buttons>
         <ion-title>Mijn Producten</ion-title>
       </ion-toolbar>
     </ion-header>

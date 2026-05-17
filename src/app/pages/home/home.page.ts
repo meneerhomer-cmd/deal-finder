@@ -6,7 +6,7 @@ import {
   IonButton, IonIcon, IonBadge, IonSpinner, IonButtons, IonSearchbar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowForward, timerOutline, searchOutline } from 'ionicons/icons';
+import { arrowForward, timerOutline, searchOutline, bookOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { FOOD_SLUGS } from '../../models/deal.model';
@@ -72,6 +72,15 @@ import { FOOD_SLUGS } from '../../models/deal.model';
               <ion-badge>{{ r.filteredCount }}</ion-badge>
             </a>
           }
+        </div>
+      }
+
+      <!-- Folders link -->
+      @if (filteredRetailers().length > 0) {
+        <div class="folders-bar">
+          <ion-icon name="book-outline"></ion-icon>
+          <span>Bekijk de folders van je favoriete winkels</span>
+          <a routerLink="/retailers" class="folders-link">Folders <ion-icon name="arrow-forward"></ion-icon></a>
         </div>
       }
 
@@ -185,6 +194,23 @@ import { FOOD_SLUGS } from '../../models/deal.model';
       --padding-top: 1px; --padding-bottom: 1px;
     }
 
+    .folders-bar {
+      display: flex; align-items: center; gap: 8px;
+      margin: 0 14px 8px; padding: 10px 14px;
+      background: var(--ion-card-background, white);
+      border-radius: 12px; font-size: 0.82rem;
+      color: var(--ion-color-medium);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .folders-bar ion-icon { font-size: 1.2rem; color: var(--ion-color-primary); flex-shrink: 0; }
+    .folders-bar span { flex: 1; }
+    .folders-link {
+      display: flex; align-items: center; gap: 3px;
+      font-weight: 600; color: var(--ion-color-primary);
+      text-decoration: none; white-space: nowrap;
+    }
+    .folders-link ion-icon { font-size: 0.85rem; }
+
     .section { margin-bottom: 4px; }
     .section-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -286,7 +312,7 @@ export class HomePage implements OnInit {
   );
 
   constructor() {
-    addIcons({ arrowForward, timerOutline, searchOutline });
+    addIcons({ arrowForward, timerOutline, searchOutline, bookOutline });
     effect(() => localStorage.setItem('dealfinder-mode', this.mode()));
   }
 
