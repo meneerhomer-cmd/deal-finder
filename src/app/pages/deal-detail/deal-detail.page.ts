@@ -14,6 +14,7 @@ import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { Deal, getCategoryEmoji, getDiscountClass, CATEGORIES } from '../../models/deal.model';
+import { PosthogService } from '../../services/posthog.service';
 
 interface PriceHistoryEntry {
   id: number;
@@ -279,6 +280,7 @@ export class DealDetailPage implements OnInit {
   private dealService = inject(DealService);
   private shoppingList = inject(ShoppingListService);
   private toastCtrl = inject(ToastController);
+  private posthog = inject(PosthogService);
 
   deal: Deal | undefined;
   imageError = false;
@@ -297,10 +299,14 @@ export class DealDetailPage implements OnInit {
     if (existing) {
       this.deal = existing;
       this.loadPriceHistory(id);
+      this.trackDealViewed(existing);
     } else {
       this.dealService.loadDeals().subscribe(deals => {
         this.deal = deals.find(d => d.id === id);
-        if (this.deal) this.loadPriceHistory(id);
+        if (this.deal) {
+          this.loadPriceHistory(id);
+          this.trackDealViewed(this.deal);
+        }
       });
     }
     if (this.shoppingList.items().length === 0) {
@@ -329,7 +335,16 @@ export class DealDetailPage implements OnInit {
 
   addToShoppingList() {
     if (!this.deal) return;
-    this.shoppingList.addDeal(this.deal.id).subscribe(async () => {
+    const deal = this.deal;
+    this.shoppingList.addDeal(deal.id).subscribe(async () => {
+      this.posthog.posthog.capture('deal_added_to_shopping_list', {
+        deal_id: deal.id,
+        product_name: deal.productName,
+        retailer: deal.retailerName,
+        discount_percentage: deal.discountPercentage,
+        current_price: deal.currentPrice,
+        category: deal.categorySlug,
+      });
       const toast = await this.toastCtrl.create({
         message: 'Toegevoegd aan je boodschappenlijst!',
         duration: 1500,
@@ -353,11 +368,31 @@ export class DealDetailPage implements OnInit {
     if (!this.deal) return;
     const url = `${window.location.origin}/deal/${this.deal.id}`;
     const text = `${this.deal.productName} - ${this.deal.discountPercentage}% korting bij ${this.deal.retailerName}!`;
-    if (navigator.share) {
+    const canShare = 'share' in navigator;
+    const method = canShare ? 'native' : 'clipboard';
+    if (canShare) {
       await navigator.share({ title: 'Deal Finder', text, url });
     } else {
       await navigator.clipboard.writeText(`${text}\n${url}`);
     }
+    this.posthog.posthog.capture('deal_shared', {
+      deal_id: this.deal.id,
+      product_name: this.deal.productName,
+      retailer: this.deal.retailerName,
+      share_method: method,
+    });
+  }
+
+  private trackDealViewed(deal: Deal) {
+    this.posthog.posthog.capture('deal_viewed', {
+      deal_id: deal.id,
+      product_name: deal.productName,
+      retailer: deal.retailerName,
+      discount_percentage: deal.discountPercentage,
+      current_price: deal.currentPrice,
+      category: deal.categorySlug,
+      expiring_soon: deal.expiringSoon,
+    });
   }
 
   private loadPriceHistory(dealId: number) {

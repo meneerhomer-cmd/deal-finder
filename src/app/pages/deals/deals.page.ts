@@ -12,6 +12,7 @@ import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/ic
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
+import { PosthogService } from '../../services/posthog.service';
 
 @Component({
   selector: 'app-deals',
@@ -252,6 +253,7 @@ export class DealsPage implements OnInit, OnDestroy {
   dealService = inject(DealService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private posthog = inject(PosthogService);
 
   showFilterModal = false;
   dealMode = signal<'food' | 'nonfood'>(
@@ -361,10 +363,19 @@ export class DealsPage implements OnInit, OnDestroy {
   onMinDiscountChange(event: CustomEvent) {
     const value = event.detail.value;
     this.dealService.setFilter('minDiscount', value > 0 ? value : undefined);
+    this.posthog.posthog.capture('filter_applied', {
+      filter_type: 'min_discount',
+      value: value > 0 ? value : null,
+    });
   }
 
   onCategoryChange(event: CustomEvent) {
-    this.dealService.setFilter('category', event.detail.value || undefined);
+    const value = event.detail.value || undefined;
+    this.dealService.setFilter('category', value);
+    this.posthog.posthog.capture('filter_applied', {
+      filter_type: 'category',
+      value: value ?? null,
+    });
   }
 
   getCategoryName(slug: string): string {
@@ -374,6 +385,7 @@ export class DealsPage implements OnInit, OnDestroy {
 
   setMode(mode: 'food' | 'nonfood') {
     this.dealMode.set(mode);
+    this.posthog.posthog.capture('deal_mode_switched', { mode });
   }
 
   ngOnDestroy() {
@@ -384,6 +396,7 @@ export class DealsPage implements OnInit, OnDestroy {
 
   openFlyer() {
     if (!this.retailerSlug) return;
+    this.posthog.posthog.capture('flyer_opened', { retailer: this.retailerSlug });
     this.dealService.loadFlyers(this.retailerSlug).subscribe({
       next: data => {
         if (data.flyers?.length > 0) {

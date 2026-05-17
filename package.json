@@ -37,6 +37,7 @@
     "@sentry/angular": "^10.43.0",
     "@sentry/capacitor": "^4.0.0",
     "firebase": "^10.14.1",
+    "posthog-js": "^1.373.5",
     "ionicons": "^7.2.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.6.0",

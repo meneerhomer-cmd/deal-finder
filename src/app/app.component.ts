@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { ShoppingListService } from './services/shopping-list.service';
 import { AlertService } from './services/alert.service';
+import { PosthogService } from './services/posthog.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -16,8 +18,15 @@ import { AlertService } from './services/alert.service';
 export class AppComponent implements OnInit {
   private shoppingList = inject(ShoppingListService);
   private alertService = inject(AlertService);
+  private posthog = inject(PosthogService);
 
   ngOnInit() {
+    if (environment.posthog.key) {
+      this.posthog.init(environment.posthog.key, {
+        api_host: environment.posthog.host,
+        capture_exceptions: true,
+      });
+    }
     this.shoppingList.loadItems().subscribe();
     this.alertService.checkForAlerts();
   }

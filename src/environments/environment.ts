@@ -13,5 +13,9 @@ export const environment = {
     dsn: '',
     environment: 'development',
     tracesSampleRate: 0,
-  }
+  },
+  posthog: {
+    key: '',
+    host: 'https://eu.i.posthog.com',
+  },
 };

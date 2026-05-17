@@ -10,6 +10,7 @@ import {
 import { addIcons } from 'ionicons';
 import { trashOutline, cartOutline, sparklesOutline } from 'ionicons/icons';
 import { ShoppingListService, ShoppingListItem } from '../../services/shopping-list.service';
+import { PosthogService } from '../../services/posthog.service';
 
 @Component({
   selector: 'app-shopping-list',
@@ -188,6 +189,7 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
 })
 export class ShoppingListPage implements OnInit {
   shoppingList = inject(ShoppingListService);
+  private posthog = inject(PosthogService);
   currentTab: 'active' | 'purchased' = 'active';
 
   displayedItems = computed(() =>
@@ -224,6 +226,12 @@ export class ShoppingListPage implements OnInit {
       this.shoppingList.markNotPurchased(item.deal.id).subscribe();
     } else {
       this.shoppingList.markPurchased(item.deal.id).subscribe();
+      this.posthog.posthog.capture('shopping_list_item_purchased', {
+        product_name: item.deal.productName,
+        retailer: item.deal.retailerName,
+        current_price: item.deal.currentPrice,
+        discount_percentage: item.deal.discountPercentage,
+      });
     }
   }
 

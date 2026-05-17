@@ -10,6 +10,7 @@ import {
 import { addIcons } from 'ionicons';
 import { searchOutline, trophyOutline, timeOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
+import { PosthogService } from '../../services/posthog.service';
 
 interface SearchResult {
   id: string;
@@ -255,6 +256,7 @@ interface SearchResponse {
 export class SearchPage implements OnInit {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
+  private posthog = inject(PosthogService);
 
   results = signal<SearchResult[]>([]);
   loading = signal(false);
@@ -304,6 +306,11 @@ export class SearchPage implements OnInit {
       next: response => {
         this.results.set(response.results);
         this.loading.set(false);
+        this.posthog.posthog.capture('search_performed', {
+          query,
+          result_count: response.count,
+          has_results: response.count > 0,
+        });
       },
       error: () => {
         this.results.set([]);

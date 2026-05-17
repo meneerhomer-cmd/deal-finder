@@ -1,0 +1,67 @@
+[
+  {
+    "event": "deal_viewed",
+    "description": "User opens the detail page of a deal",
+    "file": "src/app/pages/deal-detail/deal-detail.page.ts"
+  },
+  {
+    "event": "deal_added_to_shopping_list",
+    "description": "User adds a deal to their shopping list from the detail page",
+    "file": "src/app/pages/deal-detail/deal-detail.page.ts"
+  },
+  {
+    "event": "deal_shared",
+    "description": "User shares a deal via the native share sheet or clipboard",
+    "file": "src/app/pages/deal-detail/deal-detail.page.ts"
+  },
+  {
+    "event": "search_performed",
+    "description": "User performs a cross-retailer product search",
+    "file": "src/app/pages/search/search.page.ts"
+  },
+  {
+    "event": "filter_applied",
+    "description": "User applies a discount or category filter in the deals list",
+    "file": "src/app/pages/deals/deals.page.ts"
+  },
+  {
+    "event": "deal_mode_switched",
+    "description": "User switches between food and non-food mode on the home or deals page",
+    "file": "src/app/pages/deals/deals.page.ts"
+  },
+  {
+    "event": "flyer_opened",
+    "description": "User opens the weekly flyer for a retailer",
+    "file": "src/app/pages/deals/deals.page.ts"
+  },
+  {
+    "event": "watchlist_item_added",
+    "description": "User adds a product to their personal watchlist",
+    "file": "src/app/pages/watchlist/watchlist.page.ts"
+  },
+  {
+    "event": "watchlist_item_removed",
+    "description": "User removes a product from their watchlist",
+    "file": "src/app/pages/watchlist/watchlist.page.ts"
+  },
+  {
+    "event": "shopping_list_item_purchased",
+    "description": "User marks a shopping list item as purchased",
+    "file": "src/app/pages/shopping-list/shopping-list.page.ts"
+  },
+  {
+    "event": "optimizer_viewed",
+    "description": "User views the smart shopping route optimizer with their list",
+    "file": "src/app/pages/optimizer/optimizer.page.ts"
+  },
+  {
+    "event": "user_signed_in",
+    "description": "User signs in with Google",
+    "file": "src/app/services/auth.service.ts"
+  },
+  {
+    "event": "user_signed_out",
+    "description": "User signs out",
+    "file": "src/app/services/auth.service.ts"
+  }
+]

@@ -10,6 +10,7 @@ import { addIcons } from 'ionicons';
 import { cartOutline, navigateOutline, checkmarkCircle } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { ShoppingListService } from '../../services/shopping-list.service';
+import { PosthogService } from '../../services/posthog.service';
 
 interface OptimizerResult {
   totalProducts: number;
@@ -166,6 +167,7 @@ interface OptimizerResult {
 export class OptimizerPage {
   private http = inject(HttpClient);
   private shoppingList = inject(ShoppingListService);
+  private posthog = inject(PosthogService);
 
   result = signal<OptimizerResult | null>(null);
   loading = signal(false);
@@ -200,6 +202,12 @@ export class OptimizerPage {
         next: result => {
           this.result.set(result);
           this.loading.set(false);
+          this.posthog.posthog.capture('optimizer_viewed', {
+            total_products: result.totalProducts,
+            stops_needed: result.stopsNeeded,
+            total_estimate: result.totalEstimate,
+            items_not_found: result.items.filter(i => !i.cheapest).length,
+          });
         },
         error: () => this.loading.set(false)
       });

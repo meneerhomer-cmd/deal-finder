@@ -12,6 +12,7 @@ import { addOutline, trashOutline, searchOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { UserDataService } from '../../services/user-data.service';
 import { AlertService } from '../../services/alert.service';
+import { PosthogService } from '../../services/posthog.service';
 
 interface WatchItem {
   name: string;
@@ -157,6 +158,7 @@ export class WatchlistPage implements OnInit {
   private http = inject(HttpClient);
   userData = inject(UserDataService);
   alertService = inject(AlertService);
+  private posthog = inject(PosthogService);
 
   items = signal<WatchItem[]>([]);
   loading = signal(false);
@@ -180,11 +182,16 @@ export class WatchlistPage implements OnInit {
     const name = this.newProduct.trim();
     if (!name) return;
     await this.userData.addToWatchlist(name);
+    this.posthog.posthog.capture('watchlist_item_added', {
+      product_name: name,
+      watchlist_size: this.userData.watchlist().length,
+    });
     this.newProduct = '';
   }
 
   async removeProduct(name: string) {
     await this.userData.removeFromWatchlist(name);
+    this.posthog.posthog.capture('watchlist_item_removed', { product_name: name });
     this.items.update(items => items.filter(i => i.name !== name));
   }
 
