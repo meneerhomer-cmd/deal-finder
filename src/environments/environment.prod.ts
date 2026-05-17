@@ -8,6 +8,7 @@ export const environment = {
     apiKey: 'AIzaSyBiL65L3Hoo_yd3D5QzbkxSySzSHJTw5os',
     authDomain: 'promo-finder-be.firebaseapp.com',
     messagingSenderId: '927801911058',
+    vapidKey: 'BCZNnEr6lon5SVgEOktCLr6NxwAqGfDRGtRbRNbdYPBoB1C7jYZzJJnpxxviKPMstLpIccqT-r7fPVQgRPuTtHc',
   },
   sentry: {
     dsn: 'https://37d1d536c86a2f3f455edcddc3eca461@o4511406547075072.ingest.de.sentry.io/4511406615756880',

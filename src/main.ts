@@ -9,6 +9,7 @@ import localeNl from '@angular/common/locales/nl-BE';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideMessaging, getMessaging } from '@angular/fire/messaging';
 import * as Sentry from '@sentry/capacitor';
 import * as SentryAngular from '@sentry/angular';
 
@@ -60,5 +61,6 @@ bootstrapApplication(AppComponent, {
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
+    provideMessaging(() => getMessaging()),
   ],
 }).catch(err => console.error(err));
