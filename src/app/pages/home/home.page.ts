@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -42,14 +42,9 @@ import { FOOD_SLUGS } from '../../models/deal.model';
           </ion-buttons>
         }
       </ion-toolbar>
-      <!-- Food / Non-food toggle -->
       <div class="mode-toggle">
-        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="mode.set('food')">
-          Voeding
-        </button>
-        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="mode.set('nonfood')">
-          Non-food
-        </button>
+        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="mode.set('food')">Voeding</button>
+        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="mode.set('nonfood')">Non-food</button>
       </div>
     </ion-header>
 
@@ -84,7 +79,7 @@ import { FOOD_SLUGS } from '../../models/deal.model';
       @if (topDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>{{ mode() === 'food' ? 'Beste deals' : 'Beste non-food' }}</h2>
+            <h2>{{ mode() === 'food' ? 'Beste voedingsdeals' : mode() === 'nonfood' ? 'Beste non-food' : 'Beste deals' }}</h2>
             <a routerLink="/deals" class="see-all">Alles <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
@@ -220,7 +215,9 @@ export class HomePage implements OnInit {
   private router = inject(Router);
 
   searchOpen = signal(false);
-  mode = signal<'food' | 'nonfood'>('food');
+  mode = signal<'food' | 'nonfood'>(
+    (localStorage.getItem('dealfinder-mode') as 'food' | 'nonfood') || 'food'
+  );
 
   private retailerLogos: Record<string, string> = {
     'lidl': 'https://cdn.jafolders.com/shops/3edf1b56-8ba7-4ae3-8a9f-91a482933067/small.png?v=63931455152',
@@ -290,6 +287,7 @@ export class HomePage implements OnInit {
 
   constructor() {
     addIcons({ arrowForward, timerOutline, searchOutline });
+    effect(() => localStorage.setItem('dealfinder-mode', this.mode()));
   }
 
   private pollInterval: any;
