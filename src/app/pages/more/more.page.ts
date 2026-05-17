@@ -2,7 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
-  IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButton, IonToggle
+  IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButton, IonToggle,
+  ToastController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -142,6 +143,7 @@ export class MorePage {
   shoppingList = inject(ShoppingListService);
   auth = inject(AuthService);
   push = inject(PushNotificationService);
+  private toastCtrl = inject(ToastController);
 
   pushSupported = typeof Notification !== 'undefined';
   working = false;
@@ -162,13 +164,28 @@ export class MorePage {
     this.working = true;
     try {
       if (event.detail.checked) {
-        await this.push.enable();
+        const token = await this.push.enable();
+        await this.showToast(
+          token ? 'Meldingen ingeschakeld' : 'Toestemming geweigerd in browser',
+          token ? 'success' : 'warning'
+        );
       } else {
         await this.push.disable();
+        await this.showToast('Meldingen uitgeschakeld', 'medium');
       }
     } finally {
       this.working = false;
     }
+  }
+
+  private async showToast(message: string, color: 'success' | 'warning' | 'medium') {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2500,
+      color,
+      position: 'bottom',
+    });
+    await toast.present();
   }
 
   constructor() {
