@@ -83,6 +83,15 @@ src/app/
 - [x] Complete dark mode — all chip/badge/retailer colors adapt via CSS vars
 - [x] Centralize retailer colors — single source of truth in variables.scss
 
+### UX gaps closed May 17, 2026
+- [x] Deal detail page redesign — single hero, retailer/deal-type tags, savings amount, info-grid
+- [x] Persist food/non-food mode in localStorage (home, deals, categories)
+- [x] Categories page food/non-food split
+- [x] Filter zero-deal retailers
+- [x] Shopping list savings hero + tap-through
+- [x] Back navigation on inner pages (brands, categories, retailers, shopping-list, watchlist)
+- [x] Folders banner on home
+
 ### Remaining
 - [ ] Fix tab navigation — switch to proper `ion-tabs` for state preservation
 - [ ] Add virtual scrolling for deal lists
