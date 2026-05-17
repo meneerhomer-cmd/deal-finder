@@ -359,6 +359,11 @@ export class DealsPage implements OnInit, OnDestroy {
       }
     });
 
+    this.route.queryParams.subscribe(params => {
+      const brand = params['brand'];
+      this.dealService.setFilter('brand', brand || undefined);
+    });
+
     if (this.dealService.retailers().length === 0) {
       this.dealService.loadRetailers().subscribe();
     }

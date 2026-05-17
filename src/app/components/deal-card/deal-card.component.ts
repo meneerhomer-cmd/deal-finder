@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Input, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.model';
 
@@ -22,7 +22,11 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       <div class="card-body">
         <span class="retailer-pill" [class]="deal.retailerSlug">{{ deal.retailerName }}</span>
         @if (deal.brand) {
-          <span class="brand-label">{{ deal.brand }}</span>
+          <button
+            type="button"
+            class="brand-label"
+            (click)="onBrandTap($event)"
+          >{{ deal.brand }}</button>
         }
         <h3 class="product-name">{{ deal.productName }}</h3>
         @if (deal.dealType) {
@@ -120,12 +124,23 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     .retailer-pill.ikea { background: var(--retailer-ikea); }
 
     .brand-label {
+      align-self: flex-start;
+      background: none;
+      border: none;
+      padding: 2px 0;
       font-size: 0.65rem;
       font-weight: 700;
       letter-spacing: 0.5px;
       text-transform: uppercase;
       color: var(--ion-color-medium);
       line-height: 1;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .brand-label:hover,
+    .brand-label:focus {
+      color: var(--ion-color-primary);
+      outline: none;
     }
     .product-name {
       margin: 0;
@@ -175,4 +190,13 @@ export class DealCardComponent {
   imgError = false;
   getCategoryEmoji = getCategoryEmoji;
   getDiscountClass = getDiscountClass;
+  private router = inject(Router);
+
+  onBrandTap(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.deal.brand) {
+      this.router.navigate(['/deals'], { queryParams: { brand: this.deal.brand } });
+    }
+  }
 }
