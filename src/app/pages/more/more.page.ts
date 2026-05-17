@@ -54,7 +54,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
 
       <ion-list>
         <ion-item routerLink="/shopping-list" [detail]="true">
-          <ion-icon name="cart-outline" slot="start" color="primary"></ion-icon>
+          <ion-icon name="cart-outline" slot="start"></ion-icon>
           <ion-label>
             <h2>Boodschappenlijst</h2>
             <p>Je opgeslagen deals</p>
@@ -65,7 +65,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
         </ion-item>
 
         <ion-item routerLink="/watchlist" [detail]="true">
-          <ion-icon name="eye-outline" slot="start" color="tertiary"></ion-icon>
+          <ion-icon name="eye-outline" slot="start"></ion-icon>
           <ion-label>
             <h2>Mijn Producten</h2>
             <p>Producten die je volgt</p>
@@ -73,7 +73,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
         </ion-item>
 
         <ion-item routerLink="/optimizer" [detail]="true">
-          <ion-icon name="sparkles-outline" slot="start" color="success"></ion-icon>
+          <ion-icon name="sparkles-outline" slot="start"></ion-icon>
           <ion-label>
             <h2>Slimme Route</h2>
             <p>Goedkoopste boodschappenroute</p>
@@ -81,7 +81,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
         </ion-item>
 
         <ion-item routerLink="/retailers" [detail]="true">
-          <ion-icon name="storefront-outline" slot="start" color="warning"></ion-icon>
+          <ion-icon name="storefront-outline" slot="start"></ion-icon>
           <ion-label>
             <h2>Winkels</h2>
             <p>Alle winkels en hun deals</p>
@@ -89,7 +89,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
         </ion-item>
 
         <ion-item routerLink="/categories" [detail]="true">
-          <ion-icon name="pricetags-outline" slot="start" color="secondary"></ion-icon>
+          <ion-icon name="pricetags-outline" slot="start"></ion-icon>
           <ion-label>
             <h2>Categorieën</h2>
             <p>Zoek per productcategorie</p>
@@ -97,7 +97,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
         </ion-item>
 
         <ion-item routerLink="/brands" [detail]="true">
-          <ion-icon name="heart-outline" slot="start" color="danger"></ion-icon>
+          <ion-icon name="heart-outline" slot="start"></ion-icon>
           <ion-label>
             <h2>Merken</h2>
             <p>Favoriete merken volgen</p>
@@ -108,7 +108,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
       @if (push.permission() !== 'denied' && pushSupported) {
         <ion-list>
           <ion-item>
-            <ion-icon name="notifications-outline" slot="start" color="primary"></ion-icon>
+            <ion-icon name="notifications-outline" slot="start"></ion-icon>
             <ion-label>
               <h2>Meldingen</h2>
               <p>{{ pushSubtitle() }}</p>
@@ -125,18 +125,49 @@ import { PushNotificationService } from '../../services/push-notification.servic
     </ion-content>
   `,
   styles: [`
-    .profile-section { padding: 16px; }
+    .profile-section { padding: 14px 14px 6px; }
     .profile-card {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px; background: var(--ion-card-background, white);
-      border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 14px;
+      background: var(--retro-newsprint-bright);
+      border: 2px solid var(--retro-ink);
+      border-radius: 0;
+      box-shadow: 2px 2px 0 0 var(--retro-ink);
     }
-    .avatar { width: 48px; height: 48px; border-radius: 50%; }
-    .avatar-icon { font-size: 48px; color: var(--ion-color-medium); }
-    .profile-card p { margin: 2px 0 0; font-size: 0.8rem; color: var(--ion-color-medium); }
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 0;
+      border: 2px solid var(--retro-ink);
+      object-fit: cover;
+    }
+    .avatar-icon { font-size: 44px; color: var(--retro-ink); }
+    .profile-card > div { flex: 1; }
+    .profile-card strong {
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-weight: 400;
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--retro-ink);
+    }
+    .profile-card p {
+      margin: 2px 0 0;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      color: var(--retro-ink-soft);
+    }
     .profile-card ion-button { margin-left: auto; }
-    ion-item h2 { font-weight: 600; }
-    ion-icon[slot="start"] { font-size: 1.4rem; margin-right: 16px; }
+    ion-item h2 {
+      font-family: 'Newsreader', Georgia, serif;
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    ion-icon[slot="start"] {
+      font-size: 1.35rem;
+      margin-right: 16px;
+      color: var(--retro-ink);
+    }
   `]
 })
 export class MorePage {

@@ -52,7 +52,7 @@ interface OptimizerResult {
         </div>
       } @else if (!result()) {
         <div class="empty-state">
-          <ion-icon name="cart-outline" class="hero-icon"></ion-icon>
+          <ion-icon name="cart-outline"></ion-icon>
           <h2>Geen items op je lijst</h2>
           <p>Voeg deals toe aan je boodschappenlijst en kom hier terug</p>
         </div>
@@ -129,10 +129,13 @@ interface OptimizerResult {
   styles: [`
     .loading {
       display: flex; flex-direction: column; align-items: center;
-      padding: 48px; text-align: center; color: var(--ion-color-medium);
+      padding: 48px; text-align: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--retro-ink-soft);
     }
-
-    .hero-icon { font-size: 4rem; margin-bottom: 16px; color: var(--ion-color-primary); }
 
     .summary-card { margin-bottom: 16px; }
 
