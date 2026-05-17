@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -11,7 +11,7 @@ import { addIcons } from 'ionicons';
 import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
+import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
 
 @Component({
   selector: 'app-deals',
@@ -58,8 +58,8 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
       </ion-toolbar>
       @if (!retailerSlug) {
         <div class="mode-toggle">
-          <button class="mode-btn" [class.active]="dealMode === 'food'" (click)="setMode('food')">Voeding</button>
-          <button class="mode-btn" [class.active]="dealMode === 'nonfood'" (click)="setMode('nonfood')">Non-food</button>
+          <button class="mode-btn" [class.active]="dealMode() === 'food'" (click)="setMode('food')">Voeding</button>
+          <button class="mode-btn" [class.active]="dealMode() === 'nonfood'" (click)="setMode('nonfood')">Non-food</button>
         </div>
       }
     </ion-header>
@@ -83,10 +83,10 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
       </div>
 
       <div class="results-bar">
-        <span class="results-count">{{ modeDeals().length }} {{ dealMode === 'food' ? 'voedingsdeals' : 'non-food deals' }}</span>
+        <span class="results-count">{{ modeDeals().length }} {{ dealMode() === 'food' ? 'voedingsdeals' : 'non-food deals' }}</span>
         <ion-button fill="clear" size="small" (click)="cycleSort()">
           <ion-icon name="swap-vertical" slot="start"></ion-icon>
-          {{ sortLabel }}
+          {{ sortLabel() }}
         </ion-button>
       </div>
 
@@ -248,16 +248,18 @@ import { CATEGORIES, FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model
     }
   `]
 })
-export class DealsPage implements OnInit {
+export class DealsPage implements OnInit, OnDestroy {
   dealService = inject(DealService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   showFilterModal = false;
-  dealMode: 'food' | 'nonfood' = 'food';
+  dealMode = signal<'food' | 'nonfood'>(
+    (localStorage.getItem('dealfinder-mode') as 'food' | 'nonfood') || 'food'
+  );
   retailerSlug: string | null = null;
   categories = CATEGORIES;
-  currentSort: 'discount' | 'price' | 'expiry' | 'name' = 'discount';
+  currentSort = signal<'discount' | 'price' | 'expiry' | 'name'>('discount');
 
   private sortOptions: Array<{ key: string; label: string }> = [
     { key: 'discount', label: 'Korting' },
@@ -274,13 +276,13 @@ export class DealsPage implements OnInit {
     return 'Alle Deals';
   }
 
-  get sortLabel(): string {
-    return this.sortOptions.find(o => o.key === this.currentSort)?.label ?? 'Korting';
-  }
+  sortLabel = computed(() =>
+    this.sortOptions.find(o => o.key === this.currentSort())?.label ?? 'Korting'
+  );
 
-  sortedDeals() {
+  sortedDeals = computed(() => {
     const deals = [...this.dealService.filteredDeals()];
-    switch (this.currentSort) {
+    switch (this.currentSort()) {
       case 'discount':
         return deals.sort((a, b) => b.discountPercentage - a.discountPercentage);
       case 'price':
@@ -292,45 +294,39 @@ export class DealsPage implements OnInit {
       default:
         return deals;
     }
-  }
+  });
 
   modeDeals = computed(() => {
     const sorted = this.sortedDeals();
     if (this.retailerSlug) return sorted;
-    return this.dealMode === 'food'
+    return this.dealMode() === 'food'
       ? sorted.filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
       : sorted.filter(d => !d.categorySlug || !FOOD_SLUGS.has(d.categorySlug));
   });
 
   topCategories = computed(() => {
     const deals = this.dealService.filteredDeals();
+    const isFood = this.dealMode() === 'food';
+    const categoryList = isFood ? FOOD_CATEGORIES : NON_FOOD_CATEGORIES;
+    const slugSet = isFood ? FOOD_SLUGS : new Set(NON_FOOD_CATEGORIES.map(c => c.slug));
     const counts = new Map<string, number>();
     for (const d of deals) {
-      if (d.categorySlug && FOOD_SLUGS.has(d.categorySlug)) {
+      if (d.categorySlug && slugSet.has(d.categorySlug)) {
         counts.set(d.categorySlug, (counts.get(d.categorySlug) || 0) + 1);
       }
     }
-    return FOOD_CATEGORIES.filter(c => counts.has(c.slug))
+    return categoryList.filter(c => counts.has(c.slug))
       .sort((a, b) => (counts.get(b.slug) || 0) - (counts.get(a.slug) || 0));
   });
 
-  foodDeals = computed(() => {
-    const sorted = this.sortedDeals();
-    return sorted.filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug));
-  });
-
-  nonFoodDeals = computed(() => {
-    const sorted = this.sortedDeals();
-    return sorted.filter(d => !d.categorySlug || !FOOD_SLUGS.has(d.categorySlug));
-  });
-
   cycleSort() {
-    const idx = this.sortOptions.findIndex(o => o.key === this.currentSort);
-    this.currentSort = this.sortOptions[(idx + 1) % this.sortOptions.length].key as typeof this.currentSort;
+    const idx = this.sortOptions.findIndex(o => o.key === this.currentSort());
+    this.currentSort.set(this.sortOptions[(idx + 1) % this.sortOptions.length].key as 'discount' | 'price' | 'expiry' | 'name');
   }
 
   constructor() {
     addIcons({ filter, close, checkmark, swapVertical, bookOutline });
+    effect(() => localStorage.setItem('dealfinder-mode', this.dealMode()));
   }
 
   ngOnInit() {
@@ -377,7 +373,13 @@ export class DealsPage implements OnInit {
   }
 
   setMode(mode: 'food' | 'nonfood') {
-    this.dealMode = mode;
+    this.dealMode.set(mode);
+  }
+
+  ngOnDestroy() {
+    if (this.retailerSlug) {
+      this.dealService.clearFilter('retailer');
+    }
   }
 
   openFlyer() {
