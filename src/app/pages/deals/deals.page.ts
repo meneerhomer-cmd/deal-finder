@@ -118,6 +118,11 @@ import { PosthogService } from '../../services/posthog.service';
         <ng-template>
           <ion-header>
             <ion-toolbar>
+              @if (dealService.activeFiltersCount() > 0) {
+                <ion-buttons slot="start">
+                  <ion-button (click)="resetFilters()">Wis</ion-button>
+                </ion-buttons>
+              }
               <ion-title>Filters</ion-title>
               <ion-buttons slot="end">
                 <ion-button (click)="showFilterModal = false">
@@ -406,6 +411,20 @@ export class DealsPage implements OnInit, OnDestroy {
       filter_type: 'brand',
       value: value ?? null,
     });
+  }
+
+  resetFilters() {
+    const cleared = this.dealService.activeFiltersCount();
+    if (this.retailerSlug) {
+      this.dealService.setFilter('retailer', this.retailerSlug);
+    } else {
+      this.dealService.clearFilters();
+    }
+    this.dealService.clearFilter('category');
+    this.dealService.clearFilter('brand');
+    this.dealService.clearFilter('minDiscount');
+    this.dealService.clearFilter('search');
+    this.posthog.posthog.capture('filters_reset', { cleared });
   }
 
   getCategoryName(slug: string): string {
