@@ -20,7 +20,12 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
         }
       </div>
       <div class="card-body">
-        <span class="retailer-pill" [class]="deal.retailerSlug">{{ deal.retailerName }}</span>
+        <button
+          type="button"
+          class="retailer-pill"
+          [class]="deal.retailerSlug"
+          (click)="onRetailerTap($event)"
+        >{{ deal.retailerName }}</button>
         @if (deal.brand) {
           <button
             type="button"
@@ -106,6 +111,14 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       color: white;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .retailer-pill:hover,
+    .retailer-pill:focus {
+      filter: brightness(1.1);
+      outline: none;
     }
     .retailer-pill.carrefour { background: var(--retailer-carrefour); }
     .retailer-pill.lidl { background: var(--retailer-lidl); }
@@ -198,5 +211,11 @@ export class DealCardComponent {
     if (this.deal.brand) {
       this.router.navigate(['/deals'], { queryParams: { brand: this.deal.brand } });
     }
+  }
+
+  onRetailerTap(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate(['/retailer', this.deal.retailerSlug]);
   }
 }
