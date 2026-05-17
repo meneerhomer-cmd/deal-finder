@@ -27,6 +27,9 @@ android/
 ios/
 plugins/
 
+# Firebase Hosting deploy cache (regenerated on every deploy)
+.firebase/
+
 # Logs
 *.log
 npm-debug.log*
