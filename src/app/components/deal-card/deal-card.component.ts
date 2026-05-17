@@ -4,317 +4,344 @@ import { DecimalPipe } from '@angular/common';
 import { Deal, getCategoryEmoji } from '../../models/deal.model';
 
 /**
- * Deal card — v2 (Pillar 3 iteration · May 17, 2026).
+ * Deal card — v3 (Pillar 3, Brutalist-Utilitarian direction · May 17, 2026)
  *
- * v1 set the direction (editorial-poster, vertical stripe, asymmetric
- * radius, sticker discount). v2 refines:
- * - Discount is now bigger and flat (no rotation). The size IS the
- *   design — it doesn't need a tilt to feel intentional.
- * - Dropped mix-blend-mode on product images: it killed legibility for
- *   white-packaged products on the off-white image background.
- * - Brand stamp and retailer label now share one top row, same
- *   typographic treatment, separated by a thin slash. Two taps live
- *   in one visual line.
- * - Footer pill removed (redundant with stripe + retailer label).
- *   Expiring badge gets the footer to itself when present.
- * - Stripe widened 4 → 5 px and now caps the bottom of the card too
- *   (lifts into the rounded corner), so the retailer color tracks
- *   the silhouette rather than ending mid-card.
- * - Discount sticker now sits flush against the top-right of the
- *   image area with only inner corners rounded (visually anchored
- *   to the image, not floating over it).
+ * Generated design system from Stitch's "Industrial Retail" spec, then
+ * implemented as a drop-in Angular component. Opposite aesthetic to v2's
+ * editorial-poster softness: this is supermarket flyer × dev tool.
+ *
+ * Design choices (all of them load-bearing — don't pick at one in isolation):
+ * - **Sharp 90° corners everywhere.** No border-radius anywhere. The
+ *   geometric rigidity does the differentiation work — it doesn't look
+ *   like any default UI framework.
+ * - **2px solid black border** on the card + every interactive chip.
+ *   Borders are the depth indicator; no soft shadows.
+ * - **Hard-offset solid-black shadow** (4px right + 4px down). Tactile,
+ *   feels like a sticker on a flyer. On :active, the card shifts into
+ *   the shadow (translate3d 4px,4px,0 + shadow shrinks to 0) — physical
+ *   button-press feedback that you can't fake with a CSS transition library.
+ * - **Discount = Sale Red block, top-right corner**, white Montserrat 900,
+ *   45px on grid view. The price tag aesthetic of a Belgian flyer made
+ *   literal. No rotation, no decoration — the size + color is enough.
+ * - **Montserrat ExtraBold (900)** for the price, with tabular numerals.
+ *   Cents are 0.55em superscripted for the supermarket-shelf-label feel.
+ *   Original price strikethrough is a 2px solid black bar, not browser
+ *   default — visible at 11px which is where most strikethroughs die.
+ * - **Retailer chip** sits in the bottom-left corner of the image area,
+ *   solid retailer-brand-color background, 2px black border, white
+ *   Montserrat all-caps. Still tappable for /retailer/:slug.
+ * - **Brand stamp** in Montserrat 800 above the product name, all-caps,
+ *   tracked. Tappable for /deals?brand=X.
+ * - **Deal type and "BIJNA VERLOPEN"** are chips with retailer-yellow or
+ *   black backgrounds, 2px black borders. Both treated as data badges,
+ *   not body copy.
+ *
+ * Same drop-in contract as v1/v2: same selector, same inputs, same click
+ * destinations.
  */
 @Component({
   selector: 'app-deal-card',
   standalone: true,
   imports: [RouterLink, DecimalPipe],
   template: `
-    <a [routerLink]="['/deal', deal.id]" class="card" [style.--accent]="accentVar()">
-      <span class="stripe" aria-hidden="true"></span>
-
-      <div class="image-area">
+    <a [routerLink]="['/deal', deal.id]" class="card">
+      <div class="image-block">
         @if (deal.imageUrl && !imgError) {
           <img [src]="deal.imageUrl" [alt]="deal.productName" loading="lazy" (error)="imgError = true" />
         } @else {
-          <span class="emoji">{{ getCategoryEmoji(deal.categorySlug) }}</span>
+          <span class="fallback">{{ emoji() }}</span>
         }
+
         @if (deal.discountPercentage > 0) {
-          <div class="discount">
-            <span class="dash">&minus;</span>{{ deal.discountPercentage }}<span class="pct">%</span>
-          </div>
+          <span class="discount">
+            <span class="sign">−</span>{{ deal.discountPercentage }}<span class="pct">%</span>
+          </span>
         }
+
+        <button
+          type="button"
+          class="retailer"
+          [attr.data-retailer]="deal.retailerSlug"
+          (click)="onRetailerTap($event)"
+          [attr.aria-label]="'Toon ' + deal.retailerName + ' deals'"
+        >{{ deal.retailerName }}</button>
       </div>
 
       <div class="body">
-        <div class="meta">
-          @if (deal.brand) {
-            <button type="button" class="meta-tap brand" (click)="onBrandTap($event)">{{ deal.brand }}</button>
-            <span class="meta-sep" aria-hidden="true">/</span>
-          }
-          <button type="button" class="meta-tap retailer" (click)="onRetailerTap($event)">{{ deal.retailerName }}</button>
-        </div>
+        @if (deal.brand) {
+          <button
+            type="button"
+            class="brand"
+            (click)="onBrandTap($event)"
+            [attr.aria-label]="'Filter op merk ' + deal.brand"
+          >{{ deal.brand }}</button>
+        }
 
         <h3 class="title">{{ deal.productName }}</h3>
 
-        @if (deal.dealType) {
-          <span class="deal-type">{{ deal.dealType }}</span>
-        }
-
-        <div class="prices">
-          @if (deal.currentPrice !== null && deal.currentPrice !== undefined) {
-            <span class="price-now">€{{ deal.currentPrice | number:'1.2-2' }}</span>
+        <div class="price-row">
+          @if (deal.currentPrice !== null) {
+            <span class="price-now">
+              <span class="euro">€</span>{{ wholePart(deal.currentPrice) }}<span class="cents">,{{ centsPart(deal.currentPrice) }}</span>
+            </span>
           }
           @if (deal.originalPrice && deal.originalPrice !== deal.currentPrice) {
             <span class="price-was">€{{ deal.originalPrice | number:'1.2-2' }}</span>
           }
         </div>
 
-        @if (deal.expiringSoon) {
-          <div class="footer">
-            <span class="expiring">Bijna verlopen</span>
-          </div>
-        }
+        <div class="tag-row">
+          @if (deal.dealType) {
+            <span class="tag tag--deal">{{ deal.dealType }}</span>
+          }
+          @if (deal.expiringSoon) {
+            <span class="tag tag--expiring">BIJNA VERLOPEN</span>
+          }
+        </div>
       </div>
     </a>
   `,
   styles: [`
-    :host { display: block; }
+    :host {
+      --ink: #000000;
+      --paper: #ffffff;
+      --paper-warm: #fff8f0;
+      --sale: #e30613;
+      --signal-yellow: #ffd200;
+      --shadow-offset: 4px;
+    }
 
     .card {
-      --accent: var(--ion-color-primary, #1a1a1a);
       position: relative;
       display: flex;
       flex-direction: column;
-      background: var(--ion-card-background, #fff);
-      color: var(--ion-text-color, #161616);
+      background: var(--paper);
+      color: var(--ink);
       text-decoration: none;
-      overflow: hidden;
-      border-radius: 0 0 14px 0;
-      box-shadow:
-        0 1px 2px rgba(15, 17, 21, 0.05),
-        0 12px 30px -14px rgba(15, 17, 21, 0.16);
-      transition: transform 140ms cubic-bezier(.2,.7,.2,1), box-shadow 140ms ease;
-      isolation: isolate;
+      border: 2px solid var(--ink);
+      border-radius: 0;
+      box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--ink);
+      transition: transform .08s ease, box-shadow .08s ease;
+      font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+      overflow: visible;
     }
+
     .card:active {
-      transform: translateY(1px);
-      box-shadow: 0 1px 2px rgba(15, 17, 21, 0.05);
+      transform: translate3d(var(--shadow-offset), var(--shadow-offset), 0);
+      box-shadow: 0 0 0 0 var(--ink);
     }
 
-    .stripe {
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 5px;
-      background: var(--accent);
-      z-index: 2;
-      border-bottom-left-radius: 0; /* leave the asymmetric corner alone */
-    }
-
-    .image-area {
+    .image-block {
       position: relative;
-      aspect-ratio: 5 / 4;
-      max-height: 140px;
-      background:
-        radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.65), rgba(255,255,255,0)),
-        #f5f3ee;
+      aspect-ratio: 4 / 3;
+      max-height: 130px;
+      background: var(--paper-warm);
+      border-bottom: 2px solid var(--ink);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      border-bottom: 1px solid rgba(15, 17, 21, 0.06);
     }
-    .image-area img {
-      max-width: 84%;
-      max-height: 84%;
+    .image-block img {
+      max-width: 82%;
+      max-height: 82%;
       object-fit: contain;
     }
-    .emoji {
-      font-size: 2.6rem;
-      filter: saturate(0.85);
-      opacity: 0.9;
+    .fallback {
+      font-size: 2.4rem;
     }
 
     .discount {
       position: absolute;
       top: 0;
       right: 0;
-      background: var(--accent);
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--sale);
+      color: var(--paper);
       font-weight: 900;
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       line-height: 1;
-      padding: 9px 11px 10px;
-      letter-spacing: -0.04em;
-      border-radius: 0 0 0 10px;
+      letter-spacing: -0.02em;
+      padding: 7px 10px 8px;
+      border-left: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
       font-variant-numeric: tabular-nums;
-      z-index: 1;
-      box-shadow: 0 6px 14px -4px rgba(0,0,0,0.25);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.06);
     }
-    .discount .dash { margin-right: 1px; opacity: 0.9; }
-    .discount .pct {
-      font-size: 0.55em;
-      vertical-align: 18%;
-      margin-left: 2px;
-      opacity: 0.85;
-      letter-spacing: 0;
+    .discount .sign { margin-right: 0; }
+    .discount .pct { font-size: 0.65em; font-weight: 800; margin-left: 1px; opacity: 0.92; vertical-align: 10%; }
+
+    .retailer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      background: #1a1a1a;
+      color: var(--paper);
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 8px 4px 7px;
+      border-top: 2px solid var(--ink);
+      border-right: 2px solid var(--ink);
+      cursor: pointer;
+      line-height: 1.1;
+      max-width: 70%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+    .retailer[data-retailer="carrefour"] { background: #0066cc; }
+    .retailer[data-retailer="lidl"] { background: #fff200; color: #003399; }
+    .retailer[data-retailer="delhaize"] { background: #e30613; }
+    .retailer[data-retailer="colruyt"] { background: #f7941d; color: var(--ink); }
+    .retailer[data-retailer="aldi"] { background: #00447c; }
+    .retailer[data-retailer="kruidvat"] { background: #e91e8c; }
+    .retailer[data-retailer="albert-heijn"] { background: #00b3e3; color: var(--ink); }
+    .retailer[data-retailer="jumbo"] { background: #ffe500; color: var(--ink); }
+    .retailer[data-retailer="spar"] { background: #009f3a; }
+    .retailer[data-retailer="carrefour-market"] { background: #003399; }
+    .retailer[data-retailer="intermarche"] { background: #e30613; }
+    .retailer[data-retailer="gamma"] { background: #6d2077; }
+    .retailer[data-retailer="brico-bricoplanit"] { background: #00853e; }
+    .retailer[data-retailer="bol-com"] { background: #003399; }
+    .retailer[data-retailer="mediamarkt"] { background: #df0000; }
+    .retailer[data-retailer="ikea"] { background: #0058a3; }
 
     .body {
-      padding: 11px 12px 12px 14px;
+      padding: 10px 10px 12px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      flex: 1;
+      gap: 6px;
     }
 
-    .meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      line-height: 1;
-    }
-    .meta-tap {
-      background: none;
-      border: none;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      font-size: 0.6rem;
-      font-weight: 700;
+    .brand {
+      align-self: flex-start;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1.5px solid var(--ink);
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      padding: 2px 6px 1px;
       cursor: pointer;
       line-height: 1.2;
-      transition: color 100ms ease;
     }
-    .meta-tap.brand {
-      color: var(--ion-text-color, #15171a);
-    }
-    .meta-tap.retailer {
-      color: var(--accent);
-    }
-    .meta-tap:hover, .meta-tap:focus {
-      outline: none;
-      opacity: 0.7;
-    }
-    .meta-sep {
-      font-size: 0.6rem;
-      color: var(--ion-color-medium, #b8b8b6);
-      font-weight: 400;
-    }
+    .brand:active { background: var(--signal-yellow); }
 
     .title {
-      margin: 4px 0 0;
-      font-size: 0.93rem;
+      margin: 2px 0 0;
+      font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+      font-size: 0.86rem;
       font-weight: 600;
-      line-height: 1.25;
+      line-height: 1.22;
       letter-spacing: -0.005em;
+      color: var(--ink);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
 
-    .deal-type {
-      display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 0.01em;
-      line-height: 1;
-      padding-top: 2px;
-    }
-
-    .prices {
+    .price-row {
       display: flex;
       align-items: baseline;
-      gap: 9px;
+      gap: 8px;
       margin-top: 4px;
     }
+
     .price-now {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      font-weight: 800;
-      font-size: 1.32rem;
-      letter-spacing: -0.028em;
-      font-variant-numeric: tabular-nums;
-      color: var(--ion-text-color, #15171a);
+      font-family: 'Montserrat', system-ui, sans-serif;
+      font-weight: 900;
+      font-size: 1.6rem;
       line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      display: inline-flex;
+      align-items: baseline;
     }
+    .price-now .euro {
+      font-size: 0.62em;
+      font-weight: 900;
+      margin-right: 1px;
+      vertical-align: 32%;
+    }
+    .price-now .cents {
+      font-size: 0.55em;
+      font-weight: 900;
+      vertical-align: 32%;
+      margin-left: 1px;
+      letter-spacing: 0;
+    }
+
     .price-was {
-      position: relative;
-      font-size: 0.8rem;
-      color: var(--ion-color-medium, #9a9a9a);
+      font-family: 'Montserrat', system-ui, sans-serif;
+      font-weight: 600;
+      font-size: 0.72rem;
+      color: #4d4632;
       font-variant-numeric: tabular-nums;
-      font-weight: 500;
-      padding: 0 2px;
-      line-height: 1;
+      position: relative;
+      white-space: nowrap;
     }
     .price-was::after {
       content: '';
       position: absolute;
       left: -2px; right: -2px;
       top: 50%;
-      height: 1.5px;
-      background: currentColor;
-      transform: rotate(-7deg);
+      height: 2px;
+      background: var(--ink);
+      transform: rotate(-6deg);
       transform-origin: center;
-      opacity: 0.85;
     }
 
-    .footer {
+    .tag-row {
       display: flex;
-      align-items: center;
-      margin-top: auto;
-      padding-top: 6px;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
     }
-    .expiring {
+    .tag {
+      font-family: inherit;
+      font-weight: 800;
       font-size: 0.6rem;
-      font-weight: 700;
-      color: #c0392b;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      line-height: 1;
-      padding: 3px 6px;
-      background: rgba(192, 57, 43, 0.1);
-      border-radius: 3px;
+      padding: 2px 6px;
+      border: 1.5px solid var(--ink);
+      line-height: 1.2;
     }
+    .tag--deal { background: var(--signal-yellow); color: var(--ink); }
+    .tag--expiring { background: var(--sale); color: var(--paper); }
 
-    /* Dark mode */
     @media (prefers-color-scheme: dark) {
-      .card {
-        background: #1a1c1f;
-        color: #ececea;
-        box-shadow:
-          0 1px 2px rgba(0,0,0,0.4),
-          0 14px 32px -16px rgba(0,0,0,0.65);
+      :host {
+        --paper: #fafaf7;
+        --ink: #050505;
       }
-      .image-area {
-        background: #f5f3ee;
-        border-bottom-color: transparent;
-      }
-      .meta-tap.brand { color: #ececea; }
-      .meta-sep { color: #555; }
-      .price-now { color: #fff; }
-      .price-was { color: #777; }
-      .expiring {
-        background: rgba(192, 57, 43, 0.18);
-      }
+      .card { box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--ink); }
     }
   `]
 })
 export class DealCardComponent {
   @Input({ required: true }) deal!: Deal;
   imgError = false;
-  getCategoryEmoji = getCategoryEmoji;
   private router = inject(Router);
 
-  accentVar(): string {
-    return `var(--retailer-${this.deal.retailerSlug}, var(--ion-color-primary))`;
+  emoji(): string {
+    return getCategoryEmoji(this.deal.categorySlug);
   }
 
-  onBrandTap(event: Event) {
+  wholePart(price: number): string {
+    return Math.floor(price).toString();
+  }
+  centsPart(price: number): string {
+    const cents = Math.round((price - Math.floor(price)) * 100);
+    return cents.toString().padStart(2, '0');
+  }
+
+  onBrandTap(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
     if (this.deal.brand) {
@@ -322,7 +349,7 @@ export class DealCardComponent {
     }
   }
 
-  onRetailerTap(event: Event) {
+  onRetailerTap(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
     this.router.navigate(['/retailer', this.deal.retailerSlug]);
