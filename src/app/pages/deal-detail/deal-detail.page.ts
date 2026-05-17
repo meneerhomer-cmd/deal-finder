@@ -79,14 +79,16 @@ interface PriceHistoryEntry {
 
           <div class="price-block">
             <div class="price-row">
-              @if (deal.currentPrice) {
+              @if (deal.currentPrice === 0) {
+                <span class="price-current price-free">GRATIS</span>
+              } @else if (deal.currentPrice != null) {
                 <span class="price-current">€{{ deal.currentPrice | number:'1.2-2' }}</span>
               }
-              @if (deal.originalPrice && deal.originalPrice !== deal.currentPrice) {
+              @if (deal.originalPrice != null && deal.originalPrice !== deal.currentPrice) {
                 <span class="price-original">€{{ deal.originalPrice | number:'1.2-2' }}</span>
               }
             </div>
-            @if (deal.discountPercentage && deal.currentPrice && deal.originalPrice) {
+            @if (deal.discountPercentage && deal.currentPrice != null && deal.originalPrice != null) {
               <span class="price-saving">Je bespaart €{{ (deal.originalPrice - deal.currentPrice) | number:'1.2-2' }}</span>
             }
           </div>
@@ -272,6 +274,15 @@ interface PriceHistoryEntry {
       letter-spacing: -0.02em;
       color: var(--retro-ink);
       font-variant-numeric: tabular-nums;
+    }
+    .price-current.price-free {
+      background: var(--retro-yellow);
+      color: var(--retro-ink);
+      padding: 4px 10px 2px;
+      border: 2px solid var(--retro-ink);
+      box-shadow: 2px 2px 0 0 var(--retro-ink);
+      letter-spacing: 0.02em;
+      font-size: 2.2rem;
     }
     .price-original {
       font-family: 'Newsreader', Georgia, serif;

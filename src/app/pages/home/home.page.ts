@@ -71,7 +71,6 @@ import { UserDataService } from '../../services/user-data.service';
           @for (r of filteredRetailers(); track r.slug) {
             <a [routerLink]="['/retailer', r.slug]" class="retailer-bubble">
               <img [src]="getRetailerLogo(r.slug)" [alt]="r.name" class="retailer-logo" />
-              <ion-badge>{{ r.filteredCount }}</ion-badge>
             </a>
           }
         </div>
@@ -204,15 +203,13 @@ import { UserDataService } from '../../services/user-data.service';
       gap: 4px; text-decoration: none; flex-shrink: 0; position: relative;
     }
     .retailer-logo {
-      width: 48px; height: 48px; border-radius: 50%;
-      object-fit: contain; background: white; padding: 3px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-    .retailer-bubble ion-badge {
-      position: absolute; top: -2px; right: -4px;
-      font-size: 0.55rem;
-      --padding-start: 4px; --padding-end: 4px;
-      --padding-top: 1px; --padding-bottom: 1px;
+      width: 52px; height: 52px;
+      border-radius: 0;
+      object-fit: contain;
+      background: var(--retro-newsprint-bright);
+      padding: 5px;
+      border: 2px solid var(--retro-ink);
+      box-shadow: 2px 2px 0 0 var(--retro-ink);
     }
 
     .folders-bar {

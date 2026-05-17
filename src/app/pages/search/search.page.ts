@@ -41,7 +41,7 @@ interface SearchResponse {
   template: `
     <ion-header>
       <ion-toolbar color="primary">
-        <ion-title>Prijsvergelijker</ion-title>
+        <ion-title>Zoek</ion-title>
       </ion-toolbar>
       <ion-toolbar>
         <ion-searchbar

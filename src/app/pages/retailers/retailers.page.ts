@@ -74,46 +74,93 @@ import { PosthogService } from '../../services/posthog.service';
       display: flex;
       justify-content: space-between;
       padding: 12px 16px;
-      font-size: 0.85rem;
-      color: var(--ion-color-medium);
-      border-bottom: 1px solid var(--ion-color-light);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--retro-ink-soft);
+      border-bottom: 2px solid var(--retro-ink);
+      background: var(--retro-newsprint);
     }
 
     .retailer-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 0;
+      border: 2px solid var(--retro-ink);
+      box-shadow: 2px 2px 0 0 var(--retro-ink);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      font-weight: bold;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 400;
       color: white;
+      background: var(--retro-ink-soft);
       margin-right: 16px;
 
       &.carrefour { background: var(--retailer-carrefour); }
       &.lidl { background: var(--retailer-lidl); }
       &.delhaize { background: var(--retailer-delhaize); }
-      &.colruyt { background: var(--retailer-colruyt); }
+      &.colruyt { background: var(--retailer-colruyt); color: var(--retro-ink); }
       &.aldi { background: var(--retailer-aldi); }
       &.kruidvat { background: var(--retailer-kruidvat); }
+      &.albert-heijn { background: var(--retailer-albert-heijn); }
+      &.jumbo { background: var(--retailer-jumbo); color: var(--retro-ink); }
+      &.spar { background: var(--retailer-spar); }
+      &.carrefour-market { background: var(--retailer-carrefour-market); }
+      &.intermarche { background: var(--retailer-intermarche); }
+      &.renmans { background: var(--retailer-renmans); }
+      &.bol-com { background: var(--retailer-bol-com); }
+      &.mediamarkt { background: var(--retailer-mediamarkt); }
+      &.ikea { background: var(--retailer-ikea); }
+      &.gamma { background: var(--retailer-gamma); }
+      &.brico-bricoplanit { background: var(--retailer-brico-bricoplanit); }
     }
 
     ion-badge {
-      font-size: 1rem;
-      padding: 8px 12px;
-      border-radius: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 0;
+      border: 2px solid var(--retro-ink);
+      box-shadow: 1.5px 1.5px 0 0 var(--retro-ink);
+      --color: #fff;
+      --background: var(--retro-ink-soft);
 
       &.carrefour { --background: var(--retailer-carrefour); }
       &.lidl { --background: var(--retailer-lidl); }
       &.delhaize { --background: var(--retailer-delhaize); }
-      &.colruyt { --background: var(--retailer-colruyt); }
+      &.colruyt { --background: var(--retailer-colruyt); --color: var(--retro-ink); }
       &.aldi { --background: var(--retailer-aldi); }
       &.kruidvat { --background: var(--retailer-kruidvat); }
+      &.albert-heijn { --background: var(--retailer-albert-heijn); }
+      &.jumbo { --background: var(--retailer-jumbo); --color: var(--retro-ink); }
+      &.spar { --background: var(--retailer-spar); }
+      &.carrefour-market { --background: var(--retailer-carrefour-market); }
+      &.intermarche { --background: var(--retailer-intermarche); }
+      &.renmans { --background: var(--retailer-renmans); }
+      &.bol-com { --background: var(--retailer-bol-com); }
+      &.mediamarkt { --background: var(--retailer-mediamarkt); }
+      &.ikea { --background: var(--retailer-ikea); }
+      &.gamma { --background: var(--retailer-gamma); }
+      &.brico-bricoplanit { --background: var(--retailer-brico-bricoplanit); }
     }
 
     ion-item h2 {
+      font-family: 'Newsreader', Georgia, serif;
       font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+    ion-item p {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--retro-ink-soft);
     }
   `]
 })
