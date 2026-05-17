@@ -7,6 +7,7 @@ import { Deal, Retailer, ScanStatus, FOOD_SLUGS } from '../models/deal.model';
 export interface DealFilters {
   retailer?: string;
   category?: string;
+  brand?: string;
   minDiscount?: number;
   search?: string;
   foodOnly?: boolean;
@@ -33,6 +34,7 @@ export class DealService {
     return allDeals.filter(deal => {
       if (f.retailer && deal.retailerSlug !== f.retailer) return false;
       if (f.category && deal.categorySlug?.toLowerCase() !== f.category.toLowerCase()) return false;
+      if (f.brand && deal.brand?.toLowerCase() !== f.brand.toLowerCase()) return false;
       if (f.minDiscount && deal.discountPercentage < f.minDiscount) return false;
       if (f.search) {
         const searchLower = f.search.toLowerCase();
@@ -42,7 +44,17 @@ export class DealService {
       return true;
     });
   });
-  
+
+  availableBrands = computed(() => {
+    const counts = new Map<string, number>();
+    for (const d of this.deals()) {
+      if (d.brand) counts.set(d.brand, (counts.get(d.brand) || 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  });
+
   // Stats
   totalDeals = computed(() => this.deals().length);
   activeFiltersCount = computed(() => {
@@ -50,6 +62,7 @@ export class DealService {
     let count = 0;
     if (f.retailer) count++;
     if (f.category) count++;
+    if (f.brand) count++;
     if (f.minDiscount) count++;
     if (f.search) count++;
     return count;

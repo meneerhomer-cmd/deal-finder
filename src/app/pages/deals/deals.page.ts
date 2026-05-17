@@ -152,6 +152,22 @@ import { PosthogService } from '../../services/posthog.service';
                 }
               </ion-radio-group>
             </ion-list>
+
+            @if (dealService.availableBrands().length > 0) {
+              <ion-list>
+                <ion-item>
+                  <ion-label><strong>Merk</strong></ion-label>
+                </ion-item>
+                <ion-radio-group [value]="dealService.filters().brand || ''" (ionChange)="onBrandChange($event)">
+                  <ion-item><ion-radio value="">Alle merken</ion-radio></ion-item>
+                  @for (brand of dealService.availableBrands(); track brand.name) {
+                    <ion-item>
+                      <ion-radio [value]="brand.name">{{ brand.name }} ({{ brand.count }})</ion-radio>
+                    </ion-item>
+                  }
+                </ion-radio-group>
+              </ion-list>
+            }
           </ion-content>
         </ng-template>
       </ion-modal>
@@ -374,6 +390,15 @@ export class DealsPage implements OnInit, OnDestroy {
     this.dealService.setFilter('category', value);
     this.posthog.posthog.capture('filter_applied', {
       filter_type: 'category',
+      value: value ?? null,
+    });
+  }
+
+  onBrandChange(event: CustomEvent) {
+    const value = event.detail.value || undefined;
+    this.dealService.setFilter('brand', value);
+    this.posthog.posthog.capture('filter_applied', {
+      filter_type: 'brand',
       value: value ?? null,
     });
   }
