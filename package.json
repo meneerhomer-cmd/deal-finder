@@ -11,7 +11,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "ionic:serve": "ionic serve",
-    "ionic:build": "ionic build"
+    "ionic:build": "ionic build",
+    "sentry:upload": "sentry-cli sourcemaps inject --org honeystly --project capacitor ./www/browser && sentry-cli sourcemaps upload --org honeystly --project capacitor ./www/browser",
+    "deploy:prod": "ng build --configuration=production && npm run sentry:upload && find ./www/browser -name \"*.map\" -delete && firebase deploy --only hosting"
   },
   "dependencies": {
     "@angular/animations": "^17.3.0",
@@ -37,8 +39,8 @@
     "@sentry/angular": "^10.43.0",
     "@sentry/capacitor": "^4.0.0",
     "firebase": "^10.14.1",
-    "posthog-js": "^1.373.5",
     "ionicons": "^7.2.0",
+    "posthog-js": "^1.373.5",
     "rxjs": "~7.8.0",
     "tslib": "^2.6.0",
     "zone.js": "~0.14.0"
@@ -49,6 +51,7 @@
     "@angular/compiler-cli": "^17.3.0",
     "@capacitor/assets": "^3.0.5",
     "@ionic/angular-toolkit": "^11.0.0",
+    "@sentry/cli": "^3.4.2",
     "@types/node": "^20.0.0",
     "typescript": "~5.4.0"
   }
