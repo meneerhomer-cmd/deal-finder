@@ -304,7 +304,13 @@ export class SearchPage implements OnInit {
       params: { q: query, limit: '50' }
     }).subscribe({
       next: response => {
-        this.results.set(response.results);
+        const sorted = [...response.results].sort((a, b) => {
+          if (a.currentPrice == null && b.currentPrice == null) return 0;
+          if (a.currentPrice == null) return 1;
+          if (b.currentPrice == null) return -1;
+          return a.currentPrice - b.currentPrice;
+        });
+        this.results.set(sorted);
         this.loading.set(false);
         this.posthog.posthog.capture('search_performed', {
           query,
