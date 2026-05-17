@@ -2,7 +2,8 @@ import { Component, OnInit, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
-  IonList, IonItem, IonLabel, IonBadge, IonIcon, IonSkeletonText, IonNote
+  IonList, IonItem, IonLabel, IonBadge, IonIcon, IonSkeletonText, IonNote,
+  IonButtons, IonBackButton
 } from '@ionic/angular/standalone';
 import { DealService } from '../../services/deal.service';
 
@@ -12,11 +13,15 @@ import { DealService } from '../../services/deal.service';
   imports: [
     RouterLink,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
-    IonList, IonItem, IonLabel, IonBadge, IonIcon, IonSkeletonText, IonNote
+    IonList, IonItem, IonLabel, IonBadge, IonIcon, IonSkeletonText, IonNote,
+    IonButtons, IonBackButton
   ],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
+        <ion-buttons slot="start">
+          <ion-back-button defaultHref="/more"></ion-back-button>
+        </ion-buttons>
         <ion-title>Winkels</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -115,7 +120,9 @@ export class RetailersPage implements OnInit {
   dealService = inject(DealService);
 
   sortedRetailers = computed(() =>
-    [...this.dealService.retailers()].sort((a, b) => b.dealCount - a.dealCount)
+    [...this.dealService.retailers()]
+      .filter(r => r.dealCount > 0)
+      .sort((a, b) => b.dealCount - a.dealCount)
   );
 
   totalDeals = computed(() =>
