@@ -5,7 +5,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
   IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
-  IonBadge, IonSpinner, IonSegment, IonSegmentButton
+  IonBadge, IonSpinner, IonSegment, IonSegmentButton, IonBackButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { trashOutline, cartOutline, sparklesOutline } from 'ionicons/icons';
@@ -19,11 +19,14 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
     IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
-    IonBadge, IonSpinner, IonSegment, IonSegmentButton
+    IonBadge, IonSpinner, IonSegment, IonSegmentButton, IonBackButton
   ],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
+        <ion-buttons slot="start">
+          <ion-back-button defaultHref="/more"></ion-back-button>
+        </ion-buttons>
         <ion-title>Boodschappenlijst</ion-title>
         @if (shoppingList.items().length > 0) {
           <ion-buttons slot="end">
@@ -53,14 +56,20 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
 
       @if (shoppingList.activeCount() > 0 && currentTab === 'active') {
         <div class="summary-bar">
+          @if (totalSavings() > 0) {
+            <div class="savings-hero">
+              <span class="savings-amount">€{{ totalSavings() | number:'1.2-2' }}</span>
+              <span class="savings-text">bespaard met {{ shoppingList.activeCount() }} deals</span>
+            </div>
+          }
           <div class="summary-stats">
             <div class="summary-item">
-              <span class="summary-label">Totaal</span>
+              <span class="summary-label">Te betalen</span>
               <span class="summary-value">€{{ totalPrice() | number:'1.2-2' }}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Besparing</span>
-              <span class="summary-value savings">€{{ totalSavings() | number:'1.2-2' }}</span>
+              <span class="summary-label">Oorspronkelijk</span>
+              <span class="summary-value original">€{{ (totalPrice() + totalSavings()) | number:'1.2-2' }}</span>
             </div>
           </div>
           <ion-button expand="block" fill="outline" routerLink="/optimizer" size="small">
@@ -84,11 +93,12 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
         <ion-list>
           @for (item of displayedItems(); track item.id) {
             <ion-item-sliding>
-              <ion-item>
+              <ion-item [routerLink]="['/deal', item.deal.id]" [detail]="true">
                 <ion-checkbox
                   slot="start"
                   [checked]="item.purchased"
                   (ionChange)="togglePurchased(item)"
+                  (click)="$event.stopPropagation()"
                 ></ion-checkbox>
                 <ion-label [class.purchased]="item.purchased">
                   <h2>{{ item.deal.productName }}</h2>
@@ -118,13 +128,23 @@ import { ShoppingListService, ShoppingListItem } from '../../services/shopping-l
       border-bottom: 1px solid var(--ion-color-light);
       background: var(--ion-color-light);
     }
+    .savings-hero {
+      text-align: center; padding: 8px 0 12px;
+    }
+    .savings-amount {
+      display: block; font-size: 2rem; font-weight: 800;
+      color: var(--ion-color-success, #2dd36f);
+    }
+    .savings-text {
+      font-size: 0.8rem; color: var(--ion-color-medium);
+    }
     .summary-stats {
       display: flex; justify-content: space-around; margin-bottom: 8px;
     }
     .summary-item { text-align: center; }
     .summary-label { display: block; font-size: 0.75rem; color: var(--ion-color-medium); text-transform: uppercase; }
-    .summary-value { display: block; font-size: 1.2rem; font-weight: 700; color: var(--ion-color-primary); }
-    .summary-value.savings { color: var(--ion-color-success); }
+    .summary-value { display: block; font-size: 1.1rem; font-weight: 700; color: var(--ion-color-primary); }
+    .summary-value.original { text-decoration: line-through; color: var(--ion-color-medium); font-weight: 500; }
     .loading {
       display: flex;
       justify-content: center;
