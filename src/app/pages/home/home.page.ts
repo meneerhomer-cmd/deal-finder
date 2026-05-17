@@ -11,6 +11,7 @@ import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { FOOD_SLUGS } from '../../models/deal.model';
 import { PosthogService } from '../../services/posthog.service';
+import { UserDataService } from '../../services/user-data.service';
 
 @Component({
   selector: 'app-home',
@@ -82,6 +83,21 @@ import { PosthogService } from '../../services/posthog.service';
           <ion-icon name="book-outline"></ion-icon>
           <span>Bekijk de folders van je favoriete winkels</span>
           <a routerLink="/retailers" class="folders-link">Folders <ion-icon name="arrow-forward"></ion-icon></a>
+        </div>
+      }
+
+      <!-- Favorite brands -->
+      @if (favoriteBrandDeals().length > 0) {
+        <div class="section">
+          <div class="section-header">
+            <h2>Uw favoriete merken</h2>
+            <a routerLink="/brands" class="see-all">Beheer <ion-icon name="arrow-forward"></ion-icon></a>
+          </div>
+          <div class="deal-carousel">
+            @for (deal of favoriteBrandDeals(); track deal.id) {
+              <div class="carousel-item"><app-deal-card [deal]="deal"></app-deal-card></div>
+            }
+          </div>
         </div>
       }
 
@@ -241,6 +257,7 @@ export class HomePage implements OnInit {
   dealService = inject(DealService);
   private router = inject(Router);
   private posthog = inject(PosthogService);
+  private userData = inject(UserDataService);
 
   searchOpen = signal(false);
   mode = signal<'food' | 'nonfood'>(
@@ -312,6 +329,15 @@ export class HomePage implements OnInit {
       .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
       .slice(0, 6)
   );
+
+  favoriteBrandDeals = computed(() => {
+    const favs = this.userData.favoriteBrands();
+    if (favs.size === 0) return [];
+    return this.dealService.deals()
+      .filter(d => d.brand && favs.has(d.brand))
+      .sort((a, b) => b.discountPercentage - a.discountPercentage)
+      .slice(0, 8);
+  });
 
   constructor() {
     addIcons({ arrowForward, timerOutline, searchOutline, bookOutline });
