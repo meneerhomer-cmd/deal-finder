@@ -1,25 +1,32 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonHeader, IonToolbar, IonTitle, IonContent, IonBadge
+  IonHeader, IonToolbar, IonTitle, IonContent, IonBadge, IonButtons, IonBackButton
 } from '@ionic/angular/standalone';
-import { CATEGORIES } from '../../models/deal.model';
+import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
 import { DealService } from '../../services/deal.service';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonBadge],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonBadge, IonButtons, IonBackButton],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
+        <ion-buttons slot="start">
+          <ion-back-button defaultHref="/more"></ion-back-button>
+        </ion-buttons>
         <ion-title>Categorieën</ion-title>
       </ion-toolbar>
+      <div class="mode-toggle">
+        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="setMode('food')">Voeding</button>
+        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="setMode('nonfood')">Non-food</button>
+      </div>
     </ion-header>
 
     <ion-content>
       <div class="category-grid">
-        @for (cat of categories; track cat.slug) {
+        @for (cat of activeCategories(); track cat.slug) {
           <div class="category-card" (click)="openCategory(cat.slug)">
             <span class="category-emoji">{{ cat.emoji }}</span>
             <span class="category-name">{{ cat.name }}</span>
@@ -73,15 +80,43 @@ import { DealService } from '../../services/deal.service';
       right: 4px;
       font-size: 0.65rem;
     }
+
+    .mode-toggle {
+      display: flex;
+      background: var(--ion-color-primary);
+      padding: 0 14px 10px;
+    }
+    .mode-btn {
+      flex: 1; padding: 7px 0; border: none;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
+      transition: all 0.2s ease;
+    }
+    .mode-btn:first-child { border-radius: 8px 0 0 8px; }
+    .mode-btn:last-child { border-radius: 0 8px 8px 0; }
+    .mode-btn.active { background: white; color: var(--ion-color-primary); }
   `]
 })
 export class CategoriesPage {
   private router = inject(Router);
   private dealService = inject(DealService);
-  categories = CATEGORIES;
+
+  mode = signal<'food' | 'nonfood'>(
+    (localStorage.getItem('dealfinder-mode') as 'food' | 'nonfood') || 'food'
+  );
+
+  activeCategories = computed(() => {
+    const list = this.mode() === 'food' ? FOOD_CATEGORIES : NON_FOOD_CATEGORIES;
+    return list.filter(c => this.getCategoryCount(c.slug) > 0);
+  });
 
   getCategoryCount(slug: string): number {
     return this.dealService.deals().filter(d => d.categorySlug === slug).length;
+  }
+
+  setMode(m: 'food' | 'nonfood') {
+    this.mode.set(m);
+    localStorage.setItem('dealfinder-mode', m);
   }
 
   openCategory(slug: string) {
