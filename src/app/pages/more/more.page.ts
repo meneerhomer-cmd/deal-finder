@@ -1,21 +1,23 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
-  IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButton
+  IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButton, IonToggle
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   storefrontOutline, cartOutline, pricetagsOutline, heartOutline,
-  eyeOutline, bookOutline, sparklesOutline, logInOutline, logOutOutline, personCircleOutline
+  eyeOutline, bookOutline, sparklesOutline, logInOutline, logOutOutline,
+  personCircleOutline, notificationsOutline
 } from 'ionicons/icons';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { AuthService } from '../../services/auth.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 
 @Component({
   selector: 'app-more',
   standalone: true,
-  imports: [RouterLink, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButton],
+  imports: [RouterLink, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonIcon, IonBadge, IonButton, IonToggle],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
@@ -101,6 +103,24 @@ import { AuthService } from '../../services/auth.service';
           </ion-label>
         </ion-item>
       </ion-list>
+
+      @if (push.permission() !== 'denied' && pushSupported) {
+        <ion-list>
+          <ion-item>
+            <ion-icon name="notifications-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h2>Meldingen</h2>
+              <p>{{ pushSubtitle() }}</p>
+            </ion-label>
+            <ion-toggle
+              slot="end"
+              [checked]="pushEnabled()"
+              [disabled]="!auth.isLoggedIn() || working"
+              (ionChange)="togglePush($event)"
+            ></ion-toggle>
+          </ion-item>
+        </ion-list>
+      }
     </ion-content>
   `,
   styles: [`
@@ -121,11 +141,41 @@ import { AuthService } from '../../services/auth.service';
 export class MorePage {
   shoppingList = inject(ShoppingListService);
   auth = inject(AuthService);
+  push = inject(PushNotificationService);
+
+  pushSupported = typeof Notification !== 'undefined';
+  working = false;
+
+  pushEnabled = computed(() =>
+    this.push.permission() === 'granted' && this.push.token() !== null
+  );
+
+  pushSubtitle = computed(() => {
+    if (!this.auth.isLoggedIn()) return 'Log in om meldingen aan te zetten';
+    if (this.push.permission() === 'denied') return 'Geblokkeerd in browserinstellingen';
+    if (this.pushEnabled()) return 'Aan — krijg alerts bij nieuwe deals';
+    return 'Uit — tik om alerts te krijgen bij nieuwe deals van favoriete merken';
+  });
+
+  async togglePush(event: CustomEvent) {
+    if (this.working) return;
+    this.working = true;
+    try {
+      if (event.detail.checked) {
+        await this.push.enable();
+      } else {
+        await this.push.disable();
+      }
+    } finally {
+      this.working = false;
+    }
+  }
 
   constructor() {
     addIcons({
       storefrontOutline, cartOutline, pricetagsOutline, heartOutline,
-      eyeOutline, bookOutline, sparklesOutline, logInOutline, logOutOutline, personCircleOutline
+      eyeOutline, bookOutline, sparklesOutline, logInOutline, logOutOutline,
+      personCircleOutline, notificationsOutline
     });
   }
 }
