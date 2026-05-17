@@ -10,6 +10,7 @@ import { addIcons } from 'ionicons';
 import { heartOutline, heart, searchOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { UserDataService } from '../../services/user-data.service';
+import { PosthogService } from '../../services/posthog.service';
 
 interface Brand {
   name: string;
@@ -122,6 +123,7 @@ interface Brand {
 export class BrandsPage implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private posthog = inject(PosthogService);
   userData = inject(UserDataService);
 
   allBrands = signal<Brand[]>([]);
@@ -159,6 +161,7 @@ export class BrandsPage implements OnInit {
   }
 
   searchBrand(brandName: string) {
+    this.posthog.posthog.capture('brand_searched', { brand_name: brandName });
     this.router.navigate(['/search'], { queryParams: { q: brandName } });
   }
 
@@ -168,6 +171,11 @@ export class BrandsPage implements OnInit {
 
   toggleFavorite(brandName: string, event: Event) {
     event.stopPropagation();
+    const wasFavorite = this.isFavorite(brandName);
     this.userData.toggleFavoriteBrand(brandName);
+    this.posthog.posthog.capture('brand_favorited', {
+      brand_name: brandName,
+      action: wasFavorite ? 'removed' : 'added',
+    });
   }
 }

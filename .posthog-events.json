@@ -63,5 +63,35 @@
     "event": "user_signed_out",
     "description": "User signs out",
     "file": "src/app/services/auth.service.ts"
+  },
+  {
+    "event": "category_selected",
+    "description": "User taps a category on the categories page, navigating to the filtered deals list",
+    "file": "src/app/pages/categories/categories.page.ts"
+  },
+  {
+    "event": "retailer_selected",
+    "description": "User taps a retailer on the retailers page, navigating to that retailer's deal list",
+    "file": "src/app/pages/retailers/retailers.page.ts"
+  },
+  {
+    "event": "brand_searched",
+    "description": "User taps a brand on the brands page to search for deals by that brand",
+    "file": "src/app/pages/brands/brands.page.ts"
+  },
+  {
+    "event": "brand_favorited",
+    "description": "User adds or removes a brand from favorites on the brands page",
+    "file": "src/app/pages/brands/brands.page.ts"
+  },
+  {
+    "event": "home_mode_switched",
+    "description": "User switches between food and non-food mode on the home page",
+    "file": "src/app/pages/home/home.page.ts"
+  },
+  {
+    "event": "flyer_product_added_to_shopping_list",
+    "description": "User adds a product from the flyer viewer directly to their shopping list",
+    "file": "src/app/pages/flyer-viewer/flyer-viewer.page.ts"
   }
 ]

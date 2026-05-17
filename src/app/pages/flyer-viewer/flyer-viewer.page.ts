@@ -10,6 +10,7 @@ import { addIcons } from 'ionicons';
 import { chevronBack, chevronForward, close, cartOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { ShoppingListService } from '../../services/shopping-list.service';
+import { PosthogService } from '../../services/posthog.service';
 
 interface HotspotProduct {
   id: string;
@@ -220,6 +221,7 @@ export class FlyerViewerPage implements OnInit {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private shoppingList = inject(ShoppingListService);
+  private posthog = inject(PosthogService);
 
   shopSlug = '';
   imageLoaded = false;
@@ -256,6 +258,12 @@ export class FlyerViewerPage implements OnInit {
   }
 
   addToList(product: HotspotProduct) {
+    this.posthog.posthog.capture('flyer_product_added_to_shopping_list', {
+      product_name: product.name,
+      brand_name: product.brandName,
+      discount_percent: product.discountPercent,
+      retailer_slug: this.shopSlug,
+    });
     // The product id from the flyer is a GraphQL offer id, not a deal DB id
     // For now just close the modal — full integration needs deal ID mapping
     this.selectedProduct.set(null);

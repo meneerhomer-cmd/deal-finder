@@ -6,6 +6,7 @@ import {
   IonButtons, IonBackButton
 } from '@ionic/angular/standalone';
 import { DealService } from '../../services/deal.service';
+import { PosthogService } from '../../services/posthog.service';
 
 @Component({
   selector: 'app-retailers',
@@ -51,7 +52,7 @@ import { DealService } from '../../services/deal.service';
         </div>
         <ion-list>
           @for (retailer of sortedRetailers(); track retailer.slug) {
-            <ion-item [routerLink]="['/retailer', retailer.slug]" [detail]="true">
+            <ion-item [routerLink]="['/retailer', retailer.slug]" [detail]="true" (click)="trackRetailerSelected(retailer)">
               <div class="retailer-logo" [class]="retailer.slug" slot="start">
                 {{ retailer.name.charAt(0) }}
               </div>
@@ -118,6 +119,7 @@ import { DealService } from '../../services/deal.service';
 })
 export class RetailersPage implements OnInit {
   dealService = inject(DealService);
+  private posthog = inject(PosthogService);
 
   sortedRetailers = computed(() =>
     [...this.dealService.retailers()]
@@ -138,6 +140,14 @@ export class RetailersPage implements OnInit {
   refresh(event: any) {
     this.dealService.loadRetailers().subscribe({
       complete: () => event.target.complete()
+    });
+  }
+
+  trackRetailerSelected(retailer: { slug: string; name: string; dealCount: number }) {
+    this.posthog.posthog.capture('retailer_selected', {
+      retailer_slug: retailer.slug,
+      retailer_name: retailer.name,
+      deal_count: retailer.dealCount,
     });
   }
 }

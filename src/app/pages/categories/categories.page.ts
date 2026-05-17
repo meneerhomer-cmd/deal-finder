@@ -5,6 +5,7 @@ import {
 } from '@ionic/angular/standalone';
 import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
 import { DealService } from '../../services/deal.service';
+import { PosthogService } from '../../services/posthog.service';
 
 @Component({
   selector: 'app-categories',
@@ -100,6 +101,7 @@ import { DealService } from '../../services/deal.service';
 export class CategoriesPage {
   private router = inject(Router);
   private dealService = inject(DealService);
+  private posthog = inject(PosthogService);
 
   mode = signal<'food' | 'nonfood'>(
     (localStorage.getItem('dealfinder-mode') as 'food' | 'nonfood') || 'food'
@@ -120,6 +122,13 @@ export class CategoriesPage {
   }
 
   openCategory(slug: string) {
+    const cat = [...FOOD_CATEGORIES, ...NON_FOOD_CATEGORIES].find(c => c.slug === slug);
+    this.posthog.posthog.capture('category_selected', {
+      category_slug: slug,
+      category_name: cat?.name ?? slug,
+      deal_count: this.getCategoryCount(slug),
+      mode: this.mode(),
+    });
     this.dealService.setFilter('category', slug);
     this.router.navigate(['/deals']);
   }

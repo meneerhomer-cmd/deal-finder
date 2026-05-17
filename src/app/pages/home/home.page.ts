@@ -10,6 +10,7 @@ import { arrowForward, timerOutline, searchOutline, bookOutline } from 'ionicons
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { FOOD_SLUGS } from '../../models/deal.model';
+import { PosthogService } from '../../services/posthog.service';
 
 @Component({
   selector: 'app-home',
@@ -43,8 +44,8 @@ import { FOOD_SLUGS } from '../../models/deal.model';
         }
       </ion-toolbar>
       <div class="mode-toggle">
-        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="mode.set('food')">Voeding</button>
-        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="mode.set('nonfood')">Non-food</button>
+        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="switchMode('food')">Voeding</button>
+        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="switchMode('nonfood')">Non-food</button>
       </div>
     </ion-header>
 
@@ -239,6 +240,7 @@ import { FOOD_SLUGS } from '../../models/deal.model';
 export class HomePage implements OnInit {
   dealService = inject(DealService);
   private router = inject(Router);
+  private posthog = inject(PosthogService);
 
   searchOpen = signal(false);
   mode = signal<'food' | 'nonfood'>(
@@ -341,6 +343,12 @@ export class HomePage implements OnInit {
   doRefresh(event: any) {
     this.dealService.loadDeals().subscribe({ complete: () => event.target.complete() });
     this.dealService.loadRetailers().subscribe();
+  }
+
+  switchMode(m: 'food' | 'nonfood') {
+    if (this.mode() === m) return;
+    this.mode.set(m);
+    this.posthog.posthog.capture('home_mode_switched', { mode: m });
   }
 
   onSearch(event: CustomEvent) {
