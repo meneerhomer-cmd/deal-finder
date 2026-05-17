@@ -4,27 +4,25 @@ import { DecimalPipe } from '@angular/common';
 import { Deal, getCategoryEmoji } from '../../models/deal.model';
 
 /**
- * Deal card — redesigned May 17, 2026 (Pillar 3 starter).
+ * Deal card — v2 (Pillar 3 iteration · May 17, 2026).
  *
- * Aesthetic: editorial-poster. Borrowed visual language from Belgian retail
- * flyers (massive discount numerals, sharp colored stickers) and elevated
- * with magazine-style typography hierarchy and asymmetric corner radius.
- *
- * Design choices:
- * - Asymmetric corner radius (sharp top-left, rounded bottom-right) gives
- *   the card a torn-ticket silhouette that breaks Ionic's uniform-rounded
- *   look instantly.
- * - Retailer identity is a 4px vertical stripe along the left edge in the
- *   retailer's brand color. Reads faster across a grid than a coloured pill,
- *   doesn't compete with the discount.
- * - Discount is a slightly-rotated dark sticker top-right with a coloured
- *   left edge in the retailer accent — modeled on real Belgian flyer
- *   "actie" stickers but with tabular numerals and tighter spacing.
- * - Brand becomes a small monospace "stamp" with hairline underline, like
- *   a magazine section header. Still tappable for brand filter.
- * - Original price gets a real angled strikethrough rendered with a 2px
- *   bar rotated 8°, not the default horizontal text-decoration that
- *   never reads at small sizes.
+ * v1 set the direction (editorial-poster, vertical stripe, asymmetric
+ * radius, sticker discount). v2 refines:
+ * - Discount is now bigger and flat (no rotation). The size IS the
+ *   design — it doesn't need a tilt to feel intentional.
+ * - Dropped mix-blend-mode on product images: it killed legibility for
+ *   white-packaged products on the off-white image background.
+ * - Brand stamp and retailer label now share one top row, same
+ *   typographic treatment, separated by a thin slash. Two taps live
+ *   in one visual line.
+ * - Footer pill removed (redundant with stripe + retailer label).
+ *   Expiring badge gets the footer to itself when present.
+ * - Stripe widened 4 → 5 px and now caps the bottom of the card too
+ *   (lifts into the rounded corner), so the retailer color tracks
+ *   the silhouette rather than ending mid-card.
+ * - Discount sticker now sits flush against the top-right of the
+ *   image area with only inner corners rounded (visually anchored
+ *   to the image, not floating over it).
  */
 @Component({
   selector: 'app-deal-card',
@@ -48,13 +46,20 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
       </div>
 
       <div class="body">
-        @if (deal.brand) {
-          <button type="button" class="brand" (click)="onBrandTap($event)">{{ deal.brand }}</button>
-        }
+        <div class="meta">
+          @if (deal.brand) {
+            <button type="button" class="meta-tap brand" (click)="onBrandTap($event)">{{ deal.brand }}</button>
+            <span class="meta-sep" aria-hidden="true">/</span>
+          }
+          <button type="button" class="meta-tap retailer" (click)="onRetailerTap($event)">{{ deal.retailerName }}</button>
+        </div>
+
         <h3 class="title">{{ deal.productName }}</h3>
+
         @if (deal.dealType) {
           <span class="deal-type">{{ deal.dealType }}</span>
         }
+
         <div class="prices">
           @if (deal.currentPrice !== null && deal.currentPrice !== undefined) {
             <span class="price-now">€{{ deal.currentPrice | number:'1.2-2' }}</span>
@@ -63,14 +68,12 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
             <span class="price-was">€{{ deal.originalPrice | number:'1.2-2' }}</span>
           }
         </div>
-        <div class="footer">
-          <button type="button" class="retailer" (click)="onRetailerTap($event)">
-            {{ deal.retailerName }}
-          </button>
-          @if (deal.expiringSoon) {
+
+        @if (deal.expiringSoon) {
+          <div class="footer">
             <span class="expiring">Bijna verlopen</span>
-          }
-        </div>
+          </div>
+        }
       </div>
     </a>
   `,
@@ -88,8 +91,8 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
       overflow: hidden;
       border-radius: 0 0 14px 0;
       box-shadow:
-        0 1px 2px rgba(15, 17, 21, 0.06),
-        0 10px 28px -12px rgba(15, 17, 21, 0.18);
+        0 1px 2px rgba(15, 17, 21, 0.05),
+        0 12px 30px -14px rgba(15, 17, 21, 0.16);
       transition: transform 140ms cubic-bezier(.2,.7,.2,1), box-shadow 140ms ease;
       isolation: isolate;
     }
@@ -101,17 +104,18 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
     .stripe {
       position: absolute;
       left: 0; top: 0; bottom: 0;
-      width: 4px;
+      width: 5px;
       background: var(--accent);
       z-index: 2;
+      border-bottom-left-radius: 0; /* leave the asymmetric corner alone */
     }
 
     .image-area {
       position: relative;
       aspect-ratio: 5 / 4;
-      max-height: 130px;
+      max-height: 140px;
       background:
-        radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.6), rgba(255,255,255,0)),
+        radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.65), rgba(255,255,255,0)),
         #f5f3ee;
       display: flex;
       align-items: center;
@@ -120,77 +124,90 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
       border-bottom: 1px solid rgba(15, 17, 21, 0.06);
     }
     .image-area img {
-      max-width: 82%;
-      max-height: 82%;
+      max-width: 84%;
+      max-height: 84%;
       object-fit: contain;
-      mix-blend-mode: multiply;
     }
     .emoji {
-      font-size: 2.4rem;
+      font-size: 2.6rem;
       filter: saturate(0.85);
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     .discount {
       position: absolute;
-      top: 10px;
-      right: 8px;
-      background: #15171a;
+      top: 0;
+      right: 0;
+      background: var(--accent);
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       font-weight: 900;
-      font-size: 1.35rem;
+      font-size: 1.75rem;
       line-height: 1;
-      padding: 6px 9px 7px;
-      letter-spacing: -0.03em;
-      border-radius: 4px;
-      border-left: 4px solid var(--accent);
+      padding: 9px 11px 10px;
+      letter-spacing: -0.04em;
+      border-radius: 0 0 0 10px;
       font-variant-numeric: tabular-nums;
-      transform: rotate(-3deg);
-      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.25);
       z-index: 1;
+      box-shadow: 0 6px 14px -4px rgba(0,0,0,0.25);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.06);
     }
-    .discount .dash { margin-right: 1px; }
+    .discount .dash { margin-right: 1px; opacity: 0.9; }
     .discount .pct {
-      font-size: 0.65em;
-      vertical-align: 12%;
-      margin-left: 1px;
-      opacity: 0.82;
+      font-size: 0.55em;
+      vertical-align: 18%;
+      margin-left: 2px;
+      opacity: 0.85;
       letter-spacing: 0;
     }
 
     .body {
-      padding: 12px 12px 12px 14px;
+      padding: 11px 12px 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       flex: 1;
     }
 
-    .brand {
-      align-self: flex-start;
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      line-height: 1;
+    }
+    .meta-tap {
       background: none;
       border: none;
-      padding: 0 0 2px 0;
-      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       font-size: 0.6rem;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--ion-color-medium, #6b6b6b);
-      border-bottom: 1px solid currentColor;
+      letter-spacing: 0.12em;
       cursor: pointer;
-      line-height: 1;
-      font-family: ui-monospace, monospace;
+      line-height: 1.2;
+      transition: color 100ms ease;
     }
-    .brand:hover, .brand:focus {
-      color: var(--ion-color-primary, #15171a);
+    .meta-tap.brand {
+      color: var(--ion-text-color, #15171a);
+    }
+    .meta-tap.retailer {
+      color: var(--accent);
+    }
+    .meta-tap:hover, .meta-tap:focus {
       outline: none;
+      opacity: 0.7;
+    }
+    .meta-sep {
+      font-size: 0.6rem;
+      color: var(--ion-color-medium, #b8b8b6);
+      font-weight: 400;
     }
 
     .title {
-      margin: 0;
-      font-size: 0.9rem;
+      margin: 4px 0 0;
+      font-size: 0.93rem;
       font-weight: 600;
       line-height: 1.25;
       letter-spacing: -0.005em;
@@ -207,29 +224,32 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
       color: var(--accent);
       letter-spacing: 0.01em;
       line-height: 1;
+      padding-top: 2px;
     }
 
     .prices {
       display: flex;
       align-items: baseline;
-      gap: 8px;
-      margin-top: 2px;
+      gap: 9px;
+      margin-top: 4px;
     }
     .price-now {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       font-weight: 800;
-      font-size: 1.22rem;
-      letter-spacing: -0.025em;
+      font-size: 1.32rem;
+      letter-spacing: -0.028em;
       font-variant-numeric: tabular-nums;
       color: var(--ion-text-color, #15171a);
+      line-height: 1;
     }
     .price-was {
       position: relative;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: var(--ion-color-medium, #9a9a9a);
       font-variant-numeric: tabular-nums;
       font-weight: 500;
       padding: 0 2px;
+      line-height: 1;
     }
     .price-was::after {
       content: '';
@@ -238,53 +258,27 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
       top: 50%;
       height: 1.5px;
       background: currentColor;
-      transform: rotate(-8deg);
+      transform: rotate(-7deg);
       transform-origin: center;
-      opacity: 0.9;
+      opacity: 0.85;
     }
 
     .footer {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
       margin-top: auto;
-      padding-top: 2px;
+      padding-top: 6px;
     }
-    .retailer {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 4px 8px 3px;
-      border-radius: 2px;
-      cursor: pointer;
-      line-height: 1.2;
-      max-width: 60%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .retailer:hover, .retailer:focus {
-      filter: brightness(1.08);
-      outline: none;
-    }
-
     .expiring {
       font-size: 0.6rem;
       font-weight: 700;
       color: #c0392b;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.55; }
+      letter-spacing: 0.1em;
+      line-height: 1;
+      padding: 3px 6px;
+      background: rgba(192, 57, 43, 0.1);
+      border-radius: 3px;
     }
 
     /* Dark mode */
@@ -294,19 +288,19 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
         color: #ececea;
         box-shadow:
           0 1px 2px rgba(0,0,0,0.4),
-          0 12px 32px -16px rgba(0,0,0,0.6);
+          0 14px 32px -16px rgba(0,0,0,0.65);
       }
       .image-area {
-        background: #f5f3ee; /* keep light bg behind product photos */
+        background: #f5f3ee;
         border-bottom-color: transparent;
       }
-      .discount {
-        background: #fff;
-        color: #15171a;
-      }
-      .brand { color: #9a9a98; }
+      .meta-tap.brand { color: #ececea; }
+      .meta-sep { color: #555; }
       .price-now { color: #fff; }
-      .price-was { color: #6f6f6e; }
+      .price-was { color: #777; }
+      .expiring {
+        background: rgba(192, 57, 43, 0.18);
+      }
     }
   `]
 })
