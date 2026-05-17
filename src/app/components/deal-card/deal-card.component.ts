@@ -21,6 +21,9 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
       </div>
       <div class="card-body">
         <span class="retailer-pill" [class]="deal.retailerSlug">{{ deal.retailerName }}</span>
+        @if (deal.brand) {
+          <span class="brand-label">{{ deal.brand }}</span>
+        }
         <h3 class="product-name">{{ deal.productName }}</h3>
         @if (deal.dealType) {
           <span class="deal-type-label">{{ deal.dealType }}</span>
@@ -116,6 +119,14 @@ import { Deal, getCategoryEmoji, getDiscountClass } from '../../models/deal.mode
     .retailer-pill.mediamarkt { background: var(--retailer-mediamarkt); }
     .retailer-pill.ikea { background: var(--retailer-ikea); }
 
+    .brand-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--ion-color-medium);
+      line-height: 1;
+    }
     .product-name {
       margin: 0;
       font-size: 0.8rem;
