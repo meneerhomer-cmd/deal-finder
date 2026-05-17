@@ -63,7 +63,7 @@ interface PriceHistoryEntry {
 
         <div class="detail-body">
           <div class="meta-row">
-            <span class="retailer-badge" [class]="deal.retailerSlug">{{ deal.retailerName }}</span>
+            <span class="retailer-badge {{ deal.retailerSlug }}">{{ deal.retailerName }}</span>
             @if (deal.dealType) {
               <span class="deal-type-tag">{{ deal.dealType }}</span>
             }
@@ -164,113 +164,221 @@ interface PriceHistoryEntry {
     </ion-content>
   `,
   styles: [`
-    ion-content { --background: var(--ion-color-light, #f4f5f8); }
+    ion-content { --background: var(--retro-newsprint); }
 
     .loading {
       display: flex; flex-direction: column; align-items: center;
-      padding: 48px; color: var(--ion-color-medium);
+      padding: 48px; color: var(--retro-ink-soft);
+      font-family: 'Space Mono', monospace;
     }
 
     .hero {
       position: relative;
       display: flex; align-items: center; justify-content: center;
-      background: white;
-      min-height: 200px;
-      padding: 20px;
+      background:
+        radial-gradient(circle at 1px 1px, rgba(0,0,0,0.04) 0.5px, transparent 0.5px) 0 0 / 5px 5px,
+        var(--retro-newsprint-bright);
+      min-height: 220px;
+      padding: 24px;
+      border-bottom: 2px solid var(--retro-ink);
     }
     .hero-image {
-      max-width: 100%; max-height: 250px; object-fit: contain;
+      max-width: 100%; max-height: 260px; object-fit: contain;
     }
-    .hero-emoji { font-size: 5rem; }
+    .hero-emoji { font-size: 5rem; opacity: 0.6; }
     .hero-discount {
-      position: absolute; top: 12px; right: 12px;
-      background: #e53935; color: white;
-      font-weight: 800; font-size: 1.1rem;
-      padding: 6px 14px; border-radius: 12px;
+      position: absolute; top: 14px; right: -6px;
+      background: var(--retro-red);
+      color: white;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-weight: 400;
+      font-size: 2rem;
+      line-height: 1;
+      padding: 10px 16px 8px;
+      border: 2.5px solid var(--retro-ink);
+      transform: rotate(-3deg);
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
+      letter-spacing: -0.01em;
+      font-variant-numeric: tabular-nums;
     }
 
-    .detail-body { padding: 16px; }
+    .detail-body { padding: 20px 16px 16px; }
 
     .meta-row {
       display: flex; flex-wrap: wrap; gap: 8px;
-      align-items: center; margin-bottom: 10px;
+      align-items: center; margin-bottom: 14px;
     }
     .deal-type-tag {
-      font-size: 0.75rem; font-weight: 600; padding: 3px 10px;
-      border-radius: 8px;
-      background: var(--ion-color-success-tint, #e8f5e9);
-      color: var(--ion-color-success-shade, #1b9e4b);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 3px 8px 2px;
+      border: 1.5px solid var(--retro-ink);
+      background: var(--retro-yellow);
+      color: var(--retro-ink);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      box-shadow: 1.5px 1.5px 0 0 var(--retro-ink);
     }
     .expiring-tag {
-      font-size: 0.72rem; font-weight: 600; padding: 3px 10px;
-      border-radius: 8px; background: #fff3e0; color: #e65100;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 3px 8px 2px;
+      border: 1.5px solid var(--retro-ink);
+      background: var(--retro-red);
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      box-shadow: 1.5px 1.5px 0 0 var(--retro-ink);
     }
 
     .product-name {
-      margin: 0 0 2px; font-size: 1.3rem; font-weight: 700;
-      line-height: 1.3;
+      margin: 0 0 4px;
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.5rem; font-weight: 500;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      color: var(--retro-ink);
     }
     .brand-name {
-      margin: 0 0 12px; font-size: 0.9rem;
-      color: var(--ion-color-medium);
+      display: inline-block;
+      margin: 0 0 14px;
+      font-family: 'Archivo Narrow', system-ui, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--retro-ink);
+      background: linear-gradient(to top, var(--retro-yellow) 0%, var(--retro-yellow) 50%, transparent 50%);
+      padding: 0 4px 1px;
     }
 
     .price-block {
-      background: white; border-radius: 14px;
-      padding: 16px; margin-bottom: 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      background: var(--retro-newsprint-bright);
+      border-radius: 0;
+      border: 2px solid var(--retro-ink);
+      padding: 18px 18px 16px;
+      margin-bottom: 16px;
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
     }
     .price-row {
-      display: flex; align-items: baseline; gap: 10px;
+      display: flex; align-items: baseline; gap: 12px;
+      flex-wrap: wrap;
     }
     .price-current {
-      font-size: 2.2rem; font-weight: 800;
-      color: var(--ion-color-success, #2dd36f);
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-weight: 400;
+      font-size: 2.6rem;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--retro-ink);
+      font-variant-numeric: tabular-nums;
     }
     .price-original {
-      font-size: 1.1rem; text-decoration: line-through;
-      color: var(--ion-color-medium);
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: var(--retro-ink-soft);
+      font-variant-numeric: tabular-nums;
+      position: relative;
+      padding: 0 2px;
+      text-decoration: none;
+    }
+    .price-original::after {
+      content: '';
+      position: absolute;
+      left: -2px; right: -2px;
+      top: 52%;
+      height: 2px;
+      background: var(--retro-ink);
+      transform: rotate(-6deg);
+      transform-origin: center;
     }
     .price-saving {
-      display: block; margin-top: 4px;
-      font-size: 0.85rem; font-weight: 500;
-      color: var(--ion-color-success-shade, #1b9e4b);
+      display: inline-block;
+      margin-top: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--retro-ink);
+      background: var(--retro-yellow);
+      padding: 3px 8px 2px;
+      border: 1.5px solid var(--retro-ink);
     }
 
     .action-buttons {
-      display: flex; gap: 8px; margin-bottom: 16px;
+      display: flex; gap: 8px; margin-bottom: 18px;
     }
     .action-buttons ion-button { flex: 1; }
 
     .info-section {
-      background: white; border-radius: 14px;
-      padding: 14px 16px; margin-bottom: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      background: var(--retro-newsprint-bright);
+      border-radius: 0;
+      border: 2px solid var(--retro-ink);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
     }
     .info-section h3 {
-      margin: 0 0 10px; font-size: 0.85rem; font-weight: 600;
-      text-transform: uppercase; color: var(--ion-color-medium);
-      letter-spacing: 0.3px;
-      display: flex; align-items: center; gap: 6px;
+      margin: 0 0 12px;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--retro-ink);
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1.5px solid var(--retro-ink);
+      padding-bottom: 6px;
     }
-    .info-grid { display: flex; flex-direction: column; gap: 8px; }
+    .info-grid { display: flex; flex-direction: column; gap: 0; }
     .info-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding-bottom: 8px; border-bottom: 1px solid var(--ion-color-light);
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--retro-ink-hairline);
     }
     .info-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .info-label { font-size: 0.88rem; color: var(--ion-color-medium); }
-    .info-value { font-size: 0.88rem; font-weight: 500; text-align: right; max-width: 55%; }
-    .info-value.loyalty { color: var(--ion-color-warning-shade); }
-    .history-pct { color: var(--ion-color-danger); margin-left: 6px; font-weight: 600; }
+    .info-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--retro-ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .info-value {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-align: right;
+      max-width: 60%;
+      color: var(--retro-ink);
+    }
+    .info-value.loyalty { color: var(--retro-red); }
+    .history-pct {
+      color: var(--retro-red);
+      margin-left: 8px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
 
     .trend-pill {
       display: inline-flex; align-items: center; gap: 6px;
-      margin-top: 10px; padding: 6px 12px; border-radius: 8px;
-      font-size: 0.82rem; font-weight: 500;
+      margin-top: 12px;
+      padding: 4px 10px;
+      border-radius: 0;
+      border: 1.5px solid var(--retro-ink);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
-    .trend-pill.down { background: #e8f5e9; color: #2e7d32; }
-    .trend-pill.up { background: #fce4ec; color: #c62828; }
+    .trend-pill.down { background: var(--retro-yellow); color: var(--retro-ink); }
+    .trend-pill.up { background: var(--retro-red); color: white; }
   `]
 })
 export class DealDetailPage implements OnInit {

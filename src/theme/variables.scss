@@ -1,52 +1,96 @@
-// Ionic Variables and Theming
+// =============================================================================
+// Retro Belgian Flyer — global design system
+// =============================================================================
 :root {
-  // Primary - Nice blue
-  --ion-color-primary: #3880ff;
-  --ion-color-primary-rgb: 56, 128, 255;
+  // Retro tokens (single source of truth)
+  --retro-newsprint: #faf7f0;
+  --retro-newsprint-bright: #fffaf0;
+  --retro-ink: #0a0a0a;
+  --retro-ink-soft: #4a4540;
+  --retro-ink-hairline: rgba(10, 10, 10, 0.14);
+  --retro-red: #e30613;
+  --retro-yellow: #ffd200;
+  --retro-blue: #0066cc;
+
+  // Body uses Newsreader (serif) for editorial readability;
+  // Anton + Space Mono for display/labels per the design system
+  --ion-font-family: 'Newsreader', Georgia, serif;
+
+  // Background = newsprint cream
+  --ion-background-color: var(--retro-newsprint);
+  --ion-background-color-rgb: 250, 247, 240;
+  --ion-text-color: var(--retro-ink);
+  --ion-text-color-rgb: 10, 10, 10;
+
+  // Toolbar + tab bar pick up newsprint too
+  --ion-toolbar-background: var(--retro-newsprint);
+  --ion-toolbar-color: var(--retro-ink);
+  --ion-toolbar-border-color: var(--retro-ink);
+  --ion-tab-bar-background: var(--retro-newsprint);
+  --ion-tab-bar-color: var(--retro-ink-soft);
+  --ion-tab-bar-color-selected: var(--retro-red);
+  --ion-tab-bar-border-color: var(--retro-ink);
+
+  // Cards + items
+  --ion-card-background: var(--retro-newsprint-bright);
+  --ion-item-background: var(--retro-newsprint);
+  --ion-border-color: var(--retro-ink-hairline);
+
+  // Primary = Belgian flyer red (the discount color)
+  --ion-color-primary: var(--retro-red);
+  --ion-color-primary-rgb: 227, 6, 19;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #3171e0;
-  --ion-color-primary-tint: #4c8dff;
+  --ion-color-primary-shade: #c70510;
+  --ion-color-primary-tint: #e72030;
 
-  // Success - Green for savings/prices
-  --ion-color-success: #2dd36f;
-  --ion-color-success-rgb: 45, 211, 111;
-  --ion-color-success-contrast: #ffffff;
-  --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-success-shade: #28ba62;
-  --ion-color-success-tint: #42d77d;
+  // Success = retro yellow accent (used for "got it" / brand highlights)
+  --ion-color-success: var(--retro-yellow);
+  --ion-color-success-rgb: 255, 210, 0;
+  --ion-color-success-contrast: var(--retro-ink);
+  --ion-color-success-contrast-rgb: 10, 10, 10;
+  --ion-color-success-shade: #e0b900;
+  --ion-color-success-tint: #ffd71a;
 
-  // Warning
-  --ion-color-warning: #ffc409;
-  --ion-color-warning-rgb: 255, 196, 9;
-  --ion-color-warning-contrast: #000000;
-  --ion-color-warning-contrast-rgb: 0, 0, 0;
-  --ion-color-warning-shade: #e0ac08;
-  --ion-color-warning-tint: #ffca22;
+  // Warning stays yellow but adjusted
+  --ion-color-warning: var(--retro-yellow);
+  --ion-color-warning-rgb: 255, 210, 0;
+  --ion-color-warning-contrast: var(--retro-ink);
+  --ion-color-warning-contrast-rgb: 10, 10, 10;
+  --ion-color-warning-shade: #e0b900;
+  --ion-color-warning-tint: #ffd71a;
 
-  // Danger - Red for discounts
-  --ion-color-danger: #eb445a;
-  --ion-color-danger-rgb: 235, 68, 90;
+  // Danger = same red (single accent for urgency)
+  --ion-color-danger: var(--retro-red);
+  --ion-color-danger-rgb: 227, 6, 19;
   --ion-color-danger-contrast: #ffffff;
   --ion-color-danger-contrast-rgb: 255, 255, 255;
-  --ion-color-danger-shade: #cf3c4f;
-  --ion-color-danger-tint: #ed576b;
+  --ion-color-danger-shade: #c70510;
+  --ion-color-danger-tint: #e72030;
 
-  // Medium
-  --ion-color-medium: #92949c;
-  --ion-color-medium-rgb: 146, 148, 156;
+  // Medium = ink-soft (for secondary text)
+  --ion-color-medium: var(--retro-ink-soft);
+  --ion-color-medium-rgb: 74, 69, 64;
   --ion-color-medium-contrast: #ffffff;
   --ion-color-medium-contrast-rgb: 255, 255, 255;
-  --ion-color-medium-shade: #808289;
-  --ion-color-medium-tint: #9d9fa6;
+  --ion-color-medium-shade: #3d3934;
+  --ion-color-medium-tint: #5c5650;
 
-  // Light
-  --ion-color-light: #f4f5f8;
-  --ion-color-light-rgb: 244, 245, 248;
-  --ion-color-light-contrast: #000000;
-  --ion-color-light-contrast-rgb: 0, 0, 0;
-  --ion-color-light-shade: #d7d8da;
-  --ion-color-light-tint: #f5f6f9;
+  // Light = newsprint surface
+  --ion-color-light: var(--retro-newsprint);
+  --ion-color-light-rgb: 250, 247, 240;
+  --ion-color-light-contrast: var(--retro-ink);
+  --ion-color-light-contrast-rgb: 10, 10, 10;
+  --ion-color-light-shade: #e0ddd6;
+  --ion-color-light-tint: #fcfaf3;
+
+  // Secondary (Ionic uses for some UI bits) — Belgian blue
+  --ion-color-secondary: var(--retro-blue);
+  --ion-color-secondary-rgb: 0, 102, 204;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #005ab3;
+  --ion-color-secondary-tint: #1a75d1;
 
   // Retailer brand colors (single source of truth)
   --retailer-carrefour: #0066CC;

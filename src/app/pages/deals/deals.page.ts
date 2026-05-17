@@ -203,44 +203,67 @@ import { PosthogService } from '../../services/posthog.service';
 
     .mode-toggle {
       display: flex;
-      background: var(--ion-color-primary);
-      padding: 0 14px 10px;
+      background: var(--retro-newsprint);
+      padding: 8px 12px 10px;
+      gap: 0;
+      border-bottom: 2px solid var(--retro-ink);
     }
     .mode-btn {
-      flex: 1; padding: 7px 0; border: none;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
-      transition: all 0.2s ease;
+      flex: 1;
+      padding: 8px 0 7px;
+      border: 2px solid var(--retro-ink);
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: var(--retro-newsprint-bright);
+      color: var(--retro-ink);
+      transition: background-color 0.1s ease;
     }
-    .mode-btn:first-child { border-radius: 8px 0 0 8px; }
-    .mode-btn:last-child { border-radius: 0 8px 8px 0; }
-    .mode-btn.active { background: white; color: var(--ion-color-primary); }
+    .mode-btn + .mode-btn { border-left-width: 0; }
+    .mode-btn.active {
+      background: var(--retro-yellow);
+      color: var(--retro-ink);
+      box-shadow: inset 0 -4px 0 0 var(--retro-ink);
+    }
 
     .category-scroll {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       padding: 10px 12px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      background: var(--retro-newsprint);
+      border-bottom: 1px solid var(--retro-ink-hairline);
     }
     .category-scroll::-webkit-scrollbar { display: none; }
     .cat-chip {
       flex-shrink: 0;
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1.5px solid var(--ion-color-light-shade, #d7d8da);
-      background: transparent;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--ion-text-color);
+      padding: 5px 11px 4px;
+      border-radius: 0;
+      border: 1.5px solid var(--retro-ink);
+      background: var(--retro-newsprint-bright);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--retro-ink);
       cursor: pointer;
       white-space: nowrap;
+      box-shadow: 1.5px 1.5px 0 0 var(--retro-ink);
     }
     .cat-chip.active {
-      background: var(--ion-color-primary);
-      color: white;
-      border-color: var(--ion-color-primary);
+      background: var(--retro-red);
+      color: #ffffff;
+      border-color: var(--retro-ink);
+    }
+    .cat-chip:active {
+      transform: translate(1.5px, 1.5px);
+      box-shadow: 0 0 0 0 var(--retro-ink);
     }
 
     .deal-grid {

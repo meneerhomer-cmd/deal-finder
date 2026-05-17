@@ -18,17 +18,180 @@
   box-sizing: border-box;
 }
 
-// Discount badge
+// =============================================================================
+// Retro Belgian Flyer — global type + shape overrides
+// =============================================================================
+
+// Background newsprint texture (very subtle halftone dots) on app root
+ion-app {
+  background:
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.025) 0.5px, transparent 0.5px) 0 0 / 5px 5px,
+    var(--retro-newsprint);
+}
+
+// Toolbar: ink-on-newsprint with hairline bottom border instead of soft shadow
+ion-toolbar {
+  --background: var(--retro-newsprint);
+  --color: var(--retro-ink);
+  --border-color: var(--retro-ink);
+  --border-width: 0 0 2px 0;
+  --border-style: solid;
+  --min-height: 56px;
+}
+
+ion-title {
+  font-family: 'Anton', 'Archivo Narrow', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding-inline: 16px;
+}
+
+// Searchbar: framed in 2px ink, square corners
+ion-searchbar {
+  --background: var(--retro-newsprint-bright);
+  --color: var(--retro-ink);
+  --placeholder-color: var(--retro-ink-soft);
+  --icon-color: var(--retro-ink);
+  --border-radius: 0;
+  --box-shadow: 0 0 0 2px var(--retro-ink);
+  padding: 12px 16px !important;
+}
+ion-searchbar .searchbar-input {
+  font-family: 'Archivo Narrow', system-ui, sans-serif !important;
+  font-weight: 500;
+}
+
+// Buttons: sharp corners, no soft shadow, Anton uppercase for primary
+ion-button {
+  --border-radius: 0;
+  --box-shadow: 2px 2px 0 0 var(--retro-ink);
+  font-family: 'Archivo Narrow', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+ion-button[fill="clear"] {
+  --box-shadow: none;
+}
+ion-button:active {
+  --box-shadow: 0 0 0 0 var(--retro-ink);
+  transform: translate(2px, 2px);
+}
+
+// Cards: square corners, hairline border, no soft shadow
+ion-card {
+  --background: var(--retro-newsprint-bright);
+  --color: var(--retro-ink);
+  border-radius: 0;
+  box-shadow: 2px 2px 0 0 var(--retro-ink);
+  border: 2px solid var(--retro-ink);
+  margin: 8px;
+}
+
+// Items: square corners, hairline bottom, Newsreader serif body
+ion-item {
+  --background: transparent;
+  --color: var(--retro-ink);
+  --border-color: var(--retro-ink-hairline);
+  --border-radius: 0;
+  --inner-border-width: 0 0 1px 0;
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  font-family: 'Newsreader', Georgia, serif;
+}
+ion-item ion-label h2 {
+  font-family: 'Archivo Narrow', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+ion-item ion-label p {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--retro-ink-soft);
+  letter-spacing: 0.02em;
+}
+
+// Chips: square, 2px border, no fill by default
+ion-chip {
+  --background: var(--retro-newsprint-bright);
+  --color: var(--retro-ink);
+  border: 2px solid var(--retro-ink);
+  border-radius: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  height: auto;
+}
+
+// Tabs (bottom nav)
+ion-tab-bar {
+  --background: var(--retro-newsprint);
+  --color: var(--retro-ink-soft);
+  --color-selected: var(--retro-red);
+  --border: 2px solid var(--retro-ink);
+}
+ion-tab-button {
+  font-family: 'Archivo Narrow', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+ion-tab-button ion-label {
+  font-size: 0.65rem !important;
+  margin-top: 2px !important;
+}
+
+// Badges: square corners
+ion-badge {
+  --background: var(--retro-red);
+  --color: #ffffff;
+  border-radius: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+}
+
+// Inputs (filters, forms)
+ion-input, ion-textarea, ion-select {
+  --background: var(--retro-newsprint-bright);
+  --color: var(--retro-ink);
+  --border-radius: 0;
+  --highlight-color-focused: var(--retro-red);
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+// Radio / checkbox squares (no rounded)
+ion-radio, ion-checkbox {
+  --border-radius: 0;
+  --color-checked: var(--retro-red);
+}
+
+// Modal sheet
+ion-modal {
+  --border-radius: 0;
+  --background: var(--retro-newsprint);
+}
+
+// Legacy: discount badge — keep but restyle
 .discount-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 14px;
-  background: var(--ion-color-danger);
+  border-radius: 0;
+  font-family: 'Anton', 'Archivo Narrow', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  background: var(--retro-red);
   color: white;
+  border: 2px solid var(--retro-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 // Deal type chip — uses CSS vars from variables.scss for dark mode support
@@ -61,24 +224,30 @@
   }
 }
 
-// Retailer badge — colors from CSS vars (single source of truth in variables.scss)
+// Retailer badge — retro flyer treatment (2px ink border, square corners,
+// Archivo Narrow uppercase). Colors from CSS vars (variables.scss).
 .retailer-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 3px 9px 2px;
+  border-radius: 0;
+  border: 2px solid var(--retro-ink);
+  font-family: 'Archivo Narrow', system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: white;
+  box-shadow: 1.5px 1.5px 0 0 var(--retro-ink);
 
   &.carrefour { background: var(--retailer-carrefour); }
   &.lidl { background: var(--retailer-lidl); }
   &.delhaize { background: var(--retailer-delhaize); }
-  &.colruyt { background: var(--retailer-colruyt); }
+  &.colruyt { background: var(--retailer-colruyt); color: var(--retro-ink); }
   &.aldi { background: var(--retailer-aldi); }
   &.kruidvat { background: var(--retailer-kruidvat); }
   &.albert-heijn { background: var(--retailer-albert-heijn); }
-  &.jumbo { background: var(--retailer-jumbo); color: #333; }
+  &.jumbo { background: var(--retailer-jumbo); color: var(--retro-ink); }
   &.spar { background: var(--retailer-spar); }
   &.carrefour-market { background: var(--retailer-carrefour-market); }
   &.intermarche { background: var(--retailer-intermarche); }
@@ -103,7 +272,7 @@
   font-size: 0.9rem;
 }
 
-// Empty state
+// Empty state — retro flyer treatment
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -111,21 +280,81 @@
   justify-content: center;
   padding: 48px 24px;
   text-align: center;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 0.5px, transparent 0.5px) 0 0 / 5px 5px,
+    var(--retro-newsprint);
 
   ion-icon {
-    font-size: 64px;
-    color: var(--ion-color-medium);
+    font-size: 56px;
+    color: var(--retro-ink);
     margin-bottom: 16px;
+    padding: 16px;
+    border: 2px solid var(--retro-ink);
+    border-radius: 0;
+    box-shadow: 3px 3px 0 0 var(--retro-ink);
+    background: var(--retro-newsprint-bright);
   }
 
   h2 {
     margin: 0 0 8px;
+    font-family: 'Anton', 'Archivo Narrow', sans-serif;
+    font-weight: 400;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--retro-ink);
   }
 
   p {
     margin: 0;
-    color: var(--ion-color-medium);
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 1rem;
+    color: var(--retro-ink-soft);
+    max-width: 320px;
+    font-style: italic;
   }
+}
+
+// Segments (ACTIEF/GEKOCHT etc) — retro flyer treatment
+ion-segment {
+  --background: var(--retro-newsprint);
+  background: var(--retro-newsprint);
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--retro-ink);
+  gap: 0;
+}
+ion-segment-button {
+  --background: var(--retro-newsprint-bright);
+  --background-checked: var(--retro-yellow);
+  --color: var(--retro-ink);
+  --color-checked: var(--retro-ink);
+  --indicator-color: transparent;
+  --border-radius: 0;
+  --border-color: var(--retro-ink);
+  --border-width: 2px;
+  --border-style: solid;
+  min-height: 36px;
+  font-family: 'Anton', 'Archivo Narrow', sans-serif;
+  font-weight: 400;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+ion-segment-button.segment-button-checked {
+  box-shadow: inset 0 -4px 0 0 var(--retro-ink);
+}
+
+// Item-options (swipe actions on lists)
+ion-item-option {
+  font-family: 'Archivo Narrow', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+// Refresher
+ion-refresher-content {
+  --color: var(--retro-ink);
 }
 
 // Filter chips container

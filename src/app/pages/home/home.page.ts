@@ -160,26 +160,30 @@ import { UserDataService } from '../../services/user-data.service';
 
     .mode-toggle {
       display: flex;
-      background: var(--ion-color-primary);
-      padding: 0 14px 10px;
+      background: var(--retro-newsprint);
+      padding: 8px 12px 10px;
       gap: 0;
+      border-bottom: 2px solid var(--retro-ink);
     }
     .mode-btn {
       flex: 1;
-      padding: 7px 0;
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 600;
+      padding: 8px 0 7px;
+      border: 2px solid var(--retro-ink);
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       cursor: pointer;
-      background: rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.7);
-      transition: all 0.2s ease;
+      background: var(--retro-newsprint-bright);
+      color: var(--retro-ink);
+      transition: background-color 0.1s ease;
     }
-    .mode-btn:first-child { border-radius: 8px 0 0 8px; }
-    .mode-btn:last-child { border-radius: 0 8px 8px 0; }
+    .mode-btn + .mode-btn { border-left-width: 0; }
     .mode-btn.active {
-      background: white;
-      color: var(--ion-color-primary);
+      background: var(--retro-yellow);
+      color: var(--retro-ink);
+      box-shadow: inset 0 -4px 0 0 var(--retro-ink);
     }
 
     .scraping-banner {
