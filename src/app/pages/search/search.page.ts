@@ -8,7 +8,7 @@ import {
   IonBadge, IonSpinner, IonIcon, IonChip, IonButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { searchOutline, trophyOutline, timeOutline } from 'ionicons/icons';
+import { searchOutline, trophyOutline, timeOutline, informationCircleOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { PosthogService } from '../../services/posthog.service';
 
@@ -26,6 +26,8 @@ interface SearchResult {
 interface SearchResponse {
   query: string;
   count: number;
+  kind?: 'primary' | 'synonym' | 'intersection';
+  synonymsUsed?: string[];
   results: SearchResult[];
 }
 
@@ -97,6 +99,12 @@ interface SearchResponse {
           <p>Probeer een andere zoekterm</p>
         </div>
       } @else {
+        @if (searchKind() === 'synonym') {
+          <div class="synonym-banner">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            <span>Geen <strong>{{ lastQuery() }}</strong> gevonden — dit lijkt er op:</span>
+          </div>
+        }
         <div class="results-header">
           <span>{{ results().length }} resultaten voor "{{ lastQuery() }}"</span>
         </div>
@@ -251,6 +259,15 @@ interface SearchResponse {
     .recent-chips {
       display: flex; flex-wrap: wrap; gap: 8px;
     }
+    .synonym-banner {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--retro-yellow, #ffe14d); color: var(--retro-ink, #1a1a1a);
+      padding: 12px 16px; margin: 0 12px 8px; border: 2px solid var(--retro-ink, #1a1a1a);
+      box-shadow: 3px 3px 0 var(--retro-ink, #1a1a1a);
+      font-family: var(--font-mono, 'Space Mono'), monospace; font-size: 0.85rem;
+    }
+    .synonym-banner ion-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .synonym-banner strong { font-family: var(--font-display, Anton), sans-serif; text-transform: uppercase; }
   `]
 })
 export class SearchPage implements OnInit {
@@ -262,12 +279,13 @@ export class SearchPage implements OnInit {
   loading = signal(false);
   hasSearched = signal(false);
   lastQuery = signal('');
+  searchKind = signal<'primary' | 'synonym' | 'intersection' | null>(null);
 
   recentSearches = signal<string[]>(JSON.parse(localStorage.getItem('recent-searches') || '[]'));
   popularSearches = ['Coca-Cola', 'Pampers', 'Nutella', 'Dash', 'Pringles', 'Fairy'];
 
   constructor() {
-    addIcons({ searchOutline, trophyOutline, timeOutline });
+    addIcons({ searchOutline, trophyOutline, timeOutline, informationCircleOutline });
   }
 
   ngOnInit() {
@@ -311,11 +329,13 @@ export class SearchPage implements OnInit {
           return a.currentPrice - b.currentPrice;
         });
         this.results.set(sorted);
+        this.searchKind.set(response.kind ?? 'primary');
         this.loading.set(false);
         this.posthog.posthog.capture('search_performed', {
           query,
           result_count: response.count,
           has_results: response.count > 0,
+          search_kind: response.kind ?? 'primary',
         });
       },
       error: () => {
