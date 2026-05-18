@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -392,7 +392,7 @@ interface PriceHistoryEntry {
     .trend-pill.up { background: var(--retro-red); color: white; }
   `]
 })
-export class DealDetailPage implements OnInit {
+export class DealDetailPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
@@ -404,6 +404,7 @@ export class DealDetailPage implements OnInit {
   deal: Deal | undefined;
   imageError = false;
   priceHistory = signal<PriceHistoryEntry[]>([]);
+  private static JSONLD_ID = 'deal-jsonld';
 
   getCategoryEmoji = getCategoryEmoji;
   getDiscountClass = getDiscountClass;
@@ -512,6 +513,49 @@ export class DealDetailPage implements OnInit {
       category: deal.categorySlug,
       expiring_soon: deal.expiringSoon,
     });
+    this.injectProductJsonLd(deal);
+  }
+
+  /**
+   * Inject schema.org/Product structured data so Google's rich-results crawler
+   * can index the deal as a product with price + retailer. Replaces any
+   * existing JSON-LD block when navigating between deals. Cleaned up on
+   * component destroy so non-deal pages don't keep stale data.
+   */
+  private injectProductJsonLd(deal: Deal) {
+    if (typeof document === 'undefined') return;
+    const existing = document.getElementById(DealDetailPage.JSONLD_ID);
+    if (existing) existing.remove();
+
+    const payload: Record<string, any> = {
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      name: deal.productName,
+      image: deal.imageUrl || undefined,
+      brand: deal.brand ? { '@type': 'Brand', name: deal.brand } : undefined,
+      category: deal.categoryName || undefined,
+      offers: {
+        '@type': 'Offer',
+        url: `https://promo-finder-be.web.app/deal/${deal.id}`,
+        priceCurrency: 'EUR',
+        price: deal.currentPrice != null ? String(deal.currentPrice) : undefined,
+        priceValidUntil: deal.validUntil || undefined,
+        availability: deal.expired ? 'https://schema.org/Discontinued' : 'https://schema.org/InStock',
+        seller: deal.retailerName ? { '@type': 'Organization', name: deal.retailerName } : undefined,
+      },
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = DealDetailPage.JSONLD_ID;
+    script.textContent = JSON.stringify(payload);
+    document.head.appendChild(script);
+  }
+
+  ngOnDestroy() {
+    if (typeof document === 'undefined') return;
+    const existing = document.getElementById(DealDetailPage.JSONLD_ID);
+    if (existing) existing.remove();
   }
 
   private loadPriceHistory(dealId: number) {
