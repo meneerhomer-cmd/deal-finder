@@ -461,12 +461,19 @@ export class DealsPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clear ALL filters set during this page's lifetime so other pages
+    // (home, brands, categories, deal-detail) start from a clean slate.
+    // Filter sources: retailer (from URL slug), brand (from query param when
+    // user clicked a deal-card brand chip), category (handed off from
+    // /categories), plus search / minDiscount / brand / category set via the
+    // filter modal. Without this, e.g. visiting /deals?brand=Dreft then
+    // navigating back to home would leave the brand filter active and
+    // silently bias every other deal-reading computed.
+    this.dealService.clearFilters();
+    // loadDealsByRetailer overwrites the global deals signal with only one
+    // retailer's deals. Restore the full catalog so the home retailer rail
+    // (and any other page that reads dealService.deals()) sees everything.
     if (this.retailerSlug) {
-      this.dealService.clearFilter('retailer');
-      // loadDealsByRetailer overwrites the global deals signal with only
-      // this retailer's deals, which pollutes every other page (e.g. home's
-      // filteredRetailers computed iterates that signal and ends up with only
-      // one store in the retailer rail). Restore the full catalog on exit.
       this.dealService.loadDeals().subscribe();
     }
   }
