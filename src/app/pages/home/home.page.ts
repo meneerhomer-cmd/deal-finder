@@ -188,7 +188,8 @@ import { AuthService } from '../../services/auth.service';
     }
     .mode-btn {
       flex: 1;
-      padding: 8px 0 7px;
+      min-height: 44px;
+      padding: 11px 0 10px;
       border: 2px solid var(--retro-ink);
       font-family: 'Anton', 'Archivo Narrow', sans-serif;
       font-size: 0.95rem;
