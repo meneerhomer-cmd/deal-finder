@@ -21,7 +21,18 @@
   <meta name="apple-mobile-web-app-title" content="Deal Finder" />
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- Retro Belgian Flyer v4 typography -->
+  <!-- Performance: cut handshake latency for first paint on slow networks.
+       Each preconnect saves ~150-300ms of TCP + TLS on a cold connection. -->
+  <link rel="preconnect" href="https://deal-finder-api-927801911058.europe-west1.run.app" crossorigin />
+  <link rel="preconnect" href="https://cdn.jafolders.com" crossorigin />
+  <link rel="dns-prefetch" href="https://eu.i.posthog.com" />
+  <link rel="dns-prefetch" href="https://firebaseinstallations.googleapis.com" />
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+  <link rel="dns-prefetch" href="https://o4511406985379920.ingest.sentry.io" />
+
+  <!-- Retro Belgian Flyer v4 typography. The stylesheet itself is render-blocking;
+       Google Fonts injects font-face declarations and the swap below makes sure
+       text renders in the fallback while the WOFF2 is downloading. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" />
