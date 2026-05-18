@@ -103,8 +103,8 @@ import { AuthService } from '../../services/auth.service';
             <ion-icon name="notifications-outline"></ion-icon>
           </div>
           <div class="signin-cta-body">
-            <strong>Mis nooit een prijsdaling</strong>
-            <p>Volg je favoriete merken en krijg een melding zodra ze in de aanbieding zijn.</p>
+            <strong>Sync op meerdere toestellen</strong>
+            <p>Log in zodat je producten en merken op al je toestellen beschikbaar blijven.</p>
             <button class="signin-cta-btn" (click)="signIn()">
               <ion-icon name="log-in-outline"></ion-icon>
               Inloggen met Google
@@ -351,7 +351,10 @@ export class HomePage implements OnInit {
   );
   private signInCtaDismissed = signal(localStorage.getItem('signin-cta-dismissed') === '1');
 
-  showSignInCta = computed(() => !this.auth.isLoggedIn() && !this.signInCtaDismissed());
+  // Show the CTA for both anonymous and signed-out users; hide only once
+  // they've actually linked a real account (Google) — at that point their data
+  // is already synced.
+  showSignInCta = computed(() => !this.auth.isLinkedAccount() && !this.signInCtaDismissed());
 
   async signIn() {
     this.posthog.posthog.capture('signin_cta_tapped', { source: 'home' });

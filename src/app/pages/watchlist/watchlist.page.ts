@@ -68,34 +68,22 @@ interface WatchItem {
         </div>
       }
 
-      @if (auth.isLoggedIn()) {
-        <div class="add-bar">
-          <ion-input
-            placeholder="Product toevoegen (bv. Pampers, Coca-Cola...)"
-            [(ngModel)]="newProduct"
-            (keyup.enter)="addProduct()"
-            fill="outline"
-          ></ion-input>
-          <ion-button (click)="addProduct()" [disabled]="!newProduct.trim()">
-            <ion-icon name="add-outline" slot="icon-only"></ion-icon>
-          </ion-button>
-        </div>
-      }
+      <div class="add-bar">
+        <ion-input
+          placeholder="Product toevoegen (bv. Pampers, Coca-Cola...)"
+          [(ngModel)]="newProduct"
+          (keyup.enter)="addProduct()"
+          fill="outline"
+        ></ion-input>
+        <ion-button (click)="addProduct()" [disabled]="!newProduct.trim()">
+          <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
 
       @if (loading()) {
         <div class="loading">
           <ion-spinner></ion-spinner>
           <p>Prijzen checken...</p>
-        </div>
-      } @else if (!auth.isLoggedIn()) {
-        <div class="empty-state">
-          <ion-icon name="search-outline" class="hero-icon"></ion-icon>
-          <h2>Log in om producten te volgen</h2>
-          <p>Met een account kun je producten opslaan en krijg je een melding wanneer ze in de aanbieding zijn.</p>
-          <ion-button (click)="signIn()" expand="block" class="sign-in-btn">
-            <ion-icon name="log-in-outline" slot="start"></ion-icon>
-            Inloggen met Google
-          </ion-button>
         </div>
       } @else if (items().length === 0) {
         <div class="empty-state">

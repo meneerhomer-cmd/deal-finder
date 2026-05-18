@@ -198,18 +198,8 @@ export class BrandsPage implements OnInit {
     return this.userData.isFavoriteBrand(brandName);
   }
 
-  async toggleFavorite(brandName: string, event: Event) {
+  toggleFavorite(brandName: string, event: Event) {
     event.stopPropagation();
-    if (!this.auth.isLoggedIn()) {
-      const toast = await this.toastCtrl.create({
-        message: 'Log in om merken te volgen',
-        duration: 2500,
-        position: 'bottom',
-        buttons: [{ text: 'Inloggen', handler: () => { this.auth.signInWithGoogle(); } }],
-      });
-      await toast.present();
-      return;
-    }
     const wasFavorite = this.isFavorite(brandName);
     this.userData.toggleFavoriteBrand(brandName);
     this.posthog.posthog.capture('brand_favorited', {

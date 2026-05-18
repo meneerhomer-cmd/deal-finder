@@ -26,6 +26,8 @@ export interface Deal {
   expired: boolean;
   daysExpired: number;
   expiringSoon: boolean;
+  lowestPriceSeen: number | null;
+  atLowestPrice: boolean;
 }
 
 export interface Retailer {

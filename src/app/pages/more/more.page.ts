@@ -27,9 +27,11 @@ import { PushNotificationService } from '../../services/push-notification.servic
     </ion-header>
 
     <ion-content>
-      <!-- Auth section -->
+      <!-- Auth section: show profile card only for real (linked) accounts.
+           Anonymous users still see the sign-in CTA because they need to
+           upgrade for sync + push notifications. -->
       <div class="profile-section">
-        @if (auth.isLoggedIn()) {
+        @if (auth.isLinkedAccount()) {
           <div class="profile-card">
             @if (auth.photoURL()) {
               <img [src]="auth.photoURL()" class="avatar" />
@@ -116,7 +118,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
             <ion-toggle
               slot="end"
               [checked]="pushEnabled()"
-              [disabled]="!auth.isLoggedIn() || working"
+              [disabled]="!auth.isLinkedAccount() || working"
               (ionChange)="togglePush($event)"
             ></ion-toggle>
           </ion-item>
@@ -184,7 +186,7 @@ export class MorePage {
   );
 
   pushSubtitle = computed(() => {
-    if (!this.auth.isLoggedIn()) return 'Log in om meldingen aan te zetten';
+    if (!this.auth.isLinkedAccount()) return 'Log in om meldingen aan te zetten';
     if (this.push.permission() === 'denied') return 'Geblokkeerd in browserinstellingen';
     if (this.pushEnabled()) return 'Aan — krijg alerts bij nieuwe deals';
     return 'Uit — tik om alerts te krijgen bij nieuwe deals van favoriete merken';

@@ -52,6 +52,9 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
         </div>
 
         <div class="tags">
+          @if (deal.atLowestPrice) {
+            <span class="stamp stamp--lowest" aria-label="Laagste prijs sinds we deze deal volgen">LAAGSTE PRIJS</span>
+          }
           @if (deal.dealType) {
             <span class="stamp stamp--deal">{{ deal.dealType }}</span>
           }
@@ -274,6 +277,11 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
     }
     .stamp--deal { background: var(--yellow); color: var(--ink); }
     .stamp--expiring { background: var(--red); color: var(--yellow); }
+    .stamp--lowest {
+      background: var(--ink);
+      color: var(--yellow);
+      letter-spacing: 0.06em;
+    }
   `]
 })
 export class DealCardComponent {

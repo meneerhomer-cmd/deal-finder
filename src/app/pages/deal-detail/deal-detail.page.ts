@@ -91,6 +91,12 @@ interface PriceHistoryEntry {
             @if (deal.discountPercentage && deal.currentPrice != null && deal.originalPrice != null) {
               <span class="price-saving">Je bespaart €{{ (deal.originalPrice - deal.currentPrice) | number:'1.2-2' }}</span>
             }
+            @if (deal.atLowestPrice && deal.lowestPriceSeen != null) {
+              <span class="price-lowest">
+                <ion-icon name="trending-down"></ion-icon>
+                Laagste prijs sinds we deze deal volgen
+              </span>
+            }
           </div>
 
           <div class="action-buttons">
@@ -318,6 +324,23 @@ interface PriceHistoryEntry {
       padding: 3px 8px 2px;
       border: 1.5px solid var(--retro-ink);
     }
+    .price-lowest {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      margin-left: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--retro-yellow);
+      background: var(--retro-ink);
+      padding: 3px 8px 2px;
+      border: 1.5px solid var(--retro-ink);
+    }
+    .price-lowest ion-icon { font-size: 0.95rem; }
 
     .action-buttons {
       display: flex; gap: 8px; margin-bottom: 18px;
