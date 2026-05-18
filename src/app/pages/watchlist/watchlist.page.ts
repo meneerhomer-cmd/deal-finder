@@ -7,11 +7,13 @@ import {
   IonItemSliding, IonItemOptions, IonItemOption, IonInput
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
+import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, trashOutline, searchOutline } from 'ionicons/icons';
+import { addOutline, trashOutline, searchOutline, logInOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { UserDataService } from '../../services/user-data.service';
 import { AlertService } from '../../services/alert.service';
+import { AuthService } from '../../services/auth.service';
 import { PosthogService } from '../../services/posthog.service';
 
 interface WatchItem {
@@ -66,22 +68,34 @@ interface WatchItem {
         </div>
       }
 
-      <div class="add-bar">
-        <ion-input
-          placeholder="Product toevoegen (bv. Pampers, Coca-Cola...)"
-          [(ngModel)]="newProduct"
-          (keyup.enter)="addProduct()"
-          fill="outline"
-        ></ion-input>
-        <ion-button (click)="addProduct()" [disabled]="!newProduct.trim()">
-          <ion-icon name="add-outline" slot="icon-only"></ion-icon>
-        </ion-button>
-      </div>
+      @if (auth.isLoggedIn()) {
+        <div class="add-bar">
+          <ion-input
+            placeholder="Product toevoegen (bv. Pampers, Coca-Cola...)"
+            [(ngModel)]="newProduct"
+            (keyup.enter)="addProduct()"
+            fill="outline"
+          ></ion-input>
+          <ion-button (click)="addProduct()" [disabled]="!newProduct.trim()">
+            <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      }
 
       @if (loading()) {
         <div class="loading">
           <ion-spinner></ion-spinner>
           <p>Prijzen checken...</p>
+        </div>
+      } @else if (!auth.isLoggedIn()) {
+        <div class="empty-state">
+          <ion-icon name="search-outline" class="hero-icon"></ion-icon>
+          <h2>Log in om producten te volgen</h2>
+          <p>Met een account kun je producten opslaan en krijg je een melding wanneer ze in de aanbieding zijn.</p>
+          <ion-button (click)="signIn()" expand="block" class="sign-in-btn">
+            <ion-icon name="log-in-outline" slot="start"></ion-icon>
+            Inloggen met Google
+          </ion-button>
         </div>
       } @else if (items().length === 0) {
         <div class="empty-state">
@@ -136,6 +150,10 @@ interface WatchItem {
     .watch-price { font-weight: 700; font-size: 1.1rem; color: var(--ion-color-success); }
     .watch-discount { color: var(--ion-color-danger); font-weight: 600; margin-left: 4px; }
     .not-found { color: var(--ion-color-medium); font-style: italic; }
+    .sign-in-btn { max-width: 320px; margin: 24px auto 0; }
+    .empty-state { text-align: center; padding: 48px 24px; }
+    .empty-state h2 { margin: 0 0 8px; }
+    .empty-state p { color: var(--ion-color-medium); max-width: 360px; margin: 0 auto; }
     .alerts-section { padding: 12px; }
     .alerts-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -158,14 +176,29 @@ export class WatchlistPage implements OnInit {
   private http = inject(HttpClient);
   userData = inject(UserDataService);
   alertService = inject(AlertService);
+  auth = inject(AuthService);
+  private toastCtrl = inject(ToastController);
   private posthog = inject(PosthogService);
 
   items = signal<WatchItem[]>([]);
   loading = signal(false);
   newProduct = '';
 
+  async signIn() {
+    try {
+      await this.auth.signInWithGoogle();
+    } catch (e) {
+      const toast = await this.toastCtrl.create({
+        message: 'Inloggen mislukt. Probeer opnieuw.',
+        duration: 2000,
+        color: 'danger',
+      });
+      await toast.present();
+    }
+  }
+
   constructor() {
-    addIcons({ addOutline, trashOutline, searchOutline });
+    addIcons({ addOutline, trashOutline, searchOutline, logInOutline });
     effect(() => {
       const products = this.userData.watchlist();
       if (products.length > 0 || this.items().length > 0) {

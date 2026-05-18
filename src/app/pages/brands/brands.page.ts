@@ -6,10 +6,12 @@ import {
   IonSearchbar, IonList, IonItem, IonLabel, IonBadge,
   IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton, IonButton
 } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { heartOutline, heart, searchOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { UserDataService } from '../../services/user-data.service';
+import { AuthService } from '../../services/auth.service';
 import { PosthogService } from '../../services/posthog.service';
 
 interface Brand {
@@ -149,7 +151,9 @@ export class BrandsPage implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   private posthog = inject(PosthogService);
+  private toastCtrl = inject(ToastController);
   userData = inject(UserDataService);
+  auth = inject(AuthService);
 
   allBrands = signal<Brand[]>([]);
   loading = signal(true);
@@ -194,8 +198,18 @@ export class BrandsPage implements OnInit {
     return this.userData.isFavoriteBrand(brandName);
   }
 
-  toggleFavorite(brandName: string, event: Event) {
+  async toggleFavorite(brandName: string, event: Event) {
     event.stopPropagation();
+    if (!this.auth.isLoggedIn()) {
+      const toast = await this.toastCtrl.create({
+        message: 'Log in om merken te volgen',
+        duration: 2500,
+        position: 'bottom',
+        buttons: [{ text: 'Inloggen', handler: () => { this.auth.signInWithGoogle(); } }],
+      });
+      await toast.present();
+      return;
+    }
     const wasFavorite = this.isFavorite(brandName);
     this.userData.toggleFavoriteBrand(brandName);
     this.posthog.posthog.capture('brand_favorited', {
