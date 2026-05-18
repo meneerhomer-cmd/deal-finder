@@ -20,7 +20,7 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
     <a [routerLink]="['/deal', deal.id]" class="card">
       <div class="image-wrap">
         @if (deal.imageUrl && !imgError) {
-          <img [src]="deal.imageUrl" [alt]="deal.productName" loading="lazy" (error)="imgError = true" />
+          <img [src]="deal.imageUrl" [alt]="deal.productName" loading="lazy" width="280" height="160" (error)="imgError = true" />
         } @else {
           <span class="fallback">{{ emoji() }}</span>
         }

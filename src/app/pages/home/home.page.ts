@@ -38,7 +38,7 @@ import { UserDataService } from '../../services/user-data.service';
         } @else {
           <ion-title>Deal Finder</ion-title>
           <ion-buttons slot="end">
-            <ion-button (click)="searchOpen.set(true)">
+            <ion-button (click)="searchOpen.set(true)" aria-label="Zoek een product of merk">
               <ion-icon name="search-outline" slot="icon-only"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -241,8 +241,13 @@ import { UserDataService } from '../../services/user-data.service';
     .section-header.expiring h2 { color: #e65100; }
     .see-all {
       display: flex; align-items: center; gap: 3px;
-      font-size: 0.78rem; font-weight: 600;
-      color: var(--ion-color-primary); text-decoration: none;
+      font-family: 'Archivo Narrow', system-ui, sans-serif;
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--retro-ink); text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 3px;
     }
 
     .deal-carousel {
