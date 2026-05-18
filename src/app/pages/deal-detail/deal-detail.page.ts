@@ -322,7 +322,7 @@ interface PriceHistoryEntry {
     .action-buttons {
       display: flex; gap: 8px; margin-bottom: 18px;
     }
-    .action-buttons ion-button { flex: 1; }
+    .action-buttons ion-button { flex: 1; --min-height: 44px; min-height: 44px; }
 
     .info-section {
       background: var(--retro-newsprint-bright);

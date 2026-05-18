@@ -257,7 +257,12 @@ interface SearchResponse {
       text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
     }
     .recent-chips {
-      display: flex; flex-wrap: wrap; gap: 8px;
+      display: flex; flex-wrap: wrap; gap: 10px;
+    }
+    .recent-chips ion-chip {
+      --min-height: 44px; min-height: 44px;
+      padding-inline: 14px;
+      font-size: 0.95rem;
     }
     .synonym-banner {
       display: flex; align-items: center; gap: 10px;
