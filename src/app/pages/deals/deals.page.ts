@@ -463,6 +463,11 @@ export class DealsPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.retailerSlug) {
       this.dealService.clearFilter('retailer');
+      // loadDealsByRetailer overwrites the global deals signal with only
+      // this retailer's deals, which pollutes every other page (e.g. home's
+      // filteredRetailers computed iterates that signal and ends up with only
+      // one store in the retailer rail). Restore the full catalog on exit.
+      this.dealService.loadDeals().subscribe();
     }
   }
 
