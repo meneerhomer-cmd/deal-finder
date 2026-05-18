@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
@@ -9,7 +9,7 @@ import {
 } from '@ionic/angular/standalone';
 import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, checkmarkCircle } from 'ionicons/icons';
+import { arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, checkmarkCircle, trophyOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
@@ -28,7 +28,7 @@ interface PriceHistoryEntry {
   selector: 'app-deal-detail',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe,
+    DatePipe, DecimalPipe, RouterLink,
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
     IonBadge, IonSpinner, IonChip, IonLabel
@@ -116,6 +116,29 @@ interface PriceHistoryEntry {
               Delen
             </ion-button>
           </div>
+
+          @if (matches().length > 0) {
+            <section class="cross-retailer-panel">
+              <h3 class="section-title">Zelfde merk bij andere winkels</h3>
+              @if (isCurrentDealCheapest()) {
+                <p class="cheapest-note">
+                  <ion-icon name="trophy-outline"></ion-icon>
+                  Je zit hier al goedkoopst.
+                </p>
+              }
+              <div class="match-list">
+                @for (m of matches(); track m.id) {
+                  <a [routerLink]="['/deal', m.id]" class="match-row">
+                    <span class="match-retailer">{{ m.retailerName }}</span>
+                    <span class="match-price">€{{ m.currentPrice | number:'1.2-2' }}</span>
+                    @if (m.discountPercentage > 0) {
+                      <span class="match-discount">−{{ m.discountPercentage }}%</span>
+                    }
+                  </a>
+                }
+              </div>
+            </section>
+          }
 
           @if (deal.quantity || deal.unitPrice || deal.conditions || deal.loyaltyCard || deal.validUntil || deal.categorySlug) {
             <div class="info-section">
@@ -347,6 +370,72 @@ interface PriceHistoryEntry {
     }
     .action-buttons ion-button { flex: 1; --min-height: 44px; min-height: 44px; }
 
+    .cross-retailer-panel {
+      background: var(--retro-newsprint-bright);
+      border: 2px solid var(--retro-ink);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
+    }
+    .cross-retailer-panel .section-title {
+      margin: 0 0 10px;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--retro-ink);
+    }
+    .cheapest-note {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin: 0 0 10px;
+      padding: 4px 10px 3px;
+      background: var(--retro-yellow);
+      border: 1.5px solid var(--retro-ink);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--retro-ink);
+    }
+    .cheapest-note ion-icon { font-size: 0.95rem; }
+    .match-list { display: flex; flex-direction: column; gap: 6px; }
+    .match-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--retro-newsprint, #faf7f0);
+      border: 2px solid var(--retro-ink);
+      text-decoration: none;
+      color: var(--retro-ink);
+      min-height: 44px;
+      box-shadow: 2px 2px 0 0 var(--retro-ink);
+      transition: transform 0.05s ease;
+    }
+    .match-row:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 0 var(--retro-ink); }
+    .match-retailer {
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .match-price {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .match-discount {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 2px 6px 1px;
+      background: var(--retro-red, #e30613);
+      color: white;
+      border: 1.5px solid var(--retro-ink);
+    }
+
     .info-section {
       background: var(--retro-newsprint-bright);
       border-radius: 0;
@@ -427,13 +516,20 @@ export class DealDetailPage implements OnInit, OnDestroy {
   deal: Deal | undefined;
   imageError = false;
   priceHistory = signal<PriceHistoryEntry[]>([]);
+  matches = signal<Deal[]>([]);
   private static JSONLD_ID = 'deal-jsonld';
+
+  isCurrentDealCheapest = computed(() => {
+    const ms = this.matches();
+    if (!ms.length || this.deal?.currentPrice == null) return false;
+    return ms.every(m => m.currentPrice == null || m.currentPrice >= this.deal!.currentPrice!);
+  });
 
   getCategoryEmoji = getCategoryEmoji;
   getDiscountClass = getDiscountClass;
 
   constructor() {
-    addIcons({ arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp });
+    addIcons({ arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, trophyOutline });
   }
 
   ngOnInit() {
@@ -442,12 +538,14 @@ export class DealDetailPage implements OnInit, OnDestroy {
     if (existing) {
       this.deal = existing;
       this.loadPriceHistory(id);
+      this.loadCrossRetailerMatches(id);
       this.trackDealViewed(existing);
     } else {
       this.dealService.loadDeals().subscribe(deals => {
         this.deal = deals.find(d => d.id === id);
         if (this.deal) {
           this.loadPriceHistory(id);
+          this.loadCrossRetailerMatches(id);
           this.trackDealViewed(this.deal);
         }
       });
@@ -586,6 +684,14 @@ export class DealDetailPage implements OnInit, OnDestroy {
       .subscribe({
         next: history => this.priceHistory.set(history),
         error: () => {} // silently ignore if no history
+      });
+  }
+
+  private loadCrossRetailerMatches(dealId: number) {
+    this.http.get<Deal[]>(`${environment.apiUrl}/deals/${dealId}/cross-retailer-matches`)
+      .subscribe({
+        next: ms => this.matches.set(ms),
+        error: () => {} // silently hide section on error
       });
   }
 }
