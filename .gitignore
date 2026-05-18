@@ -30,6 +30,9 @@ plugins/
 # Firebase Hosting deploy cache (regenerated on every deploy)
 .firebase/
 
+# Auto-generated per build by scripts/write-version.mjs (postinstall + deploy:prod)
+src/environments/version.ts
+
 # Logs
 *.log
 npm-debug.log*

@@ -16,6 +16,7 @@ import * as SentryAngular from '@sentry/angular';
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
+import { APP_VERSION } from './environments/version';
 
 registerLocaleData(localeNl);
 
@@ -27,6 +28,7 @@ if (environment.sentry.dsn) {
   Sentry.init({
     dsn: environment.sentry.dsn,
     environment: environment.sentry.environment,
+    release: APP_VERSION,
     integrations: [SentryAngular.browserTracingIntegration()],
     tracesSampleRate: environment.sentry.tracesSampleRate,
     tracePropagationTargets: [
