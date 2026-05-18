@@ -28,6 +28,12 @@ export class AppComponent implements OnInit {
       this.posthog.init(environment.posthog.key, {
         api_host: environment.posthog.host,
         capture_exceptions: true,
+        session_recording: {
+          maskAllInputs: true,
+          maskTextSelector: '[data-private]',
+        },
+        disable_session_recording: false,
+        autocapture: true,
       });
     }
     this.shoppingList.loadItems().subscribe();
