@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonSearchbar, IonList, IonItem, IonLabel, IonBadge,
-  IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton
+  IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton, IonButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { heartOutline, heart, searchOutline } from 'ionicons/icons';
@@ -24,7 +24,7 @@ interface Brand {
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent,
     IonSearchbar, IonList, IonItem, IonLabel, IonBadge,
-    IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton
+    IonSpinner, IonIcon, IonChip, IonButtons, IonBackButton, IonButton
   ],
   template: `
     <ion-header>
@@ -54,7 +54,15 @@ interface Brand {
           <ion-list>
             @for (brand of favoriteBrands(); track brand.name) {
               <ion-item (click)="searchBrand(brand.name)" [detail]="true">
-                <ion-icon name="heart" slot="start" color="danger" (click)="toggleFavorite(brand.name, $event)"></ion-icon>
+                <ion-button
+                  slot="start"
+                  fill="clear"
+                  class="fav-btn fav-btn--on"
+                  (click)="toggleFavorite(brand.name, $event)"
+                  [attr.aria-label]="'Verwijder ' + brand.name + ' uit favorieten'"
+                >
+                  <ion-icon name="heart" slot="icon-only"></ion-icon>
+                </ion-button>
                 <ion-label>
                   <h2>{{ brand.name }}</h2>
                   <p>{{ brand.retailerCount }} winkels</p>
@@ -71,12 +79,19 @@ interface Brand {
         <ion-list>
           @for (brand of filteredBrands(); track brand.name) {
             <ion-item (click)="searchBrand(brand.name)" [detail]="true">
-              <ion-icon
-                [name]="isFavorite(brand.name) ? 'heart' : 'heart-outline'"
+              <ion-button
                 slot="start"
-                [color]="isFavorite(brand.name) ? 'danger' : 'medium'"
+                fill="clear"
+                class="fav-btn"
+                [class.fav-btn--on]="isFavorite(brand.name)"
                 (click)="toggleFavorite(brand.name, $event)"
-              ></ion-icon>
+                [attr.aria-label]="(isFavorite(brand.name) ? 'Verwijder ' : 'Voeg ') + brand.name + (isFavorite(brand.name) ? ' uit favorieten' : ' toe aan favorieten')"
+              >
+                <ion-icon
+                  [name]="isFavorite(brand.name) ? 'heart' : 'heart-outline'"
+                  slot="icon-only"
+                ></ion-icon>
+              </ion-button>
               <ion-label>
                 <h2>{{ brand.name }}</h2>
                 <p>{{ brand.retailerCount }} winkels</p>
@@ -97,27 +112,37 @@ interface Brand {
     .section-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px 4px;
-      font-weight: 600;
-      font-size: 0.85rem;
+      gap: 10px;
+      padding: 16px 16px 6px;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-weight: 400;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--ion-color-medium);
-      letter-spacing: 0.5px;
-    }
-
-    ion-item {
-      cursor: pointer;
+      color: var(--retro-ink);
+      border-bottom: 1.5px solid var(--retro-ink-hairline);
+      margin-bottom: 2px;
     }
 
     ion-item h2 {
+      font-family: 'Newsreader', Georgia, serif;
       font-weight: 600;
+      font-size: 1.05rem;
     }
 
-    ion-icon[slot="start"] {
-      cursor: pointer;
-      font-size: 1.3rem;
+    .fav-btn {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      margin: 0 4px 0 0;
+      --color: var(--retro-ink-soft);
+      --background-hover: transparent;
+      --background-activated: transparent;
+      --background-focused: transparent;
+      min-width: 44px;
+      min-height: 44px;
     }
+    .fav-btn ion-icon { font-size: 1.4rem; }
+    .fav-btn--on { --color: var(--retro-red); }
   `]
 })
 export class BrandsPage implements OnInit {
