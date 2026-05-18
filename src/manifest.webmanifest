@@ -4,8 +4,8 @@
   "description": "Vergelijk prijzen bij alle Belgische winkels",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#3880ff",
-  "theme_color": "#3880ff",
+  "background_color": "#e30613",
+  "theme_color": "#e30613",
   "lang": "nl-BE",
   "icons": [
     {
