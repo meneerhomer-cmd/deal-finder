@@ -11,12 +11,12 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 2000,
-      backgroundColor: '#3880ff',
+      backgroundColor: '#e30613',
       showSpinner: false,
     },
     StatusBar: {
       style: 'LIGHT',
-      backgroundColor: '#3880ff',
+      backgroundColor: '#e30613',
     },
     Keyboard: {
       resize: 'body',
