@@ -47,8 +47,14 @@ import { AuthService } from '../../services/auth.service';
         }
       </ion-toolbar>
       <div class="mode-toggle">
-        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="switchMode('food')">Voeding</button>
-        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="switchMode('nonfood')">Non-food</button>
+        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="switchMode('food')">
+          Voeding
+          @if (foodCount() > 0) { <span class="mode-count">{{ foodCount() }}</span> }
+        </button>
+        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="switchMode('nonfood')">
+          Non-food
+          @if (nonFoodCount() > 0) { <span class="mode-count">{{ nonFoodCount() }}</span> }
+        </button>
       </div>
     </ion-header>
 
@@ -206,6 +212,22 @@ import { AuthService } from '../../services/auth.service';
       background: var(--retro-yellow);
       color: var(--retro-ink);
       box-shadow: inset 0 -4px 0 0 var(--retro-ink);
+    }
+    .mode-count {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      background: var(--retro-ink);
+      color: var(--retro-newsprint-bright);
+      vertical-align: 1px;
+    }
+    .mode-btn.active .mode-count {
+      background: var(--retro-red, #e30613);
+      color: white;
     }
 
     .scraping-banner {
@@ -381,6 +403,9 @@ export class HomePage implements OnInit {
   private matchesMode(d: { categorySlug?: string | null }): boolean {
     return this.mode() === 'food' ? this.isFood(d) : !this.isFood(d);
   }
+
+  foodCount = computed(() => this.dealService.deals().filter(d => this.isFood(d)).length);
+  nonFoodCount = computed(() => this.dealService.deals().filter(d => !this.isFood(d)).length);
 
   filteredRetailers = computed(() => {
     const deals = this.dealService.deals();
