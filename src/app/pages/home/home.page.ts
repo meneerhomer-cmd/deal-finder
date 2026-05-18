@@ -5,13 +5,15 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonButton, IonIcon, IonBadge, IonSpinner, IonButtons, IonSearchbar
 } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowForward, timerOutline, searchOutline, bookOutline } from 'ionicons/icons';
+import { arrowForward, timerOutline, searchOutline, bookOutline, notificationsOutline, closeOutline, logInOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
 import { FOOD_SLUGS } from '../../models/deal.model';
 import { PosthogService } from '../../services/posthog.service';
 import { UserDataService } from '../../services/user-data.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -82,6 +84,26 @@ import { UserDataService } from '../../services/user-data.service';
           <ion-icon name="book-outline"></ion-icon>
           <span>Bekijk de folders van je favoriete winkels</span>
           <a routerLink="/retailers" class="folders-link">Folders <ion-icon name="arrow-forward"></ion-icon></a>
+        </div>
+      }
+
+      <!-- Sign-in CTA: anonymous-only, dismissible -->
+      @if (showSignInCta()) {
+        <div class="signin-cta">
+          <button class="signin-cta-dismiss" (click)="dismissSignInCta()" aria-label="Sluit">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+          <div class="signin-cta-icon">
+            <ion-icon name="notifications-outline"></ion-icon>
+          </div>
+          <div class="signin-cta-body">
+            <strong>Mis nooit een prijsdaling</strong>
+            <p>Volg je favoriete merken en krijg een melding zodra ze in de aanbieding zijn.</p>
+            <button class="signin-cta-btn" (click)="signIn()">
+              <ion-icon name="log-in-outline"></ion-icon>
+              Inloggen met Google
+            </button>
+          </div>
         </div>
       }
 
@@ -257,6 +279,39 @@ import { UserDataService } from '../../services/user-data.service';
     }
     .deal-carousel::-webkit-scrollbar { display: none; }
     .carousel-item { flex-shrink: 0; width: 140px; scroll-snap-align: start; }
+    .signin-cta {
+      position: relative;
+      display: flex; gap: 14px; align-items: flex-start;
+      margin: 8px 12px 16px; padding: 16px;
+      background: var(--retro-red, #e30613); color: white;
+      border: 2px solid var(--retro-ink, #1a1a1a);
+      box-shadow: 4px 4px 0 var(--retro-ink, #1a1a1a);
+    }
+    .signin-cta-dismiss {
+      position: absolute; top: 6px; right: 6px;
+      background: transparent; border: 0; color: white;
+      padding: 4px; cursor: pointer; line-height: 0;
+    }
+    .signin-cta-dismiss ion-icon { font-size: 1.3rem; }
+    .signin-cta-icon { flex-shrink: 0; }
+    .signin-cta-icon ion-icon { font-size: 2.2rem; color: var(--retro-yellow, #ffe14d); }
+    .signin-cta-body { flex: 1; min-width: 0; padding-right: 16px; }
+    .signin-cta-body strong {
+      display: block; font-family: var(--font-display, Anton), sans-serif;
+      font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .signin-cta-body p { margin: 0 0 10px; font-size: 0.85rem; line-height: 1.35; opacity: 0.95; }
+    .signin-cta-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--retro-yellow, #ffe14d); color: var(--retro-ink, #1a1a1a);
+      border: 2px solid var(--retro-ink, #1a1a1a); padding: 8px 14px;
+      font-family: var(--font-mono, 'Space Mono'), monospace; font-weight: 700;
+      text-transform: uppercase; font-size: 0.8rem; cursor: pointer;
+      box-shadow: 2px 2px 0 var(--retro-ink, #1a1a1a);
+    }
+    .signin-cta-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--retro-ink, #1a1a1a); }
+    .signin-cta-btn ion-icon { font-size: 1rem; }
   `]
 })
 export class HomePage implements OnInit {
@@ -264,11 +319,36 @@ export class HomePage implements OnInit {
   private router = inject(Router);
   private posthog = inject(PosthogService);
   private userData = inject(UserDataService);
+  private auth = inject(AuthService);
+  private toastCtrl = inject(ToastController);
 
   searchOpen = signal(false);
   mode = signal<'food' | 'nonfood'>(
     (localStorage.getItem('dealfinder-mode') as 'food' | 'nonfood') || 'food'
   );
+  private signInCtaDismissed = signal(localStorage.getItem('signin-cta-dismissed') === '1');
+
+  showSignInCta = computed(() => !this.auth.isLoggedIn() && !this.signInCtaDismissed());
+
+  async signIn() {
+    this.posthog.posthog.capture('signin_cta_tapped', { source: 'home' });
+    try {
+      await this.auth.signInWithGoogle();
+    } catch (e) {
+      const toast = await this.toastCtrl.create({
+        message: 'Inloggen mislukt. Probeer opnieuw.',
+        duration: 2000,
+        color: 'danger',
+      });
+      await toast.present();
+    }
+  }
+
+  dismissSignInCta() {
+    localStorage.setItem('signin-cta-dismissed', '1');
+    this.signInCtaDismissed.set(true);
+    this.posthog.posthog.capture('signin_cta_dismissed', { source: 'home' });
+  }
 
   private retailerLogos: Record<string, string> = {
     'lidl': 'https://cdn.jafolders.com/shops/3edf1b56-8ba7-4ae3-8a9f-91a482933067/small.png?v=63931455152',
@@ -346,7 +426,7 @@ export class HomePage implements OnInit {
   });
 
   constructor() {
-    addIcons({ arrowForward, timerOutline, searchOutline, bookOutline });
+    addIcons({ arrowForward, timerOutline, searchOutline, bookOutline, notificationsOutline, closeOutline, logInOutline });
     effect(() => localStorage.setItem('dealfinder-mode', this.mode()));
   }
 
@@ -355,6 +435,14 @@ export class HomePage implements OnInit {
   ngOnInit() {
     this.loadData();
     this.startPollingIfEmpty();
+    this.trackSignInCtaShownOnce();
+  }
+
+  private trackSignInCtaShownOnce() {
+    if (!this.showSignInCta()) return;
+    if (sessionStorage.getItem('signin-cta-shown-this-session') === '1') return;
+    sessionStorage.setItem('signin-cta-shown-this-session', '1');
+    this.posthog.posthog.capture('signin_cta_shown', { source: 'home' });
   }
 
   loadData() {
