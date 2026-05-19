@@ -536,23 +536,33 @@ export class DealDetailPage implements OnInit, OnDestroy {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     const existing = this.dealService.deals().find(d => d.id === id);
     if (existing) {
-      this.deal = existing;
-      this.loadPriceHistory(id);
-      this.loadCrossRetailerMatches(id);
-      this.trackDealViewed(existing);
+      this.setDeal(existing, id);
     } else {
       this.dealService.loadDeals().subscribe(deals => {
-        this.deal = deals.find(d => d.id === id);
-        if (this.deal) {
-          this.loadPriceHistory(id);
-          this.loadCrossRetailerMatches(id);
-          this.trackDealViewed(this.deal);
+        const found = deals.find(d => d.id === id);
+        if (found) {
+          this.setDeal(found, id);
+        } else {
+          // Deal not in the (discount-filtered) list — fetch it directly.
+          // Covers deals excluded from the default list: cashback deals
+          // (discountPercentage 0), expired deals, and deep-linked/shared URLs.
+          this.http.get<Deal>(`${environment.apiUrl}/deals/${id}`).subscribe({
+            next: d => this.setDeal(d, id),
+            error: () => {}
+          });
         }
       });
     }
     if (this.shoppingList.items().length === 0) {
       this.shoppingList.loadItems().subscribe();
     }
+  }
+
+  private setDeal(deal: Deal, id: number) {
+    this.deal = deal;
+    this.loadPriceHistory(id);
+    this.loadCrossRetailerMatches(id);
+    this.trackDealViewed(deal);
   }
 
   priceTrend = computed<'up' | 'down' | null>(() => {
