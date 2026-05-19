@@ -166,28 +166,13 @@ interface PriceHistoryEntry {
             </div>
           }
 
-          @if (priceHistory().length > 1) {
-            <div class="info-section">
-              <h3><ion-icon name="trending-down"></ion-icon> Prijsgeschiedenis</h3>
-              <div class="info-grid">
-                @for (entry of priceHistory(); track entry.id) {
-                  <div class="info-row">
-                    <span class="info-label">{{ entry.recordedAt | date:'d MMM yyyy' }}</span>
-                    <span class="info-value">
-                      €{{ entry.price | number:'1.2-2' }}
-                      @if (entry.discountPercentage) {
-                        <span class="history-pct">-{{ entry.discountPercentage }}%</span>
-                      }
-                    </span>
-                  </div>
-                }
-              </div>
-              @if (priceTrend()) {
-                <div class="trend-pill" [class]="priceTrend()">
-                  <ion-icon [name]="priceTrend() === 'down' ? 'trending-down' : 'trending-up'"></ion-icon>
-                  {{ priceTrend() === 'down' ? 'Prijs gedaald' : 'Prijs gestegen' }}
-                </div>
-              }
+          @if (priceSignal(); as sig) {
+            <div class="price-signal" [class]="sig.direction">
+              <ion-icon [name]="sig.direction === 'down' ? 'trending-down' : 'trending-up'"></ion-icon>
+              <span>
+                €{{ sig.amount | number:'1.2-2' }} {{ sig.direction === 'down' ? 'gedaald' : 'gestegen' }}
+                sinds {{ sig.sinceDate | date:'d MMM' }}
+              </span>
             </div>
           }
         </div>
@@ -480,28 +465,20 @@ interface PriceHistoryEntry {
       color: var(--retro-ink);
     }
     .info-value.loyalty { color: var(--retro-red); }
-    .history-pct {
-      color: var(--retro-red);
-      margin-left: 8px;
-      font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      font-size: 0.78rem;
-    }
 
-    .trend-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      margin-top: 12px;
-      padding: 4px 10px;
-      border-radius: 0;
-      border: 1.5px solid var(--retro-ink);
+    .price-signal {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin: 4px 16px 16px;
+      padding: 8px 12px;
+      border: 2px solid var(--retro-ink);
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
       font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
     }
-    .trend-pill.down { background: var(--retro-yellow); color: var(--retro-ink); }
-    .trend-pill.up { background: var(--retro-red); color: white; }
+    .price-signal ion-icon { font-size: 1.1rem; }
+    .price-signal.down { background: var(--retro-yellow); color: var(--retro-ink); }
+    .price-signal.up { background: var(--retro-red); color: white; }
   `]
 })
 export class DealDetailPage implements OnInit, OnDestroy {
@@ -565,14 +542,18 @@ export class DealDetailPage implements OnInit, OnDestroy {
     this.trackDealViewed(deal);
   }
 
-  priceTrend = computed<'up' | 'down' | null>(() => {
-    const history = this.priceHistory();
-    if (history.length < 2) return null;
-    const oldest = history[history.length - 1].price;
-    const newest = history[0].price;
-    if (newest < oldest) return 'down';
-    if (newest > oldest) return 'up';
-    return null;
+  // Single price-movement signal vs the oldest recorded price. Returns null
+  // (section hidden) when stable or when there's no valid history. €0 entries
+  // are filtered out — they're cashback/extraction artifacts, not real past prices.
+  priceSignal = computed<{ direction: 'down' | 'up'; amount: number; sinceDate: string } | null>(() => {
+    const current = this.deal?.currentPrice;
+    if (current == null) return null;
+    const valid = this.priceHistory().filter(h => h.price != null && h.price > 0);
+    if (valid.length === 0) return null;
+    const oldest = valid[valid.length - 1];
+    const diff = oldest.price - current;
+    if (Math.abs(diff) < 0.01) return null;
+    return { direction: diff > 0 ? 'down' : 'up', amount: Math.abs(diff), sinceDate: oldest.recordedAt };
   });
 
   getCategoryName(slug: string): string {

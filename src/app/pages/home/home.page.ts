@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -46,16 +46,6 @@ import { AuthService } from '../../services/auth.service';
           </ion-buttons>
         }
       </ion-toolbar>
-      <div class="mode-toggle">
-        <button class="mode-btn" [class.active]="mode() === 'food'" (click)="switchMode('food')">
-          Voeding
-          @if (foodCount() > 0) { <span class="mode-count">{{ foodCount() }}</span> }
-        </button>
-        <button class="mode-btn" [class.active]="mode() === 'nonfood'" (click)="switchMode('nonfood')">
-          Non-food
-          @if (nonFoodCount() > 0) { <span class="mode-count">{{ nonFoodCount() }}</span> }
-        </button>
-      </div>
     </ion-header>
 
     <ion-content>
@@ -132,7 +122,7 @@ import { AuthService } from '../../services/auth.service';
       @if (topDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>{{ mode() === 'food' ? 'Beste voedingsdeals' : mode() === 'nonfood' ? 'Beste non-food' : 'Beste deals' }}</h2>
+            <h2>Beste voedingsdeals</h2>
             <a routerLink="/deals" class="see-all">Alles <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
@@ -183,51 +173,6 @@ import { AuthService } from '../../services/auth.service';
       --placeholder-color: rgba(255,255,255,0.7);
       --icon-color: rgba(255,255,255,0.8);
       --cancel-button-color: white;
-    }
-
-    .mode-toggle {
-      display: flex;
-      background: var(--retro-newsprint);
-      padding: 8px 12px 10px;
-      gap: 0;
-      border-bottom: 2px solid var(--retro-ink);
-    }
-    .mode-btn {
-      flex: 1;
-      min-height: 44px;
-      padding: 11px 0 10px;
-      border: 2px solid var(--retro-ink);
-      font-family: 'Anton', 'Archivo Narrow', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      background: var(--retro-newsprint-bright);
-      color: var(--retro-ink);
-      transition: background-color 0.1s ease;
-    }
-    .mode-btn + .mode-btn { border-left-width: 0; }
-    .mode-btn.active {
-      background: var(--retro-yellow);
-      color: var(--retro-ink);
-      box-shadow: inset 0 -4px 0 0 var(--retro-ink);
-    }
-    .mode-count {
-      display: inline-block;
-      margin-left: 6px;
-      padding: 1px 6px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0;
-      background: var(--retro-ink);
-      color: var(--retro-newsprint-bright);
-      vertical-align: 1px;
-    }
-    .mode-btn.active .mode-count {
-      background: var(--retro-red, #e30613);
-      color: white;
     }
 
     .scraping-banner {
@@ -346,9 +291,6 @@ export class HomePage implements OnInit {
   private toastCtrl = inject(ToastController);
 
   searchOpen = signal(false);
-  mode = signal<'food' | 'nonfood'>(
-    (localStorage.getItem('dealfinder-mode') as 'food' | 'nonfood') || 'food'
-  );
   private signInCtaDismissed = signal(localStorage.getItem('signin-cta-dismissed') === '1');
 
   // Show the CTA for both anonymous and signed-out users; hide only once
@@ -403,18 +345,11 @@ export class HomePage implements OnInit {
     return !!d.categorySlug && FOOD_SLUGS.has(d.categorySlug);
   }
 
-  private matchesMode(d: { categorySlug?: string | null }): boolean {
-    return this.mode() === 'food' ? this.isFood(d) : !this.isFood(d);
-  }
-
-  foodCount = computed(() => this.dealService.deals().filter(d => this.isFood(d)).length);
-  nonFoodCount = computed(() => this.dealService.deals().filter(d => !this.isFood(d)).length);
-
   filteredRetailers = computed(() => {
     const deals = this.dealService.deals();
     const counts = new Map<string, number>();
     for (const d of deals) {
-      if (this.matchesMode(d)) {
+      if (this.isFood(d)) {
         counts.set(d.retailerSlug, (counts.get(d.retailerSlug) || 0) + 1);
       }
     }
@@ -426,7 +361,7 @@ export class HomePage implements OnInit {
 
   topDeals = computed(() =>
     [...this.dealService.deals()]
-      .filter(d => this.matchesMode(d))
+      .filter(d => this.isFood(d))
       .sort((a, b) => b.discountPercentage - a.discountPercentage)
       .slice(0, 10)
   );
@@ -434,13 +369,13 @@ export class HomePage implements OnInit {
   recentDeals = computed(() => {
     const topIds = new Set(this.topDeals().map(d => d.id));
     return [...this.dealService.deals()]
-      .filter(d => this.matchesMode(d) && !topIds.has(d.id))
+      .filter(d => this.isFood(d) && !topIds.has(d.id))
       .slice(0, 8);
   });
 
   expiringDeals = computed(() =>
     this.dealService.deals()
-      .filter(d => d.expiringSoon && this.matchesMode(d))
+      .filter(d => d.expiringSoon && this.isFood(d))
       .sort((a, b) => (a.validUntil ?? '').localeCompare(b.validUntil ?? ''))
       .slice(0, 6)
   );
@@ -456,7 +391,6 @@ export class HomePage implements OnInit {
 
   constructor() {
     addIcons({ arrowForward, timerOutline, searchOutline, bookOutline, notificationsOutline, closeOutline, logInOutline });
-    effect(() => localStorage.setItem('dealfinder-mode', this.mode()));
   }
 
   private pollInterval: any;
@@ -492,12 +426,6 @@ export class HomePage implements OnInit {
   doRefresh(event: any) {
     this.dealService.loadDeals().subscribe({ complete: () => event.target.complete() });
     this.dealService.loadRetailers().subscribe();
-  }
-
-  switchMode(m: 'food' | 'nonfood') {
-    if (this.mode() === m) return;
-    this.mode.set(m);
-    this.posthog.posthog.capture('home_mode_switched', { mode: m });
   }
 
   onSearch(event: CustomEvent) {
