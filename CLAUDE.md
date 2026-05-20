@@ -25,7 +25,7 @@ ionic build --prod
 | Target | Command | Notes |
 |--------|---------|-------|
 | **Web (prod)** | `npm run deploy:prod` | Builds prod + Sentry source maps + `firebase deploy` → https://promo-finder-be.web.app |
-| **Web + App together** | `npm run deploy:prod:ota` | `deploy:prod` **+** Capgo OTA bundle upload. **Use this** so web and the native app stay in sync. |
+| **Web + App together** | `nvm use 22 && SENTRY_AUTH_TOKEN=… npm run deploy:prod:ota` | `deploy:prod` **+** Capgo OTA bundle upload. **Use this** so web and the native app stay in sync. Must run under node 22 (firebase-tools + Capgo CLI both installed there). |
 | **OTA only** | `npm run capgo:upload` | Uploads current `www/browser` to the Capgo `production` channel |
 
 **Before any OTA release:** bump `version` in `package.json` — each OTA bundle needs a unique version or the upload is rejected.
