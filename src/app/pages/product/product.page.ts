@@ -13,6 +13,7 @@ import { environment } from '@env/environment';
 import { Deal, Product, ProductResponse, getCategoryEmoji } from '../../models/deal.model';
 import { CategoryAttributesComponent } from '../../components/category-attributes/category-attributes.component';
 import { DealService } from '../../services/deal.service';
+import { HapticsService } from '../../services/haptics.service';
 
 @Component({
   selector: 'app-product',
@@ -25,7 +26,7 @@ import { DealService } from '../../services/deal.service';
     <ion-header>
       <ion-toolbar color="primary">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/home"></ion-back-button>
+          <ion-back-button defaultHref="/home" text="Terug"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ product()?.canonicalName || 'Product' }}</ion-title>
       </ion-toolbar>
@@ -43,10 +44,13 @@ import { DealService } from '../../services/deal.service';
         </div>
       } @else {
         <div class="hero">
-          @if (product()!.canonicalImageUrl && !imageError) {
-            <img [src]="product()!.canonicalImageUrl" [alt]="product()!.canonicalName" class="hero-image" (error)="imageError = true" />
+          @if (heroImage() && !imageError) {
+            <img [src]="heroImage()" [alt]="product()!.canonicalName" class="hero-image" (error)="imageError = true" />
           } @else {
-            <span class="hero-emoji">{{ getCategoryEmoji(product()!.category) }}</span>
+            <div class="hero-placeholder">
+              <span class="hero-emoji">{{ getCategoryEmoji(product()!.category) }}</span>
+              <span class="hero-noimg">Geen foto beschikbaar</span>
+            </div>
           }
         </div>
 
@@ -77,7 +81,7 @@ import { DealService } from '../../services/deal.service';
           <div class="retailer-list">
             @for (d of sortedDeals(); track d.id; let i = $index) {
               <div class="retailer-row">
-                <a [routerLink]="['/deal', d.id]" class="retailer-card" [class.cheapest]="i === 0 && sortedDeals().length > 1">
+                <a [routerLink]="['/deal', d.id]" class="retailer-card" [class.cheapest]="i === 0 && sortedDeals().length > 1" (click)="haptics.light()">
                   <div class="rc-top">
                     <span class="rc-retailer">{{ d.retailerName }}</span>
                     @if (i === 0 && sortedDeals().length > 1) {
@@ -128,7 +132,13 @@ import { DealService } from '../../services/deal.service';
       min-height: 220px; padding: 16px;
     }
     .hero-image { max-height: 240px; max-width: 100%; object-fit: contain; }
-    .hero-emoji { font-size: 96px; }
+    .hero-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .hero-emoji { font-size: 84px; opacity: 0.55; }
+    .hero-noimg {
+      font-family: 'Space Mono', monospace; font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--retro-ink-soft);
+    }
 
     .body { padding: 16px; font-family: 'Archivo Narrow', system-ui, sans-serif; }
     .brand {
@@ -171,6 +181,8 @@ import { DealService } from '../../services/deal.service';
       padding: 10px 12px;
     }
     .retailer-card.cheapest { box-shadow: 3px 3px 0 0 var(--retro-red); border-color: var(--retro-red); }
+    .retailer-card { transition: transform 0.05s ease; }
+    .retailer-card:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 0 var(--retro-ink); }
     .rc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
     .rc-retailer { font-family: 'Anton', sans-serif; font-size: 1.05rem; letter-spacing: 0.02em; }
     .rc-badge {
@@ -190,12 +202,21 @@ export class ProductPage implements OnInit {
   private http = inject(HttpClient);
   private dealService = inject(DealService);
   private toastCtrl = inject(ToastController);
+  haptics = inject(HapticsService);
 
   product = signal<Product | null>(null);
   deals = signal<Deal[]>([]);
   loading = signal(true);
   imageError = false;
   getCategoryEmoji = getCategoryEmoji;
+
+  // Hero photo: prefer the canonical image, but if it's missing fall back to
+  // ANY retailer deal in this group that has a flyer crop — beats a bare emoji.
+  heroImage = computed<string | null>(() => {
+    const canonical = this.product()?.canonicalImageUrl;
+    if (canonical) return canonical;
+    return this.deals().find(d => !!d.imageUrl)?.imageUrl ?? null;
+  });
 
   sortedDeals = computed(() =>
     [...this.deals()].sort((a, b) => (a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity))
