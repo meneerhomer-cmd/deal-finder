@@ -1,6 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { ShoppingListService } from './services/shopping-list.service';
 import { AlertService } from './services/alert.service';
 import { PosthogService } from './services/posthog.service';
@@ -39,6 +41,15 @@ export class AppComponent implements OnInit {
     this.shoppingList.loadItems().subscribe();
     this.alertService.checkForAlerts();
     this.handleAppUpdates();
+    this.confirmCapgoBundle();
+  }
+
+  // Tell Capgo this OTA bundle loaded successfully. Without this the plugin
+  // assumes the update crashed and rolls back to the previous bundle. No-op on
+  // web (the Capgo runtime only exists in the native shell).
+  private confirmCapgoBundle() {
+    if (!Capacitor.isNativePlatform()) return;
+    CapacitorUpdater.notifyAppReady().catch(() => {});
   }
 
   private handleAppUpdates() {

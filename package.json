@@ -15,7 +15,9 @@
     "postinstall": "node scripts/write-version.mjs",
     "write-version": "node scripts/write-version.mjs",
     "sentry:upload": "SENTRY_RELEASE=\"deal-finder-app@$(git rev-parse --short HEAD)\" sentry-cli sourcemaps inject --org honeystly --project capacitor ./www/browser && SENTRY_RELEASE=\"deal-finder-app@$(git rev-parse --short HEAD)\" sentry-cli sourcemaps upload --org honeystly --project capacitor ./www/browser",
-    "deploy:prod": "npm run write-version && ng build --configuration=production && npm run sentry:upload && find ./www/browser -name \"*.map\" -delete && firebase deploy --only hosting"
+    "deploy:prod": "npm run write-version && ng build --configuration=production && npm run sentry:upload && find ./www/browser -name \"*.map\" -delete && firebase deploy --only hosting",
+    "capgo:upload": "npx @capgo/cli@latest bundle upload --channel production",
+    "deploy:prod:ota": "npm run deploy:prod && npm run capgo:upload"
   },
   "dependencies": {
     "@angular/animations": "^17.3.0",
@@ -37,6 +39,7 @@
     "@capacitor/keyboard": "^8.0.2",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@capgo/capacitor-updater": "^8.46.1",
     "@ionic/angular": "^7.8.0",
     "@sentry/angular": "^10.43.0",
     "@sentry/capacitor": "^4.0.0",
