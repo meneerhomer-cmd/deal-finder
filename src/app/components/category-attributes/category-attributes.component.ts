@@ -53,7 +53,10 @@ const CONFIG: Record<string, AttrSpec[]> = {
   huishouden: [
     { key: 'washCount', label: 'Wasbeurten', format: num() },
     { key: 'concentrationFactor', label: 'Concentratie', format: (v) => (v ? `${v}×` : null) },
-    { key: 'ecoLabel', label: 'Ecolabel', format: map(ECO_NL) },
+    { key: 'ecoLabel', label: 'Ecolabel', format: (v) => {
+        const s = String(v ?? '');
+        return (!s || s === 'none' || s === 'null') ? null : ((ECO_NL as Record<string, string>)[s] ?? s);
+      } },
     { key: 'fragranceFree', label: 'Parfumvrij', format: yesOnly },
   ],
   baby: [

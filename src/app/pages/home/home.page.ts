@@ -87,7 +87,7 @@ import { HapticsService } from '../../services/haptics.service';
       <!-- First-launch skeletons (no cached data yet) — keeps the open instant -->
       @if (dealService.loading() && topDeals().length === 0) {
         <div class="section">
-          <div class="section-header"><h2>Beste voedingsdeals</h2></div>
+          <div class="section-header"><h2>Beste deals</h2></div>
           <div class="deal-carousel">
             @for (s of [1,2,3,4]; track s) {
               <div class="carousel-item"><div class="skeleton-card"></div></div>
@@ -101,7 +101,11 @@ import { HapticsService } from '../../services/haptics.service';
         <div class="retailer-scroll">
           @for (r of filteredRetailers(); track r.slug) {
             <a [routerLink]="['/retailer', r.slug]" class="retailer-bubble">
-              <img [src]="getRetailerLogo(r.slug)" [alt]="r.name" class="retailer-logo" />
+              @if (getRetailerLogo(r.slug)) {
+                <img [src]="getRetailerLogo(r.slug)" [alt]="r.name" class="retailer-logo" />
+              } @else {
+                <span class="retailer-logo retailer-logo--mono" [attr.aria-label]="r.name">{{ monogram(r.name) }}</span>
+              }
             </a>
           }
         </div>
@@ -155,7 +159,7 @@ import { HapticsService } from '../../services/haptics.service';
       @if (topDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>Beste voedingsdeals</h2>
+            <h2>Beste deals</h2>
             <a routerLink="/deals" class="see-all">Alles <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
@@ -279,6 +283,14 @@ import { HapticsService } from '../../services/haptics.service';
       padding: 5px;
       border: 2px solid var(--retro-ink);
       box-shadow: 2px 2px 0 0 var(--retro-ink);
+    }
+    .retailer-logo--mono {
+      display: flex; align-items: center; justify-content: center;
+      box-sizing: border-box;
+      font-family: 'Anton', sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      color: var(--retro-ink);
     }
 
     .folders-bar {
@@ -434,6 +446,11 @@ export class HomePage implements OnInit {
 
   getRetailerLogo(slug: string): string {
     return this.retailerLogos[slug] || '';
+  }
+
+  /** Letter monogram fallback when a retailer has no logo (e.g. Colruyt) — beats a broken image. */
+  monogram(name: string): string {
+    return (name || '?').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || '?';
   }
 
   private isFood(d: Deal): boolean {
