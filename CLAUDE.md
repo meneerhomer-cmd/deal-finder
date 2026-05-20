@@ -20,6 +20,25 @@ ng serve          # Alternative
 ionic build --prod
 ```
 
+## Release & Deploy
+
+| Target | Command | Notes |
+|--------|---------|-------|
+| **Web (prod)** | `npm run deploy:prod` | Builds prod + Sentry source maps + `firebase deploy` → https://promo-finder-be.web.app |
+| **Web + App together** | `npm run deploy:prod:ota` | `deploy:prod` **+** Capgo OTA bundle upload. **Use this** so web and the native app stay in sync. |
+| **OTA only** | `npm run capgo:upload` | Uploads current `www/browser` to the Capgo `production` channel |
+
+**Before any OTA release:** bump `version` in `package.json` — each OTA bundle needs a unique version or the upload is rejected.
+
+### Mobile (Capacitor + Capgo OTA)
+- **Capacitor 8** wraps the Angular build. Native projects in `ios/` + `android/` (`appId: be.dealfinder.app`). Capacitor 8 uses Swift Package Manager (no CocoaPods).
+- ⚠️ **Every `cap`/SDK/Capgo CLI command needs Node ≥ 22** — the repo's default node is 21, so prefix with `nvm use 22` (e.g. `. "$HOME/.nvm/nvm.sh" && nvm use 22 && npx cap sync android`).
+- **Android build**: `npx cap open android` (needs Android Studio); APK at `android/app/build/outputs/apk/debug/app-debug.apk`. SDK installs to `~/Library/Android/sdk`.
+- **Live updates (Capgo)**: `@capgo/capacitor-updater`, `autoUpdate: true`, `notifyAppReady()` in `app.component` (required or bundles roll back). App `be.dealfinder.app` registered; `production` channel is default + self-assign + android + emulator-allowed. CLI auth in `~/.capgo`.
+  - **iOS OTA not enabled yet** — run `npx @capgo/cli channel set production --ios` + ship an iOS build (needs full Xcode; only Command Line Tools installed).
+  - **Real devices need the plugin-APK installed once** (`adb install -r <apk>`); after that every release is OTA (no APK rebuild).
+- Native splash/status-bar themed retro-red; haptics via `@capacitor/haptics` (`HapticsService`) — no-op on web.
+
 ## Architecture
 
 ```
