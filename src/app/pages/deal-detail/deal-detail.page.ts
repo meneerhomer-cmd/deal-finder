@@ -9,11 +9,11 @@ import {
 } from '@ionic/angular/standalone';
 import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, checkmarkCircle, trophyOutline } from 'ionicons/icons';
+import { arrowBack, arrowForward, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, checkmarkCircle, trophyOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
-import { Deal, getCategoryEmoji, getDiscountClass, CATEGORIES } from '../../models/deal.model';
+import { Deal, ProductResponse, getCategoryEmoji, getDiscountClass, CATEGORIES } from '../../models/deal.model';
 import { PosthogService } from '../../services/posthog.service';
 
 interface PriceHistoryEntry {
@@ -117,27 +117,18 @@ interface PriceHistoryEntry {
             </ion-button>
           </div>
 
-          @if (matches().length > 0) {
-            <section class="cross-retailer-panel">
-              <h3 class="section-title">Zelfde merk bij andere winkels</h3>
-              @if (isCurrentDealCheapest()) {
-                <p class="cheapest-note">
-                  <ion-icon name="trophy-outline"></ion-icon>
-                  Je zit hier al goedkoopst.
-                </p>
-              }
-              <div class="match-list">
-                @for (m of matches(); track m.id) {
-                  <a [routerLink]="['/deal', m.id]" class="match-row">
-                    <span class="match-retailer">{{ m.retailerName }}</span>
-                    <span class="match-price">€{{ m.currentPrice | number:'1.2-2' }}</span>
-                    @if (m.discountPercentage > 0) {
-                      <span class="match-discount">−{{ m.discountPercentage }}%</span>
-                    }
-                  </a>
+          @if (crossRetailer(); as cr) {
+            <a class="cross-retailer-banner" [routerLink]="['/product', cr.fingerprint]">
+              <ion-icon name="trophy-outline"></ion-icon>
+              <span class="crb-text">
+                @if (cr.thisIsCheapest) {
+                  <strong>Jij zit hier goedkoopst</strong> — vergelijk {{ cr.retailerCount }} winkels
+                } @else {
+                  <strong>Goedkoper elders</strong> — €{{ cr.cheapestPrice | number:'1.2-2' }} bij {{ cr.cheapestRetailer }}, bespaar €{{ cr.saving | number:'1.2-2' }}
                 }
-              </div>
-            </section>
+              </span>
+              <ion-icon name="arrow-forward" class="crb-arrow"></ion-icon>
+            </a>
           }
 
           @if (deal.quantity || deal.unitPrice || deal.conditions || deal.loyaltyCard || deal.validUntil || deal.categorySlug) {
@@ -355,71 +346,24 @@ interface PriceHistoryEntry {
     }
     .action-buttons ion-button { flex: 1; --min-height: 44px; min-height: 44px; }
 
-    .cross-retailer-panel {
-      background: var(--retro-newsprint-bright);
-      border: 2px solid var(--retro-ink);
-      padding: 14px 16px;
+    .cross-retailer-banner {
+      display: flex; align-items: center; gap: 10px;
       margin-bottom: 14px;
-      box-shadow: 3px 3px 0 0 var(--retro-ink);
-    }
-    .cross-retailer-panel .section-title {
-      margin: 0 0 10px;
-      font-family: 'Anton', 'Archivo Narrow', sans-serif;
-      font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--retro-ink);
-    }
-    .cheapest-note {
-      display: inline-flex; align-items: center; gap: 6px;
-      margin: 0 0 10px;
-      padding: 4px 10px 3px;
+      padding: 12px 14px;
       background: var(--retro-yellow);
-      border: 1.5px solid var(--retro-ink);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--retro-ink);
-    }
-    .cheapest-note ion-icon { font-size: 0.95rem; }
-    .match-list { display: flex; flex-direction: column; gap: 6px; }
-    .match-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--retro-newsprint, #faf7f0);
       border: 2px solid var(--retro-ink);
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
       text-decoration: none;
       color: var(--retro-ink);
+      font-family: 'Archivo Narrow', sans-serif;
+      font-size: 0.95rem;
       min-height: 44px;
-      box-shadow: 2px 2px 0 0 var(--retro-ink);
       transition: transform 0.05s ease;
     }
-    .match-row:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 0 var(--retro-ink); }
-    .match-retailer {
-      font-family: 'Anton', 'Archivo Narrow', sans-serif;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .match-price {
-      font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      font-size: 1rem;
-    }
-    .match-discount {
-      font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      font-size: 0.75rem;
-      padding: 2px 6px 1px;
-      background: var(--retro-red, #e30613);
-      color: white;
-      border: 1.5px solid var(--retro-ink);
-    }
+    .cross-retailer-banner:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 0 var(--retro-ink); }
+    .cross-retailer-banner ion-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .cross-retailer-banner .crb-text { flex: 1; }
+    .cross-retailer-banner .crb-arrow { font-size: 1.1rem; }
 
     .info-section {
       background: var(--retro-newsprint-bright);
@@ -493,20 +437,36 @@ export class DealDetailPage implements OnInit, OnDestroy {
   deal: Deal | undefined;
   imageError = false;
   priceHistory = signal<PriceHistoryEntry[]>([]);
-  matches = signal<Deal[]>([]);
+  productSummary = signal<ProductResponse | null>(null);
   private static JSONLD_ID = 'deal-jsonld';
 
-  isCurrentDealCheapest = computed(() => {
-    const ms = this.matches();
-    if (!ms.length || this.deal?.currentPrice == null) return false;
-    return ms.every(m => m.currentPrice == null || m.currentPrice >= this.deal!.currentPrice!);
+  // Fingerprint-based cross-retailer summary for the deal-detail banner.
+  // Null (banner hidden) when the deal has no fingerprint or the product is
+  // only at this one retailer.
+  crossRetailer = computed(() => {
+    const fp = this.deal?.fingerprint;
+    const summary = this.productSummary();
+    const thisPrice = this.deal?.currentPrice;
+    if (!fp || !summary || thisPrice == null) return null;
+    if (summary.product.retailerCount < 2) return null;
+    const ds = summary.deals.filter(d => d.currentPrice != null);
+    if (ds.length < 2) return null;
+    const cheapest = ds.reduce((a, b) => (a.currentPrice! <= b.currentPrice! ? a : b));
+    return {
+      fingerprint: fp,
+      retailerCount: summary.product.retailerCount,
+      cheapestPrice: cheapest.currentPrice!,
+      cheapestRetailer: cheapest.retailerName,
+      saving: Math.max(0, thisPrice - cheapest.currentPrice!),
+      thisIsCheapest: thisPrice <= cheapest.currentPrice!,
+    };
   });
 
   getCategoryEmoji = getCategoryEmoji;
   getDiscountClass = getDiscountClass;
 
   constructor() {
-    addIcons({ arrowBack, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, trophyOutline });
+    addIcons({ arrowBack, arrowForward, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, trophyOutline });
   }
 
   ngOnInit() {
@@ -538,7 +498,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
   private setDeal(deal: Deal, id: number) {
     this.deal = deal;
     this.loadPriceHistory(id);
-    this.loadCrossRetailerMatches(id);
+    this.loadProductSummary(deal);
     this.trackDealViewed(deal);
   }
 
@@ -678,11 +638,13 @@ export class DealDetailPage implements OnInit, OnDestroy {
       });
   }
 
-  private loadCrossRetailerMatches(dealId: number) {
-    this.http.get<Deal[]>(`${environment.apiUrl}/deals/${dealId}/cross-retailer-matches`)
+  private loadProductSummary(deal: Deal) {
+    this.productSummary.set(null);
+    if (!deal.fingerprint) return;
+    this.http.get<ProductResponse>(`${environment.apiUrl}/products/${encodeURIComponent(deal.fingerprint)}?lang=nl`)
       .subscribe({
-        next: ms => this.matches.set(ms),
-        error: () => {} // silently hide section on error
+        next: r => this.productSummary.set(r),
+        error: () => {} // silently hide banner on error
       });
   }
 }

@@ -28,6 +28,27 @@ export interface Deal {
   expiringSoon: boolean;
   lowestPriceSeen: number | null;
   atLowestPrice: boolean;
+  fingerprint?: string | null;
+}
+
+export interface Product {
+  fingerprint: string;
+  category: string | null;
+  brand: string | null;
+  productLine: string | null;
+  style: string | null;
+  variantFamily: string | null;
+  canonicalName: string;
+  canonicalImageUrl: string | null;
+  categoryAttributesJson: string | null;
+  dealCount: number;
+  retailerCount: number;
+  minCurrentPrice: number | null;
+}
+
+export interface ProductResponse {
+  product: Product;
+  deals: Deal[];
 }
 
 export interface Retailer {

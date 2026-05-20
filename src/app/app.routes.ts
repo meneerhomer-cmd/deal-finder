@@ -41,6 +41,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/deal-detail/deal-detail.page').then(m => m.DealDetailPage),
   },
   {
+    path: 'product/:fingerprint',
+    loadComponent: () => import('./pages/product/product.page').then(m => m.ProductPage),
+  },
+  {
     path: 'shopping-list',
     loadComponent: () => import('./pages/shopping-list/shopping-list.page').then(m => m.ShoppingListPage),
   },
