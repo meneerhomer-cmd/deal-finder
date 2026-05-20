@@ -6,16 +6,19 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
   IonIcon, IonSpinner
 } from '@ionic/angular/standalone';
+import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowForward, storefront, pricetagOutline, trophyOutline } from 'ionicons/icons';
+import { arrowForward, storefront, pricetagOutline, trophyOutline, flagOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { Deal, Product, ProductResponse, getCategoryEmoji } from '../../models/deal.model';
+import { CategoryAttributesComponent } from '../../components/category-attributes/category-attributes.component';
+import { DealService } from '../../services/deal.service';
 
 @Component({
   selector: 'app-product',
   standalone: true,
   imports: [
-    DecimalPipe, RouterLink,
+    DecimalPipe, RouterLink, CategoryAttributesComponent,
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonIcon, IonSpinner
   ],
   template: `
@@ -64,29 +67,42 @@ import { Deal, Product, ProductResponse, getCategoryEmoji } from '../../models/d
             </div>
           }
 
-          <!-- TODO #3-followup: per-category attribute renderer (item #5) slots here -->
-          <!-- TODO #3-followup: unified price-history chart + Volg-dit-product button -->
+          @if (product()!.categoryAttributesJson) {
+            <app-category-attributes
+              [category]="product()!.category"
+              [attributesJson]="product()!.categoryAttributesJson">
+            </app-category-attributes>
+          }
 
           <div class="retailer-list">
             @for (d of sortedDeals(); track d.id; let i = $index) {
-              <a [routerLink]="['/deal', d.id]" class="retailer-card" [class.cheapest]="i === 0 && sortedDeals().length > 1">
-                <div class="rc-top">
-                  <span class="rc-retailer">{{ d.retailerName }}</span>
-                  @if (i === 0 && sortedDeals().length > 1) {
-                    <span class="rc-badge">GOEDKOOPST</span>
-                  }
-                </div>
-                <div class="rc-bottom">
-                  <span class="rc-price">€{{ d.currentPrice | number:'1.2-2' }}</span>
-                  @if (d.unitPrice) {
-                    <span class="rc-unit">{{ d.unitPrice }}</span>
-                  }
-                  @if (d.discountPercentage > 0) {
-                    <span class="rc-discount">−{{ d.discountPercentage }}%</span>
-                  }
-                  <ion-icon name="arrow-forward" class="rc-arrow"></ion-icon>
-                </div>
-              </a>
+              <div class="retailer-row">
+                <a [routerLink]="['/deal', d.id]" class="retailer-card" [class.cheapest]="i === 0 && sortedDeals().length > 1">
+                  <div class="rc-top">
+                    <span class="rc-retailer">{{ d.retailerName }}</span>
+                    @if (i === 0 && sortedDeals().length > 1) {
+                      <span class="rc-badge">GOEDKOOPST</span>
+                    }
+                  </div>
+                  <div class="rc-bottom">
+                    <span class="rc-price">€{{ d.currentPrice | number:'1.2-2' }}</span>
+                    @if (d.derivedUnitPrice != null && d.derivedUnitLabel) {
+                      <span class="rc-unit">€{{ d.derivedUnitPrice | number:'1.2-2' }} {{ d.derivedUnitLabel }}</span>
+                    } @else if (d.unitPrice) {
+                      <span class="rc-unit">{{ d.unitPrice }}</span>
+                    }
+                    @if (d.discountPercentage > 0) {
+                      <span class="rc-discount">−{{ d.discountPercentage }}%</span>
+                    }
+                    <ion-icon name="arrow-forward" class="rc-arrow"></ion-icon>
+                  </div>
+                </a>
+                @if (sortedDeals().length > 1) {
+                  <button type="button" class="wrong-match" (click)="reportWrong(d)">
+                    <ion-icon name="flag-outline"></ion-icon> Verkeerde match?
+                  </button>
+                }
+              </div>
             }
           </div>
         </div>
@@ -134,7 +150,20 @@ import { Deal, Product, ProductResponse, getCategoryEmoji } from '../../models/d
     }
     .savings-headline ion-icon { font-size: 1.3rem; flex-shrink: 0; }
 
-    .retailer-list { display: flex; flex-direction: column; gap: 10px; }
+    .retailer-list { display: flex; flex-direction: column; gap: 14px; }
+    .retailer-row { display: flex; flex-direction: column; }
+    .wrong-match {
+      align-self: flex-end;
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 4px;
+      background: transparent; border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--retro-ink-soft);
+      text-decoration: underline;
+      cursor: pointer; padding: 4px;
+    }
+    .wrong-match ion-icon { font-size: 0.8rem; }
     .retailer-card {
       display: block; text-decoration: none; color: var(--retro-ink);
       background: var(--retro-newsprint-bright);
@@ -159,6 +188,8 @@ import { Deal, Product, ProductResponse, getCategoryEmoji } from '../../models/d
 export class ProductPage implements OnInit {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
+  private dealService = inject(DealService);
+  private toastCtrl = inject(ToastController);
 
   product = signal<Product | null>(null);
   deals = signal<Deal[]>([]);
@@ -181,7 +212,7 @@ export class ProductPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ arrowForward, storefront, pricetagOutline, trophyOutline });
+    addIcons({ arrowForward, storefront, pricetagOutline, trophyOutline, flagOutline });
   }
 
   ngOnInit() {
@@ -192,5 +223,22 @@ export class ProductPage implements OnInit {
         next: res => { this.product.set(res.product); this.deals.set(res.deals); this.loading.set(false); },
         error: () => this.loading.set(false)
       });
+  }
+
+  /** Report that this retailer row was wrongly grouped with the rest. Pairs it
+   *  with the cheapest deal as the anchor (or the next one if it IS cheapest). */
+  async reportWrong(d: Deal) {
+    const sorted = this.sortedDeals();
+    const anchor = sorted[0].id === d.id ? sorted[1] : sorted[0];
+    if (!anchor) return;
+    this.dealService.reportWrongMatch(d.id, anchor.id).subscribe();
+    this.deals.update(list => list.filter(x => x.id !== d.id));
+    const toast = await this.toastCtrl.create({
+      message: 'Bedankt — we bekijken deze match.',
+      duration: 2000,
+      position: 'bottom',
+      color: 'medium',
+    });
+    await toast.present();
   }
 }

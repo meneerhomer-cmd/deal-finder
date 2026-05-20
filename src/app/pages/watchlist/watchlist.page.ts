@@ -21,6 +21,7 @@ interface WatchItem {
   bestPrice: number | null;
   bestRetailer: string | null;
   discount: number;
+  saving: number | null;
   resultCount: number;
   lastChecked: string;
 }
@@ -99,12 +100,16 @@ interface WatchItem {
                 <ion-label>
                   <h2>{{ item.name }}</h2>
                   @if (item.bestRetailer) {
-                    <p>
-                      Goedkoopst bij <strong>{{ item.bestRetailer }}</strong>
-                      @if (item.discount > 0) {
-                        <span class="watch-discount">-{{ item.discount }}%</span>
-                      }
-                    </p>
+                    @if (item.saving && item.saving > 0) {
+                      <p><strong class="watch-saving">Bespaar €{{ item.saving | number:'1.2-2' }}</strong> bij {{ item.bestRetailer }}</p>
+                    } @else {
+                      <p>
+                        Goedkoopst bij <strong>{{ item.bestRetailer }}</strong>
+                        @if (item.discount > 0) {
+                          <span class="watch-discount">-{{ item.discount }}%</span>
+                        }
+                      </p>
+                    }
                   } @else {
                     <p class="not-found">Niet gevonden in huidige folders</p>
                   }
@@ -137,6 +142,7 @@ interface WatchItem {
     .hero-icon { font-size: 4rem; margin-bottom: 16px; color: var(--ion-color-primary); }
     .watch-price { font-weight: 700; font-size: 1.1rem; color: var(--ion-color-success); }
     .watch-discount { color: var(--ion-color-danger); font-weight: 600; margin-left: 4px; }
+    .watch-saving { color: var(--ion-color-danger); font-weight: 700; }
     .not-found { color: var(--ion-color-medium); font-style: italic; }
     .sign-in-btn { max-width: 320px; margin: 24px auto 0; }
     .empty-state { text-align: center; padding: 48px 24px; }
@@ -231,17 +237,20 @@ export class WatchlistPage implements OnInit {
         .subscribe({
           next: data => {
             const best = data.results?.[0];
+            const saving = best?.originalPrice != null && best?.currentPrice != null
+              ? best.originalPrice - best.currentPrice : null;
             results.push({
               name,
               bestPrice: best?.currentPrice ?? null,
               bestRetailer: best?.retailerName ?? null,
               discount: best?.discountPercentage ?? 0,
+              saving: saving != null && saving > 0 ? saving : null,
               resultCount: data.count ?? 0,
               lastChecked: new Date().toISOString()
             });
           },
           error: () => {
-            results.push({ name, bestPrice: null, bestRetailer: null, discount: 0, resultCount: 0, lastChecked: new Date().toISOString() });
+            results.push({ name, bestPrice: null, bestRetailer: null, discount: 0, saving: null, resultCount: 0, lastChecked: new Date().toISOString() });
           },
           complete: () => {
             completed++;

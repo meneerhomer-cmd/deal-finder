@@ -9,11 +9,12 @@ import {
 } from '@ionic/angular/standalone';
 import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowBack, arrowForward, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, checkmarkCircle, trophyOutline } from 'ionicons/icons';
+import { arrowBack, arrowForward, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, checkmarkCircle, trophyOutline, swapHorizontalOutline, flagOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { DealService } from '../../services/deal.service';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { Deal, ProductResponse, getCategoryEmoji, getDiscountClass, CATEGORIES } from '../../models/deal.model';
+import { CategoryAttributesComponent } from '../../components/category-attributes/category-attributes.component';
 import { PosthogService } from '../../services/posthog.service';
 
 interface PriceHistoryEntry {
@@ -28,7 +29,7 @@ interface PriceHistoryEntry {
   selector: 'app-deal-detail',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe, RouterLink,
+    DatePipe, DecimalPipe, RouterLink, CategoryAttributesComponent,
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
     IonBadge, IonSpinner, IonChip, IonLabel
@@ -67,8 +68,8 @@ interface PriceHistoryEntry {
             @if (deal.dealType) {
               <span class="deal-type-tag">{{ deal.dealType }}</span>
             }
-            @if (deal.expiringSoon) {
-              <span class="expiring-tag">Bijna verlopen!</span>
+            @if (deal.expiringSoon && daysLeft() !== null) {
+              <span class="expiring-tag">{{ daysLeft() === 1 ? 'NOG 1 DAG' : 'NOG ' + daysLeft() + ' DAGEN' }}</span>
             }
           </div>
 
@@ -91,10 +92,13 @@ interface PriceHistoryEntry {
             @if (deal.discountPercentage && deal.currentPrice != null && deal.originalPrice != null) {
               <span class="price-saving">Je bespaart €{{ (deal.originalPrice - deal.currentPrice) | number:'1.2-2' }}</span>
             }
+            @if (deal.derivedUnitPrice != null && deal.derivedUnitLabel) {
+              <span class="price-unit">€{{ deal.derivedUnitPrice | number:'1.2-2' }} {{ deal.derivedUnitLabel }}</span>
+            }
             @if (deal.atLowestPrice && deal.lowestPriceSeen != null) {
               <span class="price-lowest">
                 <ion-icon name="trending-down"></ion-icon>
-                Laagste prijs sinds we deze deal volgen
+                Beste prijs sinds we deze deal volgen
               </span>
             }
           </div>
@@ -129,6 +133,45 @@ interface PriceHistoryEntry {
               </span>
               <ion-icon name="arrow-forward" class="crb-arrow"></ion-icon>
             </a>
+          }
+
+          @if (substitute(); as sub) {
+            <div class="substitute-section">
+              <h3><ion-icon name="swap-horizontal-outline"></ion-icon> Bespaar meer met een vergelijkbare optie</h3>
+              <a class="substitute-card" [routerLink]="['/deal', sub.id]">
+                <div class="sub-thumb">
+                  @if (sub.imageUrl) {
+                    <img [src]="sub.imageUrl" [alt]="sub.productName" />
+                  } @else {
+                    <span class="sub-emoji">{{ getCategoryEmoji(sub.categorySlug) }}</span>
+                  }
+                </div>
+                <div class="sub-info">
+                  <span class="sub-name">{{ sub.productName }}</span>
+                  <span class="sub-meta">{{ sub.brand ? sub.brand + ' · ' : '' }}{{ sub.retailerName }}</span>
+                  @if (sub.derivedUnitPrice != null && sub.derivedUnitLabel) {
+                    <span class="sub-unit">€{{ sub.derivedUnitPrice | number:'1.2-2' }} {{ sub.derivedUnitLabel }}</span>
+                  }
+                </div>
+                <div class="sub-price">
+                  <span class="sub-current">€{{ sub.currentPrice | number:'1.2-2' }}</span>
+                  <ion-icon name="arrow-forward"></ion-icon>
+                </div>
+              </a>
+              @if (substituteSaving() !== null) {
+                <span class="sub-saving">Bespaar €{{ substituteSaving() | number:'1.2-2' }} t.o.v. deze deal</span>
+              }
+              <button type="button" class="wrong-match" (click)="reportWrong(sub)">
+                <ion-icon name="flag-outline"></ion-icon> Verkeerde match?
+              </button>
+            </div>
+          }
+
+          @if (productSummary()?.product?.categoryAttributesJson) {
+            <app-category-attributes
+              [category]="productSummary()!.product.category"
+              [attributesJson]="productSummary()!.product.categoryAttributesJson">
+            </app-category-attributes>
           }
 
           @if (deal.quantity || deal.unitPrice || deal.conditions || deal.loyaltyCard || deal.validUntil || deal.categorySlug) {
@@ -340,6 +383,97 @@ interface PriceHistoryEntry {
       border: 1.5px solid var(--retro-ink);
     }
     .price-lowest ion-icon { font-size: 0.95rem; }
+    .price-unit {
+      display: block;
+      margin-top: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--retro-ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .substitute-section {
+      margin-bottom: 16px;
+    }
+    .substitute-section h3 {
+      margin: 0 0 8px;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--retro-ink);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .substitute-section h3 ion-icon { font-size: 1.1rem; }
+    .substitute-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      background: var(--retro-newsprint-bright);
+      border: 2px solid var(--retro-ink);
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
+      text-decoration: none;
+      color: var(--retro-ink);
+      transition: transform 0.05s ease;
+    }
+    .substitute-card:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 0 var(--retro-ink); }
+    .sub-thumb {
+      width: 52px; height: 52px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--retro-ink);
+      background: var(--retro-newsprint);
+      overflow: hidden;
+    }
+    .sub-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .sub-emoji { font-size: 1.6rem; opacity: 0.6; }
+    .sub-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .sub-name {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 0.95rem; font-weight: 500;
+      line-height: 1.2;
+      color: var(--retro-ink);
+    }
+    .sub-meta {
+      font-family: 'Archivo Narrow', sans-serif;
+      font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--retro-ink-soft);
+    }
+    .sub-unit {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem; color: var(--retro-ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
+    .sub-price { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .sub-current {
+      font-family: 'Anton', sans-serif;
+      font-size: 1.5rem; line-height: 1;
+      color: var(--retro-ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .sub-price ion-icon { font-size: 1rem; color: var(--retro-ink-soft); }
+    .sub-saving {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--retro-ink);
+      background: var(--retro-yellow);
+      padding: 3px 8px 2px;
+      border: 1.5px solid var(--retro-ink);
+    }
+    .wrong-match {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin: 8px 0 0 8px;
+      background: transparent; border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--retro-ink-soft);
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .wrong-match ion-icon { font-size: 0.85rem; }
 
     .action-buttons {
       display: flex; gap: 8px; margin-bottom: 18px;
@@ -438,6 +572,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
   imageError = false;
   priceHistory = signal<PriceHistoryEntry[]>([]);
   productSummary = signal<ProductResponse | null>(null);
+  substitute = signal<Deal | null>(null);
   private static JSONLD_ID = 'deal-jsonld';
 
   // Fingerprint-based cross-retailer summary for the deal-detail banner.
@@ -465,8 +600,27 @@ export class DealDetailPage implements OnInit, OnDestroy {
   getCategoryEmoji = getCategoryEmoji;
   getDiscountClass = getDiscountClass;
 
+  // Savings of the substitute vs the current deal (savings-first framing).
+  substituteSaving = computed<number | null>(() => {
+    const sub = this.substitute();
+    const current = this.deal?.currentPrice;
+    if (!sub || sub.currentPrice == null || current == null) return null;
+    const diff = current - sub.currentPrice;
+    return diff > 0 ? diff : null;
+  });
+
+  // Whole days until the deal expires (for the "NOG X DAGEN" honesty tag).
+  daysLeft = computed<number | null>(() => {
+    if (!this.deal?.validUntil) return null;
+    const until = new Date(this.deal.validUntil);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.ceil((until.getTime() - today.getTime()) / 86400000);
+    return days >= 0 ? days : null;
+  });
+
   constructor() {
-    addIcons({ arrowBack, arrowForward, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, trophyOutline });
+    addIcons({ arrowBack, arrowForward, cartOutline, checkmarkCircleOutline, openOutline, pricetagOutline, shareOutline, trendingDown, trendingUp, trophyOutline, swapHorizontalOutline, flagOutline });
   }
 
   ngOnInit() {
@@ -499,7 +653,26 @@ export class DealDetailPage implements OnInit, OnDestroy {
     this.deal = deal;
     this.loadPriceHistory(id);
     this.loadProductSummary(deal);
+    this.loadSubstitute(id);
     this.trackDealViewed(deal);
+  }
+
+  private loadSubstitute(dealId: number) {
+    this.substitute.set(null);
+    this.dealService.getSubstitute(dealId).subscribe(sub => this.substitute.set(sub));
+  }
+
+  async reportWrong(sub: Deal) {
+    if (!this.deal) return;
+    this.dealService.reportWrongMatch(this.deal.id, sub.id).subscribe();
+    this.substitute.set(null);
+    const toast = await this.toastCtrl.create({
+      message: 'Bedankt — we bekijken deze match.',
+      duration: 2000,
+      position: 'bottom',
+      color: 'medium',
+    });
+    await toast.present();
   }
 
   // Single price-movement signal vs the oldest recorded price. Returns null

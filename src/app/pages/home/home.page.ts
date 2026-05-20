@@ -10,7 +10,7 @@ import { addIcons } from 'ionicons';
 import { arrowForward, timerOutline, searchOutline, bookOutline, notificationsOutline, closeOutline, logInOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { FOOD_SLUGS } from '../../models/deal.model';
+import { Deal, Opportunity, isFoodDeal, getCategoryEmoji } from '../../models/deal.model';
 import { PosthogService } from '../../services/posthog.service';
 import { UserDataService } from '../../services/user-data.service';
 import { AuthService } from '../../services/auth.service';
@@ -52,6 +52,26 @@ import { AuthService } from '../../services/auth.service';
       <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
+
+      <!-- Biggest opportunity today -->
+      @if (opportunity(); as opp) {
+        <a class="opportunity-banner" [routerLink]="['/product', opp.fingerprint]">
+          <div class="ob-media">
+            @if (opp.canonicalImageUrl) {
+              <img [src]="opp.canonicalImageUrl" [alt]="opp.canonicalName" />
+            } @else {
+              <span class="ob-emoji">{{ getCategoryEmoji(opp.category) }}</span>
+            }
+          </div>
+          <div class="ob-body">
+            <span class="ob-kicker">Vandaag bespaar je het meest op</span>
+            <span class="ob-name">{{ opp.canonicalName }}</span>
+            <span class="ob-saving">Bespaar €{{ opp.savingEur | number:'1.2-2' }}</span>
+            <span class="ob-meta">€{{ opp.currentPrice | number:'1.2-2' }} bij {{ opp.cheapestRetailer }}</span>
+          </div>
+          <ion-icon name="arrow-forward" class="ob-arrow"></ion-icon>
+        </a>
+      }
 
       @if (dealService.totalDeals() === 0 && !dealService.loading()) {
         <div class="scraping-banner">
@@ -137,7 +157,7 @@ import { AuthService } from '../../services/auth.service';
       @if (recentDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>Recent toegevoegd</h2>
+            <h2>Nieuw deze week</h2>
           </div>
           <div class="deal-carousel">
             @for (deal of recentDeals(); track deal.id) {
@@ -174,6 +194,52 @@ import { AuthService } from '../../services/auth.service';
       --icon-color: rgba(255,255,255,0.8);
       --cancel-button-color: white;
     }
+
+    .opportunity-banner {
+      display: flex; align-items: center; gap: 12px;
+      margin: 12px 14px; padding: 12px;
+      text-decoration: none;
+      background:
+        radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 0.5px, transparent 0.5px) 0 0 / 5px 5px,
+        var(--retro-newsprint-bright, #fffdf7);
+      border: 2px solid var(--retro-ink, #0a0a0a);
+      box-shadow: 4px 4px 0 0 var(--retro-ink, #0a0a0a);
+      color: var(--retro-ink, #0a0a0a);
+      transition: transform 0.05s ease;
+    }
+    .opportunity-banner:active { transform: translate(1px, 1px); box-shadow: 3px 3px 0 0 var(--retro-ink, #0a0a0a); }
+    .ob-media {
+      width: 76px; height: 76px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--retro-ink, #0a0a0a);
+      background: var(--retro-newsprint, #faf7f0);
+      overflow: hidden;
+    }
+    .ob-media img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .ob-emoji { font-size: 2.2rem; opacity: 0.6; }
+    .ob-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .ob-kicker {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--retro-ink-soft, #4a4540);
+    }
+    .ob-name {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.05rem; font-weight: 500; line-height: 1.15;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ob-saving {
+      font-family: 'Anton', sans-serif;
+      font-size: 1.6rem; line-height: 1.05;
+      color: var(--retro-red, #e30613);
+      font-variant-numeric: tabular-nums;
+    }
+    .ob-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; color: var(--retro-ink-soft, #4a4540);
+      font-variant-numeric: tabular-nums;
+    }
+    .ob-arrow { font-size: 1.3rem; color: var(--retro-ink, #0a0a0a); flex-shrink: 0; }
 
     .scraping-banner {
       display: flex; align-items: center; gap: 16px;
@@ -291,6 +357,8 @@ export class HomePage implements OnInit {
   private toastCtrl = inject(ToastController);
 
   searchOpen = signal(false);
+  opportunity = signal<Opportunity | null>(null);
+  getCategoryEmoji = getCategoryEmoji;
   private signInCtaDismissed = signal(localStorage.getItem('signin-cta-dismissed') === '1');
 
   // Show the CTA for both anonymous and signed-out users; hide only once
@@ -341,8 +409,8 @@ export class HomePage implements OnInit {
     return this.retailerLogos[slug] || '';
   }
 
-  private isFood(d: { categorySlug?: string | null }): boolean {
-    return !!d.categorySlug && FOOD_SLUGS.has(d.categorySlug);
+  private isFood(d: Deal): boolean {
+    return isFoodDeal(d);
   }
 
   filteredRetailers = computed(() => {
@@ -411,6 +479,7 @@ export class HomePage implements OnInit {
   loadData() {
     this.dealService.loadDeals().subscribe();
     this.dealService.loadRetailers().subscribe();
+    this.dealService.getOpportunity().subscribe(o => this.opportunity.set(o));
   }
 
   private startPollingIfEmpty() {

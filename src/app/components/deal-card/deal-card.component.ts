@@ -50,16 +50,19 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
             <span class="price-was">€{{ deal.originalPrice | number:'1.2-2' }}</span>
           }
         </div>
+        @if (deal.derivedUnitPrice != null && deal.derivedUnitLabel) {
+          <span class="unit-price">€{{ deal.derivedUnitPrice | number:'1.2-2' }} {{ deal.derivedUnitLabel }}</span>
+        }
 
         <div class="tags">
           @if (deal.atLowestPrice) {
-            <span class="stamp stamp--lowest" aria-label="Laagste prijs sinds we deze deal volgen">LAAGSTE PRIJS</span>
+            <span class="stamp stamp--lowest" aria-label="Beste prijs sinds we deze deal volgen">BESTE PRIJS</span>
           }
           @if (deal.dealType) {
             <span class="stamp stamp--deal">{{ deal.dealType }}</span>
           }
-          @if (deal.expiringSoon) {
-            <span class="stamp stamp--expiring">TOT BINNENKORT</span>
+          @if (deal.expiringSoon && daysLeft() !== null) {
+            <span class="stamp stamp--expiring">{{ daysLeft() === 1 ? 'NOG 1 DAG' : 'NOG ' + daysLeft() + ' DAGEN' }}</span>
           }
         </div>
       </div>
@@ -260,6 +263,14 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
     .price-was::before { top: 45%; }
     .price-was::after { top: 60%; }
 
+    .unit-price {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.66rem;
+      color: var(--ink-soft);
+      font-variant-numeric: tabular-nums;
+      margin-top: -2px;
+    }
+
     .tags {
       display: flex;
       flex-wrap: wrap;
@@ -291,6 +302,15 @@ export class DealCardComponent {
 
   emoji(): string {
     return getCategoryEmoji(this.deal.categorySlug);
+  }
+
+  daysLeft(): number | null {
+    if (!this.deal.validUntil) return null;
+    const until = new Date(this.deal.validUntil);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.ceil((until.getTime() - today.getTime()) / 86400000);
+    return days >= 0 ? days : null;
   }
 
   wholePart(price: number): string {
