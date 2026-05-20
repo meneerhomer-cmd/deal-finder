@@ -2,6 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { Deal, getCategoryEmoji } from '../../models/deal.model';
+import { HapticsService } from '../../services/haptics.service';
 
 /**
  * Deal card — v4 Retro Belgian Flyer (Stitch design system)
@@ -17,7 +18,7 @@ import { Deal, getCategoryEmoji } from '../../models/deal.model';
   standalone: true,
   imports: [RouterLink, DecimalPipe],
   template: `
-    <a [routerLink]="['/deal', deal.id]" class="card">
+    <a [routerLink]="['/deal', deal.id]" class="card" (click)="haptics.light()">
       <div class="image-wrap">
         @if (deal.imageUrl && !imgError) {
           <img [src]="deal.imageUrl" [alt]="deal.productName" loading="lazy" width="280" height="160" (error)="imgError = true" />
@@ -299,6 +300,7 @@ export class DealCardComponent {
   @Input({ required: true }) deal!: Deal;
   imgError = false;
   private router = inject(Router);
+  haptics = inject(HapticsService);
 
   emoji(): string {
     return getCategoryEmoji(this.deal.categorySlug);

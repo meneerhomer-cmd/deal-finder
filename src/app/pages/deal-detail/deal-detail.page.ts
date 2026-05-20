@@ -16,6 +16,7 @@ import { ShoppingListService } from '../../services/shopping-list.service';
 import { Deal, ProductResponse, getCategoryEmoji, getDiscountClass, CATEGORIES } from '../../models/deal.model';
 import { CategoryAttributesComponent } from '../../components/category-attributes/category-attributes.component';
 import { PosthogService } from '../../services/posthog.service';
+import { HapticsService } from '../../services/haptics.service';
 
 interface PriceHistoryEntry {
   id: number;
@@ -567,6 +568,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
   private shoppingList = inject(ShoppingListService);
   private toastCtrl = inject(ToastController);
   private posthog = inject(PosthogService);
+  private haptics = inject(HapticsService);
 
   deal: Deal | undefined;
   imageError = false;
@@ -702,6 +704,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
     if (!this.deal) return;
     const deal = this.deal;
     this.shoppingList.addDeal(deal.id).subscribe(async () => {
+      this.haptics.success();
       this.posthog.posthog.capture('deal_added_to_shopping_list', {
         deal_id: deal.id,
         product_name: deal.productName,

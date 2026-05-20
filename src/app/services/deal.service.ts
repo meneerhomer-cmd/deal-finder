@@ -18,6 +18,8 @@ export interface DealFilters {
 })
 export class DealService {
   private apiUrl = environment.apiUrl;
+  private static DEALS_CACHE_KEY = 'deals-cache-v1';
+  private static OPP_CACHE_KEY = 'opportunity-cache-v1';
   
   // Signals for reactive state
   deals = signal<Deal[]>([]);
@@ -77,6 +79,7 @@ export class DealService {
     return this.http.get<Deal[]>(`${this.apiUrl}/deals?lang=nl`).pipe(
       tap(deals => {
         this.deals.set(deals);
+        this.cacheDeals(deals);
         this.loading.set(false);
       }),
       catchError(err => {
@@ -86,6 +89,41 @@ export class DealService {
         return of([]);
       })
     );
+  }
+
+  /**
+   * Paint last-known deals from localStorage instantly on launch so the home
+   * screen never opens to a spinner/blank while Cloud Run cold-starts — the
+   * single most "website" moment. The live fetch overwrites this when it lands.
+   */
+  hydrateFromCache(): void {
+    if (this.deals().length > 0) return;
+    try {
+      const raw = localStorage.getItem(DealService.DEALS_CACHE_KEY);
+      if (!raw) return;
+      const cached = JSON.parse(raw) as Deal[];
+      if (Array.isArray(cached) && cached.length > 0) this.deals.set(cached);
+    } catch { /* corrupt cache — ignore, the fetch will repopulate */ }
+  }
+
+  readCachedOpportunity(): Opportunity | null {
+    try {
+      const raw = localStorage.getItem(DealService.OPP_CACHE_KEY);
+      return raw ? (JSON.parse(raw) as Opportunity) : null;
+    } catch { return null; }
+  }
+
+  private cacheDeals(deals: Deal[]): void {
+    try {
+      localStorage.setItem(DealService.DEALS_CACHE_KEY, JSON.stringify(deals.slice(0, 120)));
+    } catch { /* quota / private mode — caching is best-effort */ }
+  }
+
+  private cacheOpportunity(opp: Opportunity | null): void {
+    try {
+      if (opp) localStorage.setItem(DealService.OPP_CACHE_KEY, JSON.stringify(opp));
+      else localStorage.removeItem(DealService.OPP_CACHE_KEY);
+    } catch { /* best-effort */ }
   }
 
   loadRetailers(): Observable<Retailer[]> {
@@ -131,6 +169,7 @@ export class DealService {
   /** Today's single biggest savings opportunity (home banner), or null when none qualifies (backend 204). */
   getOpportunity(): Observable<Opportunity | null> {
     return this.http.get<Opportunity>(`${this.apiUrl}/products/opportunity?lang=nl`).pipe(
+      tap(opp => this.cacheOpportunity(opp)),
       catchError(err => {
         console.error('Error loading opportunity:', err);
         return of(null);

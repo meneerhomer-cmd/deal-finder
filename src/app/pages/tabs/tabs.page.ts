@@ -4,13 +4,14 @@ import { addIcons } from 'ionicons';
 import { home, pricetag, search, ellipsisHorizontal } from 'ionicons/icons';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { AlertService } from '../../services/alert.service';
+import { HapticsService } from '../../services/haptics.service';
 
 @Component({
   selector: 'app-tabs',
   standalone: true,
   imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge],
   template: `
-    <ion-tabs>
+    <ion-tabs (ionTabsWillChange)="haptics.selection()">
       <ion-tab-bar slot="bottom">
         <ion-tab-button tab="home">
           <ion-icon name="home"></ion-icon>
@@ -38,6 +39,7 @@ import { AlertService } from '../../services/alert.service';
 export class TabsPage {
   private shoppingList = inject(ShoppingListService);
   private alertService = inject(AlertService);
+  haptics = inject(HapticsService);
 
   totalBadge = computed(() => this.shoppingList.activeCount() + this.alertService.unseenCount());
 

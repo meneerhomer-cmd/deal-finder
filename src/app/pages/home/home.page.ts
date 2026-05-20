@@ -14,6 +14,7 @@ import { Deal, Opportunity, isFoodDeal, getCategoryEmoji } from '../../models/de
 import { PosthogService } from '../../services/posthog.service';
 import { UserDataService } from '../../services/user-data.service';
 import { AuthService } from '../../services/auth.service';
+import { HapticsService } from '../../services/haptics.service';
 
 @Component({
   selector: 'app-home',
@@ -79,6 +80,18 @@ import { AuthService } from '../../services/auth.service';
           <div>
             <strong>Deals worden geladen...</strong>
             <p>De server verzamelt de nieuwste promoties.</p>
+          </div>
+        </div>
+      }
+
+      <!-- First-launch skeletons (no cached data yet) — keeps the open instant -->
+      @if (dealService.loading() && topDeals().length === 0) {
+        <div class="section">
+          <div class="section-header"><h2>Beste voedingsdeals</h2></div>
+          <div class="deal-carousel">
+            @for (s of [1,2,3,4]; track s) {
+              <div class="carousel-item"><div class="skeleton-card"></div></div>
+            }
           </div>
         </div>
       }
@@ -313,6 +326,19 @@ import { AuthService } from '../../services/auth.service';
     }
     .deal-carousel::-webkit-scrollbar { display: none; }
     .carousel-item { flex-shrink: 0; width: 140px; scroll-snap-align: start; }
+    .skeleton-card {
+      height: 230px;
+      border: 2px solid var(--retro-ink, #0a0a0a);
+      background:
+        linear-gradient(100deg, rgba(0,0,0,0.04) 30%, rgba(0,0,0,0.09) 50%, rgba(0,0,0,0.04) 70%),
+        var(--retro-newsprint-bright, #fffdf7);
+      background-size: 220% 100%;
+      animation: skeleton-shimmer 1.2s ease-in-out infinite;
+    }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 180% 0; }
+      100% { background-position: -80% 0; }
+    }
     .signin-cta {
       position: relative;
       display: flex; gap: 14px; align-items: flex-start;
@@ -355,6 +381,7 @@ export class HomePage implements OnInit {
   private userData = inject(UserDataService);
   private auth = inject(AuthService);
   private toastCtrl = inject(ToastController);
+  private haptics = inject(HapticsService);
 
   searchOpen = signal(false);
   opportunity = signal<Opportunity | null>(null);
@@ -464,6 +491,12 @@ export class HomePage implements OnInit {
   private pollInterval: any;
 
   ngOnInit() {
+    // Paint last-known data instantly so launch never opens to a spinner/blank
+    // while Cloud Run cold-starts; the live fetch in loadData() overwrites it.
+    this.dealService.hydrateFromCache();
+    const cachedOpp = this.dealService.readCachedOpportunity();
+    if (cachedOpp) this.opportunity.set(cachedOpp);
+
     this.loadData();
     this.startPollingIfEmpty();
     this.trackSignInCtaShownOnce();
@@ -493,8 +526,10 @@ export class HomePage implements OnInit {
   }
 
   doRefresh(event: any) {
+    this.haptics.medium();
     this.dealService.loadDeals().subscribe({ complete: () => event.target.complete() });
     this.dealService.loadRetailers().subscribe();
+    this.dealService.getOpportunity().subscribe(o => this.opportunity.set(o));
   }
 
   onSearch(event: CustomEvent) {
