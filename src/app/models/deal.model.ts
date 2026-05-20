@@ -29,6 +29,20 @@ export interface Deal {
   lowestPriceSeen: number | null;
   atLowestPrice: boolean;
   fingerprint?: string | null;
+  derivedUnitPrice?: number | null;
+  derivedUnitLabel?: string | null;
+}
+
+export interface Opportunity {
+  fingerprint: string;
+  canonicalName: string;
+  canonicalImageUrl: string | null;
+  category: string | null;
+  cheapestRetailer: string;
+  currentPrice: number;
+  expectedPrice: number;
+  savingEur: number;
+  discountPercentage: number | null;
 }
 
 export interface Product {
@@ -113,14 +127,22 @@ export const CATEGORIES: Category[] = [
 export const FOOD_SLUGS = new Set([
   'vlees', 'vis', 'zuivel', 'kaas', 'charcuterie', 'groenten', 'fruit',
   'dranken', 'bier', 'wijn', 'snoep', 'chips', 'ontbijt', 'brood',
-  'diepvries', 'conserven', 'pasta', 'sauzen', 'kruiden'
+  'diepvries', 'conserven', 'pasta', 'sauzen', 'kruiden',
+  // Two of the five launch categories live under the "non-food" taxonomy:
+  // detergent (huishouden) and diapers (baby). Surface them at launch.
+  'huishouden', 'baby'
 ]);
 
 export const FOOD_CATEGORIES = CATEGORIES.filter(c => FOOD_SLUGS.has(c.slug));
 export const NON_FOOD_CATEGORIES = CATEGORIES.filter(c => !FOOD_SLUGS.has(c.slug));
 
 export function isFoodDeal(deal: Deal): boolean {
-  return deal.categorySlug ? FOOD_SLUGS.has(deal.categorySlug) : false;
+  if (deal.categorySlug) return FOOD_SLUGS.has(deal.categorySlug);
+  // ~600 deals have a null categorySlug but a correct extracted category.
+  // Non-food deals get a null fingerprint at extraction time, so a present
+  // fingerprint means the extractor classified this as an in-scope (food /
+  // launch) product — trust it when the coarse categorySlug is missing.
+  return !!deal.fingerprint;
 }
 
 export function getCategoryEmoji(categorySlug: string | null): string {

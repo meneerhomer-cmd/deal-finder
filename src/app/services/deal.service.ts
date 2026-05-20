@@ -2,7 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
-import { Deal, Retailer, ScanStatus, FOOD_SLUGS } from '../models/deal.model';
+import { Deal, Retailer, ScanStatus, Opportunity, FOOD_SLUGS } from '../models/deal.model';
 
 export interface DealFilters {
   retailer?: string;
@@ -116,6 +116,36 @@ export class DealService {
 
   loadFlyers(shopSlug: string): Observable<{ flyers: Array<{ id: string; name: string; coverImage: string }> }> {
     return this.http.get<any>(`${this.apiUrl}/flyers/${shopSlug}`);
+  }
+
+  /** One cheaper same-style alternative from another brand, or null when none qualifies (backend 204). */
+  getSubstitute(dealId: number): Observable<Deal | null> {
+    return this.http.get<Deal>(`${this.apiUrl}/deals/${dealId}/substitute?lang=nl`).pipe(
+      catchError(err => {
+        console.error('Error loading substitute:', err);
+        return of(null);
+      })
+    );
+  }
+
+  /** Today's single biggest savings opportunity (home banner), or null when none qualifies (backend 204). */
+  getOpportunity(): Observable<Opportunity | null> {
+    return this.http.get<Opportunity>(`${this.apiUrl}/products/opportunity?lang=nl`).pipe(
+      catchError(err => {
+        console.error('Error loading opportunity:', err);
+        return of(null);
+      })
+    );
+  }
+
+  /** Report that a cross-retailer / substitute suggestion is a wrong match. */
+  reportWrongMatch(sourceDealId: number, targetDealId: number): Observable<unknown> {
+    return this.http.post(
+      `${this.apiUrl}/deals/${sourceDealId}/wrong-match?targetId=${targetDealId}`, {}
+    ).pipe(catchError(err => {
+      console.error('Error reporting wrong match:', err);
+      return of(null);
+    }));
   }
 
   getStatus(): Observable<ScanStatus> {
