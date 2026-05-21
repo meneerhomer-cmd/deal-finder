@@ -74,9 +74,10 @@ export class ShoppingListService {
       `${this.apiUrl}/shopping-list/${dealId}`, {},
       { headers: this.headers }
     ).pipe(
-      tap(item => {
+      tap(() => {
+        // No success toast here — deal-detail (the only caller) shows its own
+        // toast + haptic, so toasting here too produced a double popup.
         this.loadItems().subscribe();
-        this.showToast('Toegevoegd aan je lijst', 'success');
       }),
       catchError(err => {
         this.showToast('Kon niet toevoegen', 'danger');
