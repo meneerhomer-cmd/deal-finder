@@ -359,7 +359,7 @@ import { HapticsService } from '../../services/haptics.service';
       scrollbar-width: none; scroll-snap-type: x mandatory;
     }
     .deal-carousel::-webkit-scrollbar { display: none; }
-    .carousel-item { flex-shrink: 0; width: 140px; display: flex; scroll-snap-align: start; }
+    .carousel-item { flex-shrink: 0; width: 160px; display: flex; scroll-snap-align: start; }
     .carousel-item app-deal-card { flex: 1; min-width: 0; }
     .skeleton-card {
       height: 230px;

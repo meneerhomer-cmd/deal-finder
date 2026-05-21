@@ -253,7 +253,7 @@ import { HapticsService } from '../../services/haptics.service';
     .price-was {
       font-family: 'Archivo Narrow', system-ui, sans-serif;
       font-weight: 500;
-      font-size: 0.8rem;
+      font-size: 0.95rem;
       color: var(--ink-soft);
       font-variant-numeric: tabular-nums;
       position: relative;
