@@ -170,6 +170,20 @@ import { HapticsService } from '../../services/haptics.service';
         </div>
       }
 
+      <!-- Cashback: genuinely free after reimbursement -->
+      @if (cashbackDeals().length > 0) {
+        <div class="section">
+          <div class="section-header">
+            <h2>Gratis na cashback</h2>
+          </div>
+          <div class="deal-carousel">
+            @for (deal of cashbackDeals(); track deal.id) {
+              <div class="carousel-item"><app-deal-card [deal]="deal"></app-deal-card></div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Recent -->
       @if (recentDeals().length > 0) {
         <div class="section">
@@ -397,6 +411,7 @@ export class HomePage implements OnInit {
 
   searchOpen = signal(false);
   opportunity = signal<Opportunity | null>(null);
+  cashbackDeals = signal<Deal[]>([]);
   getCategoryEmoji = getCategoryEmoji;
   private signInCtaDismissed = signal(localStorage.getItem('signin-cta-dismissed') === '1');
 
@@ -530,6 +545,7 @@ export class HomePage implements OnInit {
     this.dealService.loadDeals().subscribe();
     this.dealService.loadRetailers().subscribe();
     this.dealService.getOpportunity().subscribe(o => this.opportunity.set(o));
+    this.dealService.getCashbackDeals().subscribe(d => this.cashbackDeals.set(d));
   }
 
   private startPollingIfEmpty() {

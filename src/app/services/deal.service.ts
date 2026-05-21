@@ -166,6 +166,16 @@ export class DealService {
     );
   }
 
+  /** "100% terugbetaald" cashback deals — free after reimbursement, hidden from normal lists. */
+  getCashbackDeals(): Observable<Deal[]> {
+    return this.http.get<Deal[]>(`${this.apiUrl}/deals/cashback?lang=nl`).pipe(
+      catchError(err => {
+        console.error('Error loading cashback deals:', err);
+        return of([]);
+      })
+    );
+  }
+
   /** Today's single biggest savings opportunity (home banner), or null when none qualifies (backend 204). */
   getOpportunity(): Observable<Opportunity | null> {
     return this.http.get<Opportunity>(`${this.apiUrl}/products/opportunity?lang=nl`).pipe(

@@ -136,7 +136,23 @@ export const FOOD_SLUGS = new Set([
 export const FOOD_CATEGORIES = CATEGORIES.filter(c => FOOD_SLUGS.has(c.slug));
 export const NON_FOOD_CATEGORIES = CATEGORIES.filter(c => !FOOD_SLUGS.has(c.slug));
 
+// Non-food products that the backend keyword categorizer mislabels into a food
+// slug because the keyword is a real word in a non-food name — e.g. "Cool Water"
+// cologne → "water" → dranken, "Jersey hoeslaken" → "sla" → groenten. The
+// whole-word categorizer fix can't catch these (the word genuinely appears), so
+// we exclude them by name/brand here. Conservative list — only clear non-food.
+const NON_FOOD_PATTERNS = [
+  'eau de toilette', 'eau de parfum', 'aftershave', 'cool water', 'deodorant', 'parfumspray',
+  'hoeslaken', 'dekbed', 'kussensloop', 'handdoek', 'badhanddoek', 'badjas',
+];
+
+export function looksNonFood(deal: Deal): boolean {
+  const hay = `${deal.productName} ${deal.brand ?? ''}`.toLowerCase();
+  return NON_FOOD_PATTERNS.some(p => hay.includes(p));
+}
+
 export function isFoodDeal(deal: Deal): boolean {
+  if (looksNonFood(deal)) return false;
   if (deal.categorySlug) return FOOD_SLUGS.has(deal.categorySlug);
   // ~600 deals have a null categorySlug but a correct extracted category.
   // Non-food deals get a null fingerprint at extraction time, so a present

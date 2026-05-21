@@ -12,7 +12,7 @@ import { addIcons } from 'ionicons';
 import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS } from '../../models/deal.model';
+import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS, isFoodDeal } from '../../models/deal.model';
 import { PosthogService } from '../../services/posthog.service';
 
 @Component({
@@ -355,8 +355,8 @@ export class DealsPage implements OnInit, OnDestroy {
     const sorted = this.sortedDeals();
     if (this.retailerSlug) return sorted;
     return this.dealMode() === 'food'
-      ? sorted.filter(d => d.categorySlug && FOOD_SLUGS.has(d.categorySlug))
-      : sorted.filter(d => !d.categorySlug || !FOOD_SLUGS.has(d.categorySlug));
+      ? sorted.filter(d => isFoodDeal(d))
+      : sorted.filter(d => !isFoodDeal(d));
   });
 
   windowedDeals = computed(() => this.modeDeals().slice(0, this.visibleCount()));
