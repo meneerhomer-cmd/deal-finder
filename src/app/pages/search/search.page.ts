@@ -1,11 +1,10 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent,
-  IonSearchbar, IonList, IonItem, IonLabel, IonNote,
-  IonBadge, IonSpinner, IonIcon, IonChip, IonButton
+  IonSearchbar, IonSpinner, IonIcon, IonChip, IonButton, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { searchOutline, trophyOutline, timeOutline, informationCircleOutline } from 'ionicons/icons';
@@ -35,10 +34,9 @@ interface SearchResponse {
   selector: 'app-search',
   standalone: true,
   imports: [
-    DecimalPipe,
+    DecimalPipe, RouterLink,
     IonHeader, IonToolbar, IonTitle, IonContent,
-    IonSearchbar, IonList, IonItem, IonLabel, IonNote,
-    IonBadge, IonSpinner, IonIcon, IonChip, IonButton
+    IonSearchbar, IonSpinner, IonIcon, IonChip, IonButton, IonLabel
   ],
   template: `
     <ion-header>
@@ -106,52 +104,35 @@ interface SearchResponse {
           </div>
         }
         <div class="results-header">
-          <span>{{ results().length }} resultaten voor "{{ lastQuery() }}"</span>
+          {{ results().length }} resultaten voor "<strong>{{ lastQuery() }}</strong>"
         </div>
 
-        @if (cheapest()) {
-          <div class="cheapest-banner">
-            <ion-icon name="trophy-outline"></ion-icon>
-            <div>
-              <strong>Goedkoopste: {{ cheapest()!.retailerName }}</strong>
-              <span>€{{ cheapest()!.currentPrice | number:'1.2-2' }}</span>
-            </div>
-          </div>
-        }
-
-        <ion-list>
+        <div class="results-list">
           @for (result of results(); track result.id; let i = $index) {
-            <ion-item [class.cheapest-item]="i === 0 && result.currentPrice">
-              <div class="result-rank" slot="start">
+            <a class="result-row" [class.is-cheapest]="i === 0 && result.currentPrice" [routerLink]="['/deal', result.id]">
+              <div class="result-info">
                 @if (i === 0 && result.currentPrice) {
-                  <ion-icon name="trophy-outline" color="warning"></ion-icon>
-                } @else {
-                  <span class="rank-number">{{ i + 1 }}</span>
+                  <span class="cheapest-stamp">★ Goedkoopst</span>
                 }
+                <span class="result-name">{{ result.productName }}</span>
+                <span class="retailer-badge" [class]="result.retailerSlug">{{ result.retailerName }}</span>
               </div>
-              <ion-label>
-                <h2>{{ result.productName }}</h2>
-                <p>
-                  <span class="retailer-badge" [class]="result.retailerSlug">{{ result.retailerName }}</span>
-                  @if (result.brandName) {
-                    <span class="brand">{{ result.brandName }}</span>
-                  }
-                </p>
-              </ion-label>
-              <div class="price-column" slot="end">
+              <div class="result-prices">
                 @if (result.currentPrice) {
-                  <span class="result-price" [class.best-price]="i === 0">€{{ result.currentPrice | number:'1.2-2' }}</span>
+                  <span class="result-price">€{{ result.currentPrice | number:'1.2-2' }}</span>
                 }
-                @if (result.discountPercentage > 0) {
-                  <span class="result-discount">-{{ result.discountPercentage }}%</span>
-                }
-                @if (result.originalPrice) {
-                  <span class="result-original">€{{ result.originalPrice | number:'1.2-2' }}</span>
-                }
+                <span class="result-sub">
+                  @if (result.discountPercentage > 0) {
+                    <span class="result-discount">-{{ result.discountPercentage }}%</span>
+                  }
+                  @if (result.originalPrice) {
+                    <span class="result-original">€{{ result.originalPrice | number:'1.2-2' }}</span>
+                  }
+                </span>
               </div>
-            </ion-item>
+            </a>
           }
-        </ion-list>
+        </div>
       }
     </ion-content>
   `,
@@ -162,13 +143,18 @@ interface SearchResponse {
       align-items: center;
       padding: 48px 24px;
       text-align: center;
-      color: var(--ion-color-medium);
+      color: var(--retro-ink-soft, #8a8580);
+    }
+    .empty-state h2 {
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      text-transform: uppercase; letter-spacing: 0.02em;
+      color: var(--retro-ink); margin: 0 0 8px;
     }
 
     .hero-icon {
       font-size: 4rem;
       margin-bottom: 16px;
-      color: var(--ion-color-primary);
+      color: var(--retro-red);
     }
 
     .loading {
@@ -176,79 +162,51 @@ interface SearchResponse {
       flex-direction: column;
       align-items: center;
       padding: 48px;
-      color: var(--ion-color-medium);
+      color: var(--retro-ink-soft, #8a8580);
     }
 
     .results-header {
       padding: 12px 16px;
-      font-size: 0.85rem;
-      color: var(--ion-color-medium);
-      border-bottom: 1px solid var(--ion-color-light);
+      font-family: 'Archivo Narrow', system-ui, sans-serif;
+      font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--retro-ink); background: var(--retro-newsprint);
+      border-bottom: 2px solid var(--retro-ink);
+    }
+    .results-header strong { font-weight: 700; }
+
+    .results-list { padding: 10px 12px 28px; display: flex; flex-direction: column; gap: 8px; }
+
+    .result-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 14px;
+      background: var(--retro-newsprint-bright);
+      border: 2px solid var(--retro-ink);
+      box-shadow: 3px 3px 0 0 var(--retro-ink);
+      text-decoration: none; color: var(--retro-ink);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    .result-row:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--retro-ink); }
+    .result-row.is-cheapest { background: var(--retro-yellow); }
+
+    .result-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .result-info .retailer-badge { align-self: flex-start; }
+    .cheapest-stamp {
+      align-self: flex-start;
+      font-family: 'Archivo Narrow', system-ui, sans-serif; font-weight: 700;
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+      background: var(--retro-red); color: #fff; padding: 2px 8px;
+      border: 2px solid var(--retro-ink);
+    }
+    .result-name {
+      font-family: 'Newsreader', Georgia, serif; font-weight: 600; font-size: 1.05rem;
+      line-height: 1.15; color: var(--retro-ink);
     }
 
-    .cheapest-banner {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: var(--chip-multi-buy-bg);
-      color: var(--chip-multi-buy-text);
-      font-size: 0.95rem;
-
-      ion-icon { font-size: 1.5rem; }
-      div { display: flex; flex-direction: column; }
-      span { font-size: 1.2rem; font-weight: 700; }
-    }
-
-    .result-rank {
-      width: 32px;
-      text-align: center;
-      margin-right: 8px;
-    }
-
-    .rank-number {
-      font-size: 0.85rem;
-      color: var(--ion-color-medium);
-      font-weight: 600;
-    }
-
-    .cheapest-item {
-      --background: var(--chip-multi-buy-bg);
-    }
-
-    .brand {
-      font-size: 0.8rem;
-      color: var(--ion-color-medium);
-      margin-left: 8px;
-    }
-
-    .price-column {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-
-    .result-price {
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
-
-    .best-price {
-      color: var(--ion-color-success);
-    }
-
-    .result-discount {
-      font-size: 0.8rem;
-      color: var(--ion-color-danger);
-      font-weight: 600;
-    }
-
-    .result-original {
-      font-size: 0.75rem;
-      text-decoration: line-through;
-      color: var(--ion-color-medium);
-    }
+    .result-prices { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .result-price { font-family: 'Anton', 'Archivo Narrow', sans-serif; font-size: 1.45rem; line-height: 0.95; color: var(--retro-ink); }
+    .result-sub { display: flex; align-items: baseline; gap: 7px; }
+    .result-discount { font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 0.8rem; color: var(--retro-red); }
+    .result-original { font-size: 0.75rem; text-decoration: line-through; color: var(--retro-ink-soft, #8a8580); }
 
     .recent-section, .popular-section { padding: 0 16px 12px; }
     .recent-header {
