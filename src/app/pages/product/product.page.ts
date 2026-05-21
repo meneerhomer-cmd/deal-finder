@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import {
@@ -45,7 +45,7 @@ import { HapticsService } from '../../services/haptics.service';
       } @else {
         <div class="hero">
           @if (heroImage() && !imageError) {
-            <img [src]="heroImage()" [alt]="product()!.canonicalName" class="hero-image" (error)="imageError = true" />
+            <img [src]="heroImage()" [alt]="product()!.canonicalName" class="hero-image" (error)="imageError = true" (click)="imageZoomed.set(true)" />
           } @else {
             <div class="hero-placeholder">
               <span class="hero-emoji">{{ getCategoryEmoji(product()!.category) }}</span>
@@ -53,6 +53,13 @@ import { HapticsService } from '../../services/haptics.service';
             </div>
           }
         </div>
+
+        @if (imageZoomed() && heroImage()) {
+          <div class="img-lightbox" (click)="imageZoomed.set(false)">
+            <img [src]="heroImage()" [alt]="product()!.canonicalName" />
+            <button type="button" class="lightbox-close" aria-label="Sluit">&times;</button>
+          </div>
+        }
 
         <div class="body">
           @if (product()!.brand) {
@@ -136,7 +143,18 @@ import { HapticsService } from '../../services/haptics.service';
       border-bottom: 2px solid var(--retro-ink);
       min-height: 220px; padding: 16px;
     }
-    .hero-image { max-height: 240px; max-width: 100%; object-fit: contain; }
+    .hero-image { max-height: 240px; max-width: 100%; object-fit: contain; cursor: zoom-in; }
+    .img-lightbox {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10, 10, 10, 0.92); padding: 16px; cursor: zoom-out;
+    }
+    .img-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border: 2px solid var(--retro-ink); background: #fff; }
+    .lightbox-close {
+      position: absolute; top: 12px; right: 16px;
+      background: transparent; border: none; color: #fff;
+      font-size: 2.4rem; line-height: 1; cursor: pointer; padding: 4px 10px;
+    }
     .hero-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .hero-emoji { font-size: 84px; opacity: 0.55; }
     .hero-noimg {
@@ -205,6 +223,7 @@ import { HapticsService } from '../../services/haptics.service';
 })
 export class ProductPage implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private http = inject(HttpClient);
   private dealService = inject(DealService);
   private toastCtrl = inject(ToastController);
@@ -214,6 +233,7 @@ export class ProductPage implements OnInit {
   deals = signal<Deal[]>([]);
   loading = signal(true);
   imageError = false;
+  imageZoomed = signal(false);
   getCategoryEmoji = getCategoryEmoji;
 
   // Hero photo: prefer the canonical image, but if it's missing fall back to
@@ -255,7 +275,16 @@ export class ProductPage implements OnInit {
     if (!fingerprint) { this.loading.set(false); return; }
     this.http.get<ProductResponse>(`${environment.apiUrl}/products/${encodeURIComponent(fingerprint)}?lang=nl`)
       .subscribe({
-        next: res => { this.product.set(res.product); this.deals.set(res.deals); this.loading.set(false); },
+        next: res => {
+          // A single-retailer "comparison" is just one deal — send the user
+          // straight to the richer, consistent deal-detail page instead of a
+          // sparse one-row product page. replaceUrl keeps Back sensible.
+          if (res.deals.length === 1) {
+            this.router.navigate(['/deal', res.deals[0].id], { replaceUrl: true });
+            return;
+          }
+          this.product.set(res.product); this.deals.set(res.deals); this.loading.set(false);
+        },
         error: () => this.loading.set(false)
       });
   }
