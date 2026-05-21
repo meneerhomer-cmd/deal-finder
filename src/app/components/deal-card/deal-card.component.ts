@@ -94,11 +94,12 @@ import { HapticsService } from '../../services/haptics.service';
       text-decoration: none;
       border: 2px solid var(--ink);
       border-radius: 0;
+      box-shadow: 3px 3px 0 0 var(--ink);
       overflow: visible;
-      transition: transform .1s ease;
+      transition: transform .08s ease, box-shadow .08s ease;
       font-family: inherit;
     }
-    .card:active { transform: translateY(1px); }
+    .card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--ink); }
 
     .image-wrap {
       position: relative;
