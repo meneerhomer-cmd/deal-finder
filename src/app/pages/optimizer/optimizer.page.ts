@@ -7,7 +7,7 @@ import {
   IonCardContent, IonBadge, IonList, IonItem, IonLabel
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cartOutline, navigateOutline, checkmarkCircle } from 'ionicons/icons';
+import { cartOutline, navigateOutline, checkmarkCircle, storefrontOutline } from 'ionicons/icons';
 import { environment } from '@env/environment';
 import { ShoppingListService } from '../../services/shopping-list.service';
 import { PosthogService } from '../../services/posthog.service';
@@ -23,6 +23,12 @@ interface OptimizerResult {
     resultCount: number;
     cheapest: { productName: string; retailerName: string; retailerSlug: string; currentPrice: number; discountPercent: number } | null;
   }>;
+  bestSingleStore: {
+    retailerName: string;
+    itemCount: number;
+    estimatedTotal: number;
+    items: Array<{ searchTerm: string; price: number }>;
+  } | null;
 }
 
 @Component({
@@ -77,10 +83,37 @@ interface OptimizerResult {
           </ion-card-content>
         </ion-card>
 
+        <!-- One-stop option -->
+        @if (result()!.bestSingleStore; as one) {
+          <ion-card class="onestop-card">
+            <ion-card-header>
+              <ion-card-title>
+                <ion-icon name="storefront-outline"></ion-icon>
+                Alles bij één winkel
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <p class="onestop-lead">
+                <strong>{{ one.retailerName }}</strong> — {{ one.itemCount }} van {{ result()!.totalProducts }}
+                producten voor <strong>€{{ one.estimatedTotal | number:'1.2-2' }}</strong>
+              </p>
+              @if (one.itemCount >= result()!.totalProducts) {
+                @if (oneStopDelta() > 0.01) {
+                  <p class="onestop-delta">€{{ oneStopDelta() | number:'1.2-2' }} meer dan de goedkoopste route — maar 1 stop i.p.v. {{ result()!.stopsNeeded }}</p>
+                } @else {
+                  <p class="onestop-delta good">Net zo goedkoop als de volledige route — én maar 1 stop! 🎉</p>
+                }
+              } @else {
+                <p class="onestop-delta">De meeste van je lijst in 1 stop; de rest haal je elders.</p>
+              }
+            </ion-card-content>
+          </ion-card>
+        }
+
         <!-- Shopping route -->
         <h3 class="section-title">
           <ion-icon name="navigate-outline"></ion-icon>
-          Je route
+          Goedkoopste route
         </h3>
 
         @for (retailer of result()!.retailerSummary; track retailer.retailerName) {
@@ -165,6 +198,11 @@ interface OptimizerResult {
 
     .not-found-card { border-left: 4px solid var(--ion-color-warning); }
     .not-found-card p { margin: 4px 0; color: var(--ion-color-medium); }
+
+    .onestop-card { border-left: 4px solid var(--retro-yellow, #ffd200); }
+    .onestop-lead { margin: 0 0 6px; font-size: 0.98rem; }
+    .onestop-delta { margin: 0; font-size: 0.85rem; color: var(--ion-color-medium); }
+    .onestop-delta.good { color: var(--ion-color-success); font-weight: 600; }
   `]
 })
 export class OptimizerPage {
@@ -179,8 +217,16 @@ export class OptimizerPage {
     (this.result()?.items ?? []).filter(i => !i.cheapest).map(i => i.searchTerm)
   );
 
+  // How much more the one-stop basket costs vs the all-over-town cheapest
+  // (only meaningful when the single store covers the whole list).
+  oneStopDelta = computed(() => {
+    const r = this.result();
+    if (!r?.bestSingleStore) return 0;
+    return r.bestSingleStore.estimatedTotal - r.totalEstimate;
+  });
+
   constructor() {
-    addIcons({ cartOutline, navigateOutline, checkmarkCircle });
+    addIcons({ cartOutline, navigateOutline, checkmarkCircle, storefrontOutline });
     this.optimize();
   }
 
