@@ -20,7 +20,7 @@ import { PosthogService } from '../../services/posthog.service';
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
     IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
-    IonBadge, IonSpinner, IonSegment, IonSegmentButton, IonBackButton
+    IonSpinner, IonBackButton
   ],
   template: `
     <ion-header>
