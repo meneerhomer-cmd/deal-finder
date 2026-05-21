@@ -5,7 +5,7 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons,
   IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
-  IonBadge, IonSpinner, IonSegment, IonSegmentButton, IonBackButton
+  IonSpinner, IonBackButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { trashOutline, cartOutline, sparklesOutline } from 'ionicons/icons';
@@ -38,15 +38,15 @@ import { PosthogService } from '../../services/posthog.service';
         }
       </ion-toolbar>
       <ion-toolbar>
-        <ion-segment value="active" (ionChange)="onTabChange($event)">
-          <ion-segment-button value="active">
+        <div class="mode-toggle">
+          <button class="mode-btn" [class.active]="currentTab() === 'active'" (click)="currentTab.set('active')">
             Actief
             @if (shoppingList.activeCount() > 0) {
-              <ion-badge color="primary">{{ shoppingList.activeCount() }}</ion-badge>
+              <span class="tab-count">{{ shoppingList.activeCount() }}</span>
             }
-          </ion-segment-button>
-          <ion-segment-button value="purchased">Gekocht</ion-segment-button>
-        </ion-segment>
+          </button>
+          <button class="mode-btn" [class.active]="currentTab() === 'purchased'" (click)="currentTab.set('purchased')">Gekocht</button>
+        </div>
       </ion-toolbar>
     </ion-header>
 
@@ -182,8 +182,36 @@ import { PosthogService } from '../../services/posthog.service';
       margin-left: 8px;
     }
 
-    ion-segment {
-      padding: 4px 8px;
+    .mode-toggle {
+      display: flex;
+      background: var(--retro-newsprint);
+      padding: 8px 12px 10px;
+      gap: 0;
+      border-bottom: 2px solid var(--retro-ink);
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 8px 0 7px;
+      border: 2px solid var(--retro-ink);
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: var(--retro-newsprint-bright);
+      color: var(--retro-ink);
+      transition: background-color 0.1s ease;
+    }
+    .mode-btn + .mode-btn { border-left-width: 0; }
+    .mode-btn.active {
+      background: var(--retro-yellow);
+      color: var(--retro-ink);
+      box-shadow: inset 0 -4px 0 0 var(--retro-ink);
+    }
+    .tab-count {
+      display: inline-block; margin-left: 6px; padding: 0 6px;
+      background: var(--retro-red); color: #fff; font-size: 0.75rem;
     }
   `]
 })
@@ -241,9 +269,5 @@ export class ShoppingListPage implements OnInit {
 
   clearAll() {
     this.shoppingList.clearAll().subscribe();
-  }
-
-  onTabChange(event: CustomEvent) {
-    this.currentTab.set(event.detail.value);
   }
 }
