@@ -5,7 +5,8 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
   IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
-  IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText
+  IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText,
+  IonInfiniteScroll, IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
@@ -23,6 +24,7 @@ import { PosthogService } from '../../services/posthog.service';
     IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
     IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
     IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText,
+    IonInfiniteScroll, IonInfiniteScrollContent,
     DealCardComponent
   ],
   template: `
@@ -108,10 +110,13 @@ import { PosthogService } from '../../services/posthog.service';
         </div>
       } @else {
         <div class="deal-grid">
-          @for (deal of modeDeals(); track deal.id) {
+          @for (deal of windowedDeals(); track deal.id) {
             <app-deal-card [deal]="deal"></app-deal-card>
           }
         </div>
+        <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="windowedDeals().length >= modeDeals().length">
+          <ion-infinite-scroll-content loadingSpinner="crescent"></ion-infinite-scroll-content>
+        </ion-infinite-scroll>
       }
 
       <ion-modal [isOpen]="showFilterModal" (didDismiss)="showFilterModal = false">
@@ -306,6 +311,10 @@ export class DealsPage implements OnInit, OnDestroy {
   retailerSlug: string | null = null;
   categories = CATEGORIES;
   currentSort = signal<'discount' | 'price' | 'expiry' | 'name'>('discount');
+  // Render a sliding window of the (client-filtered) list so the DOM stays
+  // small — the full list can be 1000+ cards, which janks scroll badly.
+  private static PAGE = 24;
+  visibleCount = signal(DealsPage.PAGE);
 
   private sortOptions: Array<{ key: string; label: string }> = [
     { key: 'discount', label: 'Korting' },
@@ -350,6 +359,13 @@ export class DealsPage implements OnInit, OnDestroy {
       : sorted.filter(d => !d.categorySlug || !FOOD_SLUGS.has(d.categorySlug));
   });
 
+  windowedDeals = computed(() => this.modeDeals().slice(0, this.visibleCount()));
+
+  loadMore(event: any) {
+    this.visibleCount.update(c => c + DealsPage.PAGE);
+    event.target.complete();
+  }
+
   topCategories = computed(() => {
     const deals = this.dealService.filteredDeals();
     const isFood = this.dealMode() === 'food';
@@ -373,6 +389,16 @@ export class DealsPage implements OnInit, OnDestroy {
   constructor() {
     addIcons({ filter, close, checkmark, swapVertical, bookOutline });
     effect(() => localStorage.setItem('dealfinder-mode', this.dealMode()));
+    // Reset the scroll window to the top whenever the result set changes
+    // (filters, mode, sort, or a fresh deal load), so you don't keep a huge
+    // window after narrowing the list.
+    effect(() => {
+      this.dealService.filters();
+      this.dealService.deals();
+      this.dealMode();
+      this.currentSort();
+      this.visibleCount.set(DealsPage.PAGE);
+    });
   }
 
   ngOnInit() {

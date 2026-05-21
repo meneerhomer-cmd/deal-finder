@@ -5,7 +5,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
-  IonBadge, IonSpinner, IonChip, IonLabel, IonToast
+  IonBadge, IonSpinner, IonChip, IonLabel, IonToast, IonFooter
 } from '@ionic/angular/standalone';
 import { ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -33,13 +33,13 @@ interface PriceHistoryEntry {
     DatePipe, DecimalPipe, RouterLink, CategoryAttributesComponent,
     IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon,
-    IonBadge, IonSpinner, IonChip, IonLabel
+    IonBadge, IonSpinner, IonChip, IonLabel, IonFooter
   ],
   template: `
     <ion-header>
       <ion-toolbar color="primary">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/home"></ion-back-button>
+          <ion-back-button defaultHref="/home" text="Terug"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ deal?.productName || 'Deal' }}</ion-title>
       </ion-toolbar>
@@ -104,23 +104,6 @@ interface PriceHistoryEntry {
             }
           </div>
 
-          <div class="action-buttons">
-            @if (isInList()) {
-              <ion-button expand="block" color="success" disabled>
-                <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-                Op je lijst
-              </ion-button>
-            } @else {
-              <ion-button expand="block" (click)="addToShoppingList()">
-                <ion-icon name="cart-outline" slot="start"></ion-icon>
-                Toevoegen aan lijst
-              </ion-button>
-            }
-            <ion-button expand="block" fill="outline" (click)="shareDeal()">
-              <ion-icon name="share-outline" slot="start"></ion-icon>
-              Delen
-            </ion-button>
-          </div>
 
           @if (crossRetailer(); as cr) {
             <a class="cross-retailer-banner" [routerLink]="['/product', cr.fingerprint]">
@@ -213,6 +196,27 @@ interface PriceHistoryEntry {
         </div>
       }
     </ion-content>
+
+    @if (deal) {
+      <ion-footer class="action-footer">
+        <div class="action-buttons">
+          @if (isInList()) {
+            <ion-button expand="block" color="success" disabled>
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              Op je lijst
+            </ion-button>
+          } @else {
+            <ion-button expand="block" (click)="addToShoppingList()">
+              <ion-icon name="cart-outline" slot="start"></ion-icon>
+              Toevoegen aan lijst
+            </ion-button>
+          }
+          <ion-button fill="outline" (click)="shareDeal()" aria-label="Delen">
+            <ion-icon name="share-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </ion-footer>
+    }
   `,
   styles: [`
     ion-content { --background: var(--retro-newsprint); }
@@ -476,10 +480,16 @@ interface PriceHistoryEntry {
     }
     .wrong-match ion-icon { font-size: 0.85rem; }
 
-    .action-buttons {
-      display: flex; gap: 8px; margin-bottom: 18px;
+    .action-footer {
+      background: var(--retro-newsprint);
+      border-top: 2px solid var(--retro-ink);
     }
-    .action-buttons ion-button { flex: 1; --min-height: 44px; min-height: 44px; }
+    .action-buttons {
+      display: flex; gap: 8px;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    }
+    .action-buttons ion-button { --min-height: 48px; min-height: 48px; margin: 0; }
+    .action-buttons ion-button:first-child { flex: 1; }
 
     .cross-retailer-banner {
       display: flex; align-items: center; gap: 10px;
