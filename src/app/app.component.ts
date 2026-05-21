@@ -37,11 +37,23 @@ export class AppComponent implements OnInit {
         disable_session_recording: false,
         autocapture: true,
       });
+      this.captureReferral();
     }
     this.shoppingList.loadItems().subscribe();
     this.alertService.checkForAlerts();
     this.handleAppUpdates();
     this.confirmCapgoBundle();
+  }
+
+  // Friend-test attribution: a `?ref=dad` (etc.) on first visit is registered as
+  // a PostHog super property so every subsequent event is tagged with who shared
+  // the link, and stored so it survives navigation/return visits.
+  private captureReferral() {
+    if (typeof window === 'undefined') return;
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (!ref) return;
+    this.posthog.posthog.register({ referral_source: ref });
+    this.posthog.posthog.capture('referral_visit', { ref });
   }
 
   // Tell Capgo this OTA bundle loaded successfully. Without this the plugin
