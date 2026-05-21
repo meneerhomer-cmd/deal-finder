@@ -216,7 +216,11 @@ import { HapticsService } from '../../services/haptics.service';
     </ion-content>
   `,
   styles: [`
-    ion-content { --background: var(--ion-color-light, #f4f5f8); }
+    ion-content {
+      --background:
+        radial-gradient(circle at 1px 1px, rgba(10,10,10,0.05) 0.5px, transparent 0.5px) 0 0 / 6px 6px,
+        var(--retro-newsprint, #faf7f0);
+    }
 
     ion-searchbar {
       --background: rgba(255,255,255,0.15);
