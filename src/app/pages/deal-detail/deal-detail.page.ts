@@ -54,7 +54,7 @@ interface PriceHistoryEntry {
       } @else {
         <div class="hero">
           @if (deal.imageUrl && !imageError) {
-            <img [src]="deal.imageUrl" [alt]="deal.productName" class="hero-image" (error)="imageError = true" />
+            <img [src]="deal.imageUrl" [alt]="deal.productName" class="hero-image" (error)="imageError = true" (click)="imageZoomed.set(true)" />
           } @else {
             <span class="hero-emoji">{{ getCategoryEmoji(deal.categorySlug) }}</span>
           }
@@ -62,6 +62,13 @@ interface PriceHistoryEntry {
             <span class="hero-discount">-{{ deal.discountPercentage }}%</span>
           }
         </div>
+
+        @if (imageZoomed() && deal.imageUrl) {
+          <div class="img-lightbox" (click)="imageZoomed.set(false)">
+            <img [src]="deal.imageUrl" [alt]="deal.productName" />
+            <button type="button" class="lightbox-close" aria-label="Sluit">&times;</button>
+          </div>
+        }
 
         <div class="detail-body">
           <div class="meta-row">
@@ -239,6 +246,25 @@ interface PriceHistoryEntry {
     }
     .hero-image {
       max-width: 100%; max-height: 260px; object-fit: contain;
+      cursor: zoom-in;
+    }
+    .img-lightbox {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10, 10, 10, 0.92);
+      padding: 16px;
+      cursor: zoom-out;
+    }
+    .img-lightbox img {
+      max-width: 100%; max-height: 100%; object-fit: contain;
+      border: 2px solid var(--retro-ink);
+      background: #fff;
+    }
+    .lightbox-close {
+      position: absolute; top: 12px; right: 16px;
+      background: transparent; border: none; color: #fff;
+      font-size: 2.4rem; line-height: 1; cursor: pointer;
+      padding: 4px 10px;
     }
     .hero-emoji { font-size: 5rem; opacity: 0.6; }
     .hero-discount {
@@ -582,6 +608,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
 
   deal: Deal | undefined;
   imageError = false;
+  imageZoomed = signal(false);
   priceHistory = signal<PriceHistoryEntry[]>([]);
   productSummary = signal<ProductResponse | null>(null);
   substitute = signal<Deal | null>(null);

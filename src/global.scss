@@ -238,6 +238,9 @@ ion-modal {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: white;
+  // Readable default for retailers without a brand color mapped (e.g. Vera) —
+  // without this they render white-on-white and the tag is invisible.
+  background: var(--retro-ink);
   box-shadow: 1.5px 1.5px 0 0 var(--retro-ink);
 
   &.carrefour { background: var(--retailer-carrefour); }
