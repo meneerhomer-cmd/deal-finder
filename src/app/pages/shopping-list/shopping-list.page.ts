@@ -38,7 +38,7 @@ import { PosthogService } from '../../services/posthog.service';
         }
       </ion-toolbar>
       <ion-toolbar>
-        <ion-segment [value]="currentTab()" (ionChange)="onTabChange($event)">
+        <ion-segment value="active" (ionChange)="onTabChange($event)">
           <ion-segment-button value="active">
             Actief
             @if (shoppingList.activeCount() > 0) {

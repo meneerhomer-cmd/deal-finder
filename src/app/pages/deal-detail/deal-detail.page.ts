@@ -210,7 +210,7 @@ interface PriceHistoryEntry {
           @if (isInList()) {
             <ion-button expand="block" color="success" (click)="removeFromShoppingList()">
               <ion-icon name="checkmark-circle" slot="start"></ion-icon>
-              Op je lijst · tik om te verwijderen
+              Op je lijst
             </ion-button>
           } @else {
             <ion-button expand="block" (click)="addToShoppingList()">
@@ -740,7 +740,9 @@ export class DealDetailPage implements OnInit, OnDestroy {
   addToShoppingList() {
     if (!this.deal) return;
     const deal = this.deal;
-    this.shoppingList.addDeal(deal.id).subscribe(async () => {
+    this.shoppingList.addDeal(deal.id).subscribe(() => {
+      // No toast — the button flips to "Op je lijst" (+ haptic on device) as
+      // confirmation, so a popup is redundant.
       this.haptics.success();
       this.posthog.posthog.capture('deal_added_to_shopping_list', {
         deal_id: deal.id,
@@ -750,14 +752,6 @@ export class DealDetailPage implements OnInit, OnDestroy {
         current_price: deal.currentPrice,
         category: deal.categorySlug,
       });
-      const toast = await this.toastCtrl.create({
-        message: 'Toegevoegd aan je boodschappenlijst!',
-        duration: 1500,
-        position: 'bottom',
-        color: 'success',
-        icon: 'checkmark-circle',
-      });
-      await toast.present();
     });
   }
 
