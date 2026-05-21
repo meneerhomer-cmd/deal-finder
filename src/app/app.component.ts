@@ -72,5 +72,10 @@ export class AppComponent implements OnInit {
         await this.swUpdate.activateUpdate();
         location.reload();
       });
+    // Proactively check on launch (and recover from a wedged SW) so a returning
+    // visitor converges to the latest version instead of being served a stale
+    // cached shell until a manual refresh.
+    this.swUpdate.checkForUpdate().catch(() => {});
+    this.swUpdate.unrecoverable.subscribe(() => location.reload());
   }
 }

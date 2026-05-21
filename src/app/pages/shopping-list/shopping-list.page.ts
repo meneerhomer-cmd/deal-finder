@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, OnInit, inject, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import {
@@ -38,7 +38,7 @@ import { PosthogService } from '../../services/posthog.service';
         }
       </ion-toolbar>
       <ion-toolbar>
-        <ion-segment [value]="currentTab" (ionChange)="onTabChange($event)">
+        <ion-segment [value]="currentTab()" (ionChange)="onTabChange($event)">
           <ion-segment-button value="active">
             Actief
             @if (shoppingList.activeCount() > 0) {
@@ -55,7 +55,7 @@ import { PosthogService } from '../../services/posthog.service';
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      @if (shoppingList.activeCount() > 0 && currentTab === 'active') {
+      @if (shoppingList.activeCount() > 0 && currentTab() === 'active') {
         <div class="summary-bar">
           @if (totalSavings() > 0) {
             <div class="savings-hero">
@@ -87,8 +87,8 @@ import { PosthogService } from '../../services/posthog.service';
       } @else if (displayedItems().length === 0) {
         <div class="empty-state">
           <ion-icon name="cart-outline" class="empty-icon"></ion-icon>
-          <h2>{{ currentTab === 'active' ? 'Je lijst is leeg' : 'Nog niets gekocht' }}</h2>
-          <p>{{ currentTab === 'active' ? 'Voeg deals toe vanuit de Deals pagina' : 'Markeer items als gekocht' }}</p>
+          <h2>{{ currentTab() === 'active' ? 'Je lijst is leeg' : 'Nog niets gekocht' }}</h2>
+          <p>{{ currentTab() === 'active' ? 'Voeg deals toe vanuit de Deals pagina' : 'Markeer items als gekocht' }}</p>
         </div>
       } @else {
         <ion-list>
@@ -190,10 +190,10 @@ import { PosthogService } from '../../services/posthog.service';
 export class ShoppingListPage implements OnInit {
   shoppingList = inject(ShoppingListService);
   private posthog = inject(PosthogService);
-  currentTab: 'active' | 'purchased' = 'active';
+  currentTab = signal<'active' | 'purchased'>('active');
 
   displayedItems = computed(() =>
-    this.currentTab === 'active' ? this.shoppingList.activeItems() : this.shoppingList.purchasedItems()
+    this.currentTab() === 'active' ? this.shoppingList.activeItems() : this.shoppingList.purchasedItems()
   );
 
   totalPrice = computed(() =>
@@ -244,6 +244,6 @@ export class ShoppingListPage implements OnInit {
   }
 
   onTabChange(event: CustomEvent) {
-    this.currentTab = event.detail.value;
+    this.currentTab.set(event.detail.value);
   }
 }
