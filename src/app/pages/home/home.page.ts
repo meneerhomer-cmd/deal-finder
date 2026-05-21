@@ -87,7 +87,7 @@ import { HapticsService } from '../../services/haptics.service';
       <!-- First-launch skeletons (no cached data yet) — keeps the open instant -->
       @if (dealService.loading() && topDeals().length === 0) {
         <div class="section">
-          <div class="section-header"><h2>Beste deals</h2></div>
+          <div class="section-header"><h2>Topdeals van de week</h2></div>
           <div class="deal-carousel">
             @for (s of [1,2,3,4]; track s) {
               <div class="carousel-item"><div class="skeleton-card"></div></div>
@@ -144,7 +144,7 @@ import { HapticsService } from '../../services/haptics.service';
       @if (favoriteBrandDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>Uw favoriete merken</h2>
+            <h2>Jouw merken in promo</h2>
             <a routerLink="/brands" class="see-all">Beheer <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
@@ -159,7 +159,7 @@ import { HapticsService } from '../../services/haptics.service';
       @if (topDeals().length > 0) {
         <div class="section">
           <div class="section-header">
-            <h2>Beste deals</h2>
+            <h2>Topdeals van de week</h2>
             <a routerLink="/deals" class="see-all">Alles <ion-icon name="arrow-forward"></ion-icon></a>
           </div>
           <div class="deal-carousel">
@@ -202,7 +202,7 @@ import { HapticsService } from '../../services/haptics.service';
       @if (expiringDeals().length > 0) {
         <div class="section">
           <div class="section-header expiring">
-            <h2><ion-icon name="timer-outline"></ion-icon> Bijna verlopen</h2>
+            <h2><ion-icon name="timer-outline"></ion-icon> Laatste kans</h2>
           </div>
           <div class="deal-carousel">
             @for (deal of expiringDeals(); track deal.id) {
@@ -330,10 +330,14 @@ import { HapticsService } from '../../services/haptics.service';
       padding: 8px 14px 2px;
     }
     .section-header h2 {
-      margin: 0; font-size: 1rem; font-weight: 700;
+      margin: 0;
+      font-family: 'Anton', 'Archivo Narrow', sans-serif;
+      font-size: 1.3rem; font-weight: 400;
+      text-transform: uppercase; letter-spacing: 0.01em;
+      color: var(--retro-ink, #0a0a0a);
       display: flex; align-items: center; gap: 6px;
     }
-    .section-header.expiring h2 { color: #e65100; }
+    .section-header.expiring h2 { color: var(--retro-red, #e30613); }
     .see-all {
       display: flex; align-items: center; gap: 3px;
       font-family: 'Archivo Narrow', system-ui, sans-serif;
@@ -351,7 +355,8 @@ import { HapticsService } from '../../services/haptics.service';
       scrollbar-width: none; scroll-snap-type: x mandatory;
     }
     .deal-carousel::-webkit-scrollbar { display: none; }
-    .carousel-item { flex-shrink: 0; width: 140px; scroll-snap-align: start; }
+    .carousel-item { flex-shrink: 0; width: 140px; display: flex; scroll-snap-align: start; }
+    .carousel-item app-deal-card { flex: 1; min-width: 0; }
     .skeleton-card {
       height: 230px;
       border: 2px solid var(--retro-ink, #0a0a0a);

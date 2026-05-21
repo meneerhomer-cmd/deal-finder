@@ -78,12 +78,15 @@ import { HapticsService } from '../../services/haptics.service';
       --yellow: #ffd200;
       --blue: #0066cc;
       font-family: 'Archivo Narrow', system-ui, sans-serif;
+      display: block;
+      height: 100%;
     }
 
     .card {
       position: relative;
       display: flex;
       flex-direction: column;
+      height: 100%;
       background:
         radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 0.5px, transparent 0.5px) 0 0 / 4px 4px,
         var(--newsprint);
@@ -179,6 +182,7 @@ import { HapticsService } from '../../services/haptics.service';
       display: flex;
       flex-direction: column;
       gap: 6px;
+      flex: 1;
     }
 
     .brand-highlight {
@@ -217,7 +221,7 @@ import { HapticsService } from '../../services/haptics.service';
       display: flex;
       align-items: baseline;
       gap: 10px;
-      margin-top: 4px;
+      margin-top: auto;
     }
 
     .price-now {
