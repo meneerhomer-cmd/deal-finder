@@ -69,6 +69,11 @@ import { HapticsService } from '../../services/haptics.service';
               <ion-icon name="trophy-outline"></ion-icon>
               <span>Goedkoopst bij <strong>{{ s.cheapestRetailer }}</strong> — bespaar €{{ s.amount | number:'1.2-2' }}</span>
             </div>
+          } @else if (sortedDeals().length > 1) {
+            <div class="savings-headline same-price">
+              <ion-icon name="storefront-outline"></ion-icon>
+              <span>Zelfde prijs bij {{ sortedDeals().length }} winkels</span>
+            </div>
           }
 
           @if (product()!.categoryAttributesJson) {
@@ -81,10 +86,10 @@ import { HapticsService } from '../../services/haptics.service';
           <div class="retailer-list">
             @for (d of sortedDeals(); track d.id; let i = $index) {
               <div class="retailer-row">
-                <a [routerLink]="['/deal', d.id]" class="retailer-card" [class.cheapest]="i === 0 && sortedDeals().length > 1" (click)="haptics.light()">
+                <a [routerLink]="['/deal', d.id]" class="retailer-card" [class.cheapest]="i === 0 && hasCheapest()" (click)="haptics.light()">
                   <div class="rc-top">
                     <span class="rc-retailer">{{ d.retailerName }}</span>
-                    @if (i === 0 && sortedDeals().length > 1) {
+                    @if (i === 0 && hasCheapest()) {
                       <span class="rc-badge">GOEDKOOPST</span>
                     }
                   </div>
@@ -159,6 +164,7 @@ import { HapticsService } from '../../services/haptics.service';
       font-family: 'Archivo Narrow', sans-serif; font-size: 0.95rem;
     }
     .savings-headline ion-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .savings-headline.same-price { background: var(--retro-newsprint-bright); box-shadow: 3px 3px 0 0 var(--retro-ink-soft, #4a4540); }
 
     .retailer-list { display: flex; flex-direction: column; gap: 14px; }
     .retailer-row { display: flex; flex-direction: column; }
@@ -221,6 +227,14 @@ export class ProductPage implements OnInit {
   sortedDeals = computed(() =>
     [...this.deals()].sort((a, b) => (a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity))
   );
+
+  // True only when the first (sorted) deal is STRICTLY cheaper than the next —
+  // so we don't badge "GOEDKOOPST" when every retailer has the same price.
+  hasCheapest = computed(() => {
+    const ds = this.sortedDeals();
+    if (ds.length < 2) return false;
+    return (ds[0].currentPrice ?? Infinity) < (ds[1].currentPrice ?? Infinity);
+  });
 
   savings = computed<{ amount: number; cheapestRetailer: string } | null>(() => {
     const ds = this.sortedDeals().filter(d => d.currentPrice != null);

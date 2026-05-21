@@ -201,9 +201,9 @@ interface PriceHistoryEntry {
       <ion-footer class="action-footer">
         <div class="action-buttons">
           @if (isInList()) {
-            <ion-button expand="block" color="success" disabled>
-              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-              Op je lijst
+            <ion-button expand="block" color="success" (click)="removeFromShoppingList()">
+              <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+              Op je lijst · tik om te verwijderen
             </ion-button>
           } @else {
             <ion-button expand="block" (click)="addToShoppingList()">
@@ -732,6 +732,13 @@ export class DealDetailPage implements OnInit, OnDestroy {
       });
       await toast.present();
     });
+  }
+
+  removeFromShoppingList() {
+    if (!this.deal) return;
+    this.haptics.light();
+    // Service shows its own "Verwijderd" toast — no extra toast here.
+    this.shoppingList.removeDeal(this.deal.id).subscribe();
   }
 
   goBack() {
