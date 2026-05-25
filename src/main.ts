@@ -35,6 +35,12 @@ if (environment.sentry.dsn) {
       'localhost',
       /^https:\/\/deal-finder-api-927801911058\.europe-west1\.run\.app/,
     ],
+    // Known non-breaking framework noise from Ionic's ion-tabs (its selectedTab/
+    // color setter throws `… is not a function` and triggers Angular's NG0600
+    // signal-write guard on tab/render changes). The app works fine; this just
+    // spams Sentry and would bury real errors during the friend test. Filter it.
+    // Root cause is internal to @ionic/angular — revisit with an Ionic upgrade.
+    ignoreErrors: ['NG0600', /is not a function/],
   }, SentryAngular.init);
 }
 

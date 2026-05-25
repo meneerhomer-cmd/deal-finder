@@ -97,6 +97,7 @@ import { PosthogService } from '../../services/posthog.service';
               <ion-item [routerLink]="['/deal', item.deal.id]" [detail]="true">
                 <ion-checkbox
                   slot="start"
+                  [attr.aria-label]="'Markeer ' + item.deal.productName + ' als gekocht'"
                   [checked]="item.purchased"
                   (ionChange)="togglePurchased(item)"
                   (click)="$event.stopPropagation()"
