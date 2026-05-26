@@ -71,7 +71,12 @@ import { HapticsService } from '../../services/haptics.service';
             Beschikbaar bij {{ product()!.retailerCount }} {{ product()!.retailerCount === 1 ? 'winkel' : 'winkels' }}
           </p>
 
-          @if (savings(); as s) {
+          @if (unitCheapest(); as u) {
+            <div class="savings-headline">
+              <ion-icon name="trophy-outline"></ion-icon>
+              <span>Goedkoopst per {{ u.word }}: <strong>{{ u.retailer }}</strong> — €{{ u.unitPrice | number:'1.2-2' }}/{{ u.word }}@if (u.pct > 0) {<span class="pct"> · {{ u.pct }}% goedkoper</span>}</span>
+            </div>
+          } @else if (absoluteSavings(); as s) {
             <div class="savings-headline">
               <ion-icon name="trophy-outline"></ion-icon>
               <span>Goedkoopst bij <strong>{{ s.cheapestRetailer }}</strong> — bespaar €{{ s.amount | number:'1.2-2' }}</span>
@@ -97,7 +102,7 @@ import { HapticsService } from '../../services/haptics.service';
                   <div class="rc-top">
                     <span class="rc-retailer">{{ d.retailerName }}</span>
                     @if (i === 0 && hasCheapest()) {
-                      <span class="rc-badge">GOEDKOOPST</span>
+                      <span class="rc-badge">{{ cheapestBadge() }}</span>
                     }
                   </div>
                   <div class="rc-bottom">
@@ -244,27 +249,91 @@ export class ProductPage implements OnInit {
     return this.deals().find(d => !!d.imageUrl)?.imageUrl ?? null;
   });
 
-  sortedDeals = computed(() =>
-    [...this.deals()].sort((a, b) => (a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity))
-  );
+  // The unit shared by most deals in this group (e.g. "€/wasbeurt"). Comparing by
+  // unit price is the only fair way across different sizes/forms (a small liquid
+  // vs a big pods bundle) — and the data is already extracted, so it costs nothing.
+  // Needs ≥2 deals sharing a unit to be useful.
+  private unitLabel = computed<string | null>(() => {
+    const counts = new Map<string, number>();
+    for (const d of this.deals()) {
+      if (d.derivedUnitPrice != null && d.derivedUnitLabel) {
+        counts.set(d.derivedUnitLabel, (counts.get(d.derivedUnitLabel) ?? 0) + 1);
+      }
+    }
+    let best: string | null = null, n = 0;
+    for (const [label, c] of counts) if (c > n) { best = label; n = c; }
+    return n >= 2 ? best : null;
+  });
 
-  // True only when the first (sorted) deal is STRICTLY cheaper than the next —
-  // so we don't badge "GOEDKOOPST" when every retailer has the same price.
+  // Deals sharing the dominant unit, cheapest-per-unit first.
+  unitComparable = computed<Deal[]>(() => {
+    const label = this.unitLabel();
+    if (!label) return [];
+    return this.deals()
+      .filter(d => d.derivedUnitLabel === label && d.derivedUnitPrice != null)
+      .sort((a, b) => (a.derivedUnitPrice as number) - (b.derivedUnitPrice as number));
+  });
+
+  // Unit-comparable deals first (by €/unit), then any others by absolute price.
+  sortedDeals = computed<Deal[]>(() => {
+    const comp = this.unitComparable();
+    if (comp.length >= 2) {
+      const ids = new Set(comp.map(d => d.id));
+      const rest = this.deals()
+        .filter(d => !ids.has(d.id))
+        .sort((a, b) => (a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity));
+      return [...comp, ...rest];
+    }
+    return [...this.deals()].sort((a, b) => (a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity));
+  });
+
+  // GOEDKOOPST: a strict unit-price winner when we have unit data; otherwise the
+  // strict absolute winner, but only when the spread is plausible (>2.2x usually
+  // means mismatched sizes/forms, not a real saving).
   hasCheapest = computed(() => {
+    const comp = this.unitComparable();
+    if (comp.length >= 2) {
+      return (comp[0].derivedUnitPrice as number) < (comp[1].derivedUnitPrice as number);
+    }
     const ds = this.sortedDeals();
     if (ds.length < 2) return false;
-    return (ds[0].currentPrice ?? Infinity) < (ds[1].currentPrice ?? Infinity);
+    const lo = ds[0].currentPrice ?? Infinity, nextLo = ds[1].currentPrice ?? Infinity;
+    const hi = ds[ds.length - 1].currentPrice ?? 0;
+    return lo < nextLo && (lo > 0 ? hi / lo : 99) <= 2.2;
   });
 
-  savings = computed<{ amount: number; cheapestRetailer: string } | null>(() => {
+  // Badge text reflects the comparison basis so a high-absolute-price winner
+  // (cheapest *per wash*) doesn't read as a mistake.
+  cheapestBadge = computed(() =>
+    this.unitComparable().length >= 2
+      ? 'BESTE €/' + this.unitWord(this.unitComparable()[0].derivedUnitLabel).toUpperCase()
+      : 'GOEDKOOPST'
+  );
+
+  // Headline: cheapest per unit + how much cheaper than the dearest comparable.
+  unitCheapest = computed<{ retailer: string; unitPrice: number; word: string; pct: number } | null>(() => {
+    const comp = this.unitComparable();
+    if (comp.length < 2) return null;
+    const cheapest = comp[0], dearest = comp[comp.length - 1];
+    const cp = cheapest.derivedUnitPrice as number, dp = dearest.derivedUnitPrice as number;
+    if (dp - cp < 0.001) return null;
+    return { retailer: cheapest.retailerName, unitPrice: cp, word: this.unitWord(cheapest.derivedUnitLabel), pct: Math.round((1 - cp / dp) * 100) };
+  });
+
+  // Absolute-price savings — only as a fallback when there's no unit data AND the
+  // spread is plausible (so we never claim a bogus saving across mismatched sizes).
+  absoluteSavings = computed<{ amount: number; cheapestRetailer: string } | null>(() => {
+    if (this.unitComparable().length >= 2) return null;
     const ds = this.sortedDeals().filter(d => d.currentPrice != null);
     if (ds.length < 2) return null;
-    const cheapest = ds[0];
-    const dearest = ds[ds.length - 1];
-    const amount = (dearest.currentPrice ?? 0) - (cheapest.currentPrice ?? 0);
-    if (amount < 0.01) return null;
-    return { amount, cheapestRetailer: cheapest.retailerName };
+    const lo = ds[0].currentPrice as number, hi = ds[ds.length - 1].currentPrice as number;
+    if (hi - lo < 0.01 || (lo > 0 && hi / lo > 2.2)) return null;
+    return { amount: hi - lo, cheapestRetailer: ds[0].retailerName };
   });
+
+  private unitWord(label: string | null | undefined): string {
+    return (label ?? '').replace(/^€\s*\/\s*/, '');
+  }
 
   constructor() {
     addIcons({ arrowForward, storefront, pricetagOutline, trophyOutline, flagOutline });
