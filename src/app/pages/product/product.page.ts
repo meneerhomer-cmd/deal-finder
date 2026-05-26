@@ -76,10 +76,10 @@ import { HapticsService } from '../../services/haptics.service';
               <ion-icon name="trophy-outline"></ion-icon>
               <span>Goedkoopst per {{ u.word }}: <strong>{{ u.retailer }}</strong> — €{{ u.unitPrice | number:'1.2-2' }}/{{ u.word }}@if (u.pct > 0) {<span class="pct"> · {{ u.pct }}% goedkoper</span>}</span>
             </div>
-          } @else if (absoluteSavings(); as s) {
+          } @else if (absoluteSavings()) {
             <div class="savings-headline">
               <ion-icon name="trophy-outline"></ion-icon>
-              <span>Goedkoopst bij <strong>{{ s.cheapestRetailer }}</strong> — bespaar €{{ s.amount | number:'1.2-2' }}</span>
+              <span>Goedkoopst bij <strong>{{ absoluteSavings()!.cheapestRetailer }}</strong> — bespaar €{{ absoluteSavings()!.amount | number:'1.2-2' }}</span>
             </div>
           } @else if (sortedDeals().length > 1) {
             <div class="savings-headline same-price">
