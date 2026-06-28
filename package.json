@@ -17,7 +17,7 @@
     "sentry:upload": "SENTRY_RELEASE=\"deal-finder-app@$(git rev-parse --short HEAD)\" sentry-cli sourcemaps inject --org honeystly --project capacitor ./www/browser && SENTRY_RELEASE=\"deal-finder-app@$(git rev-parse --short HEAD)\" sentry-cli sourcemaps upload --org honeystly --project capacitor ./www/browser",
     "deploy:prod": "npm run write-version && ng build --configuration=production && npm run sentry:upload && find ./www/browser -name \"*.map\" -delete && firebase deploy --only hosting",
     "capgo:upload": "npx @capgo/cli@latest bundle upload --channel production",
-    "deploy:prod:ota": "npm run deploy:prod && npm run capgo:upload",
+    "deploy:prod:ota": "npm run deploy:prod && (npm run capgo:upload || echo '⚠️  Capgo OTA upload skipped/failed (plan or trial?) — web IS deployed; native app not updated OTA')",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest"
   },
