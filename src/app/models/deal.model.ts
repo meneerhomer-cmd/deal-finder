@@ -174,3 +174,48 @@ export function getDiscountClass(discount: number): string {
   return 'price-drop';
 }
 
+// --- Search & filter -------------------------------------------------------
+
+export interface DealFilters {
+  retailer?: string;
+  category?: string;
+  brand?: string;
+  minDiscount?: number;
+  search?: string;
+  foodOnly?: boolean;
+  /** Keep only deals currently at their lowest recorded price. */
+  atLowestOnly?: boolean;
+}
+
+/**
+ * Absolute € the shopper saves vs the deal's pre-promo price. 0 when the
+ * original price is unknown (so those deals sort last under "grootste
+ * besparing") or when the promo somehow isn't cheaper.
+ */
+export function savingEur(deal: Deal): number {
+  if (deal.originalPrice == null || deal.currentPrice == null) return 0;
+  const saving = deal.originalPrice - deal.currentPrice;
+  return saving > 0 ? saving : 0;
+}
+
+/**
+ * Pure predicate behind the deals page's client-side filtering. Search matches
+ * either the product name or the brand, so "Dreft" finds it even when the brand
+ * isn't repeated in the product name.
+ */
+export function matchesFilters(deal: Deal, f: DealFilters): boolean {
+  if (f.retailer && deal.retailerSlug !== f.retailer) return false;
+  if (f.category && deal.categorySlug?.toLowerCase() !== f.category.toLowerCase()) return false;
+  if (f.brand && deal.brand?.toLowerCase() !== f.brand.toLowerCase()) return false;
+  if (f.minDiscount && deal.discountPercentage < f.minDiscount) return false;
+  if (f.search) {
+    const q = f.search.toLowerCase();
+    const inName = deal.productName.toLowerCase().includes(q);
+    const inBrand = !!deal.brand && deal.brand.toLowerCase().includes(q);
+    if (!inName && !inBrand) return false;
+  }
+  if (f.atLowestOnly && !deal.atLowestPrice) return false;
+  if (f.foodOnly && (!deal.categorySlug || !FOOD_SLUGS.has(deal.categorySlug))) return false;
+  return true;
+}
+

@@ -4,15 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
   IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
-  IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
+  IonModal, IonList, IonItem, IonRadio, IonRadioGroup, IonToggle,
   IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText,
   IonInfiniteScroll, IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { filter, close, checkmark, swapVertical, bookOutline } from 'ionicons/icons';
+import { filter, close, checkmark, swapVertical, bookOutline, flash } from 'ionicons/icons';
 import { DealService } from '../../services/deal.service';
 import { DealCardComponent } from '../../components/deal-card/deal-card.component';
-import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS, isFoodDeal } from '../../models/deal.model';
+import { CATEGORIES, FOOD_CATEGORIES, NON_FOOD_CATEGORIES, FOOD_SLUGS, isFoodDeal, savingEur } from '../../models/deal.model';
 import { PosthogService } from '../../services/posthog.service';
 
 @Component({
@@ -22,7 +22,7 @@ import { PosthogService } from '../../services/posthog.service';
     FormsModule,
     IonHeader, IonToolbar, IonTitle, IonContent, IonRefresher, IonRefresherContent,
     IonSearchbar, IonChip, IonLabel, IonIcon, IonButton, IonButtons,
-    IonModal, IonList, IonItem, IonRadio, IonRadioGroup,
+    IonModal, IonList, IonItem, IonRadio, IonRadioGroup, IonToggle,
     IonSpinner, IonBadge, IonBackButton, IonSegment, IonSegmentButton, IonSkeletonText,
     IonInfiniteScroll, IonInfiniteScrollContent,
     DealCardComponent
@@ -74,6 +74,8 @@ import { PosthogService } from '../../services/posthog.service';
 
       <!-- Category quick-filter chips -->
       <div class="category-scroll">
+        <button class="cat-chip lowest-chip" [class.active]="dealService.filters().atLowestOnly"
+                (click)="toggleLowestOnly()">⚡ Laagste prijs</button>
         <button class="cat-chip" [class.active]="!dealService.filters().category"
                 (click)="dealService.clearFilter('category')">Alles</button>
         @for (cat of topCategories(); track cat.slug) {
@@ -137,6 +139,16 @@ import { PosthogService } from '../../services/posthog.service';
             </ion-toolbar>
           </ion-header>
           <ion-content>
+            <ion-list>
+              <ion-item>
+                <ion-toggle [checked]="!!dealService.filters().atLowestOnly"
+                            (ionChange)="onLowestOnlyChange($event)">
+                  <strong>⚡ Alleen laagste prijs</strong>
+                  <p>Deals die nu op hun laagste prijs ooit staan</p>
+                </ion-toggle>
+              </ion-item>
+            </ion-list>
+
             <ion-list>
               <ion-item>
                 <ion-label><strong>Minimum korting</strong></ion-label>
@@ -266,6 +278,13 @@ import { PosthogService } from '../../services/posthog.service';
       color: #ffffff;
       border-color: var(--retro-ink);
     }
+    .lowest-chip {
+      background: var(--retro-yellow);
+    }
+    .lowest-chip.active {
+      background: var(--retro-ink);
+      color: var(--retro-yellow);
+    }
     .cat-chip:active {
       transform: translate(1.5px, 1.5px);
       box-shadow: 0 0 0 0 var(--retro-ink);
@@ -310,7 +329,7 @@ export class DealsPage implements OnInit, OnDestroy {
   );
   retailerSlug: string | null = null;
   categories = CATEGORIES;
-  currentSort = signal<'discount' | 'price' | 'expiry' | 'name'>('discount');
+  currentSort = signal<'discount' | 'price' | 'expiry' | 'name' | 'saving'>('discount');
   // Render a sliding window of the (client-filtered) list so the DOM stays
   // small — the full list can be 1000+ cards, which janks scroll badly.
   private static PAGE = 24;
@@ -318,6 +337,7 @@ export class DealsPage implements OnInit, OnDestroy {
 
   private sortOptions: Array<{ key: string; label: string }> = [
     { key: 'discount', label: 'Korting' },
+    { key: 'saving', label: 'Besparing €' },
     { key: 'price', label: 'Prijs' },
     { key: 'expiry', label: 'Vervaldatum' },
     { key: 'name', label: 'Naam' },
@@ -340,6 +360,8 @@ export class DealsPage implements OnInit, OnDestroy {
     switch (this.currentSort()) {
       case 'discount':
         return deals.sort((a, b) => b.discountPercentage - a.discountPercentage);
+      case 'saving':
+        return deals.sort((a, b) => savingEur(b) - savingEur(a));
       case 'price':
         return deals.sort((a, b) => (a.currentPrice ?? 0) - (b.currentPrice ?? 0));
       case 'expiry':
@@ -383,11 +405,11 @@ export class DealsPage implements OnInit, OnDestroy {
 
   cycleSort() {
     const idx = this.sortOptions.findIndex(o => o.key === this.currentSort());
-    this.currentSort.set(this.sortOptions[(idx + 1) % this.sortOptions.length].key as 'discount' | 'price' | 'expiry' | 'name');
+    this.currentSort.set(this.sortOptions[(idx + 1) % this.sortOptions.length].key as 'discount' | 'price' | 'expiry' | 'name' | 'saving');
   }
 
   constructor() {
-    addIcons({ filter, close, checkmark, swapVertical, bookOutline });
+    addIcons({ filter, close, checkmark, swapVertical, bookOutline, flash });
     effect(() => localStorage.setItem('dealfinder-mode', this.dealMode()));
     // Reset the scroll window to the top whenever the result set changes
     // (filters, mode, sort, or a fresh deal load), so you don't keep a huge
@@ -459,6 +481,22 @@ export class DealsPage implements OnInit, OnDestroy {
     this.posthog.posthog.capture('filter_applied', {
       filter_type: 'brand',
       value: value ?? null,
+    });
+  }
+
+  onLowestOnlyChange(event: CustomEvent) {
+    this.setLowestOnly(!!event.detail.checked);
+  }
+
+  toggleLowestOnly() {
+    this.setLowestOnly(!this.dealService.filters().atLowestOnly);
+  }
+
+  private setLowestOnly(on: boolean) {
+    this.dealService.setFilter('atLowestOnly', on ? true : undefined);
+    this.posthog.posthog.capture('filter_applied', {
+      filter_type: 'at_lowest_price',
+      value: on,
     });
   }
 

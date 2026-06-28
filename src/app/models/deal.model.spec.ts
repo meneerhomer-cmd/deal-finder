@@ -6,6 +6,8 @@ import {
   isFoodDeal,
   getCategoryEmoji,
   getDiscountClass,
+  savingEur,
+  matchesFilters,
 } from './deal.model';
 
 // Minimal Deal factory — only the fields the pure helpers read.
@@ -95,5 +97,76 @@ describe('getDiscountClass', () => {
     expect(getDiscountClass(20)).toBe('fixed-price');
     expect(getDiscountClass(19)).toBe('price-drop');
     expect(getDiscountClass(0)).toBe('price-drop');
+  });
+});
+
+describe('savingEur', () => {
+  it('is original minus current price', () => {
+    expect(savingEur(deal({ originalPrice: 8.99, currentPrice: 6.49 }))).toBeCloseTo(2.5, 5);
+  });
+
+  it('is 0 when original price is unknown (sorts last under besparing)', () => {
+    expect(savingEur(deal({ originalPrice: null, currentPrice: 3.0 }))).toBe(0);
+  });
+
+  it('is 0 when current price is unknown', () => {
+    expect(savingEur(deal({ originalPrice: 5.0, currentPrice: null }))).toBe(0);
+  });
+
+  it('never goes negative when the promo is not actually cheaper', () => {
+    expect(savingEur(deal({ originalPrice: 2.0, currentPrice: 3.0 }))).toBe(0);
+  });
+
+  it('orders deals by descending saving when used as a comparator', () => {
+    const deals = [
+      deal({ productName: 'small', originalPrice: 3, currentPrice: 2.5 }), // 0.5
+      deal({ productName: 'big', originalPrice: 10, currentPrice: 4 }),    // 6
+      deal({ productName: 'none', originalPrice: null, currentPrice: 4 }), // 0
+    ];
+    const sorted = [...deals].sort((a, b) => savingEur(b) - savingEur(a)).map(d => d.productName);
+    expect(sorted).toEqual(['big', 'small', 'none']);
+  });
+});
+
+describe('matchesFilters', () => {
+  const base = () =>
+    deal({
+      productName: 'Dreft Wasmiddel',
+      brand: 'Dreft',
+      retailerSlug: 'kruidvat',
+      categorySlug: 'huishouden',
+      discountPercentage: 30,
+      atLowestPrice: false,
+    });
+
+  it('passes a deal with no filters set', () => {
+    expect(matchesFilters(base(), {})).toBe(true);
+  });
+
+  it('filters by retailer / category / brand / minDiscount', () => {
+    expect(matchesFilters(base(), { retailer: 'lidl' })).toBe(false);
+    expect(matchesFilters(base(), { category: 'vlees' })).toBe(false);
+    expect(matchesFilters(base(), { brand: 'ariel' })).toBe(false);
+    expect(matchesFilters(base(), { minDiscount: 40 })).toBe(false);
+    expect(matchesFilters(base(), { minDiscount: 30 })).toBe(true);
+  });
+
+  it('search matches the product name OR the brand', () => {
+    // brand-only term that is NOT in the product name still hits
+    expect(matchesFilters(deal({ productName: 'Vloeibaar wasmiddel', brand: 'Dreft' }), { search: 'dreft' })).toBe(true);
+    expect(matchesFilters(deal({ productName: 'Dreft Wasmiddel', brand: null }), { search: 'wasmiddel' })).toBe(true);
+    expect(matchesFilters(deal({ productName: 'Wasmiddel', brand: 'Ariel' }), { search: 'dreft' })).toBe(false);
+  });
+
+  it('atLowestOnly keeps only deals at their lowest recorded price', () => {
+    expect(matchesFilters(deal({ atLowestPrice: true }), { atLowestOnly: true })).toBe(true);
+    expect(matchesFilters(deal({ atLowestPrice: false }), { atLowestOnly: true })).toBe(false);
+    // toggle off -> does not exclude
+    expect(matchesFilters(deal({ atLowestPrice: false }), { atLowestOnly: false })).toBe(true);
+  });
+
+  it('combines filters with AND semantics', () => {
+    expect(matchesFilters(base(), { retailer: 'kruidvat', minDiscount: 25, search: 'dreft' })).toBe(true);
+    expect(matchesFilters(base(), { retailer: 'kruidvat', atLowestOnly: true })).toBe(false); // base is not at lowest
   });
 });

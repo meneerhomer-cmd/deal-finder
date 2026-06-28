@@ -2,16 +2,9 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
-import { Deal, Retailer, ScanStatus, Opportunity, FOOD_SLUGS } from '../models/deal.model';
+import { Deal, Retailer, ScanStatus, Opportunity, DealFilters, matchesFilters } from '../models/deal.model';
 
-export interface DealFilters {
-  retailer?: string;
-  category?: string;
-  brand?: string;
-  minDiscount?: number;
-  search?: string;
-  foodOnly?: boolean;
-}
+export type { DealFilters } from '../models/deal.model';
 
 @Injectable({
   providedIn: 'root'
@@ -32,19 +25,7 @@ export class DealService {
   filteredDeals = computed(() => {
     const allDeals = this.deals();
     const f = this.filters();
-    
-    return allDeals.filter(deal => {
-      if (f.retailer && deal.retailerSlug !== f.retailer) return false;
-      if (f.category && deal.categorySlug?.toLowerCase() !== f.category.toLowerCase()) return false;
-      if (f.brand && deal.brand?.toLowerCase() !== f.brand.toLowerCase()) return false;
-      if (f.minDiscount && deal.discountPercentage < f.minDiscount) return false;
-      if (f.search) {
-        const searchLower = f.search.toLowerCase();
-        if (!deal.productName.toLowerCase().includes(searchLower)) return false;
-      }
-      if (f.foodOnly && (!deal.categorySlug || !FOOD_SLUGS.has(deal.categorySlug))) return false;
-      return true;
-    });
+    return allDeals.filter(deal => matchesFilters(deal, f));
   });
 
   availableBrands = computed(() => {
@@ -67,6 +48,7 @@ export class DealService {
     if (f.brand) count++;
     if (f.minDiscount) count++;
     if (f.search) count++;
+    if (f.atLowestOnly) count++;
     return count;
   });
 
