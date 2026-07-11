@@ -14,6 +14,7 @@ export interface ShoppingListItem {
     retailerName: string;
     retailerSlug: string;
     currentPrice: number | null;
+    originalPrice: number | null;
     discountPercentage: number;
     categorySlug: string | null;
   };

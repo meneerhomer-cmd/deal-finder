@@ -7,6 +7,7 @@ import {
   IonCheckbox, IonItemSliding, IonItemOptions, IonItemOption,
   IonSpinner, IonBackButton
 } from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { trashOutline, cartOutline, sparklesOutline } from 'ionicons/icons';
 import { ShoppingListService, ShoppingListItem } from '../../services/shopping-list.service';
@@ -219,6 +220,7 @@ import { PosthogService } from '../../services/posthog.service';
 export class ShoppingListPage implements OnInit {
   shoppingList = inject(ShoppingListService);
   private posthog = inject(PosthogService);
+  private alertController = inject(AlertController);
   currentTab = signal<'active' | 'purchased'>('active');
 
   displayedItems = computed(() =>
@@ -231,8 +233,9 @@ export class ShoppingListPage implements OnInit {
 
   totalSavings = computed(() =>
     this.shoppingList.activeItems().reduce((sum, i) => {
-      const orig = (i.deal.currentPrice || 0) / (1 - (i.deal.discountPercentage || 0) / 100);
-      return sum + (orig - (i.deal.currentPrice || 0));
+      const current = i.deal.currentPrice ?? 0;
+      const original = i.deal.originalPrice ?? current;
+      return sum + Math.max(0, original - current);
     }, 0)
   );
 
@@ -268,7 +271,22 @@ export class ShoppingListPage implements OnInit {
     this.shoppingList.removeDeal(item.deal.id).subscribe();
   }
 
-  clearAll() {
-    this.shoppingList.clearAll().subscribe();
+  async clearAll() {
+    const count = this.shoppingList.activeCount();
+    const alert = await this.alertController.create({
+      header: 'Lijst wissen?',
+      message: count === 1
+        ? 'Je verwijdert 1 item van je lijst. Dit kan niet ongedaan gemaakt worden.'
+        : `Je verwijdert ${count} items van je lijst. Dit kan niet ongedaan gemaakt worden.`,
+      buttons: [
+        { text: 'Annuleren', role: 'cancel' },
+        {
+          text: 'Wissen',
+          role: 'destructive',
+          handler: () => { this.shoppingList.clearAll().subscribe(); }
+        }
+      ]
+    });
+    await alert.present();
   }
 }
