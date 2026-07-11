@@ -13,6 +13,7 @@ import { PosthogService } from '../../services/posthog.service';
 
 interface SearchResult {
   id: string;
+  dealId: number | null;
   productName: string;
   brandName: string | null;
   retailerSlug: string;
@@ -109,13 +110,19 @@ interface SearchResponse {
 
         <div class="results-list">
           @for (result of results(); track result.id; let i = $index) {
-            <a class="result-row" [class.is-cheapest]="i === 0 && result.currentPrice" [routerLink]="['/deal', result.id]">
+            <a class="result-row"
+               [class.is-cheapest]="i === 0 && result.currentPrice"
+               [class.no-detail]="!result.dealId"
+               [routerLink]="result.dealId ? ['/deal', result.dealId] : null">
               <div class="result-info">
                 @if (i === 0 && result.currentPrice) {
                   <span class="cheapest-stamp">★ Goedkoopst</span>
                 }
                 <span class="result-name">{{ result.productName }}</span>
                 <span class="retailer-badge" [class]="result.retailerSlug">{{ result.retailerName }}</span>
+                @if (!result.dealId) {
+                  <span class="result-note">Alleen in de folder — geen detailpagina</span>
+                }
               </div>
               <div class="result-prices">
                 @if (result.currentPrice) {
@@ -187,6 +194,9 @@ interface SearchResponse {
     }
     .result-row:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--retro-ink); }
     .result-row.is-cheapest { background: var(--retro-yellow); }
+    .result-row.no-detail { cursor: default; opacity: 0.72; }
+    .result-row.no-detail:active { transform: none; box-shadow: 3px 3px 0 0 var(--retro-ink); }
+    .result-note { font-size: 0.7rem; opacity: 0.75; font-style: italic; }
 
     .result-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
     .result-info .retailer-badge { align-self: flex-start; }
