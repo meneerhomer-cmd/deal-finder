@@ -14,6 +14,7 @@ import { PosthogService } from '../../services/posthog.service';
 
 interface HotspotProduct {
   id: string;
+  dealId: number | null;
   name: string;
   brandName: string | null;
   discountPercent: number;
@@ -124,10 +125,17 @@ interface FlyerPage {
                   <span class="discount-badge">-{{ p.discountPercent }}%</span>
                 }
               </div>
-              <ion-button expand="block" (click)="addToList(p)">
-                <ion-icon name="cart-outline" slot="start"></ion-icon>
-                Toevoegen aan lijst
-              </ion-button>
+              @if (p.dealId) {
+                <ion-button expand="block" (click)="addToList(p)">
+                  <ion-icon name="cart-outline" slot="start"></ion-icon>
+                  Toevoegen aan lijst
+                </ion-button>
+                @if (addFailed()) {
+                  <p class="add-failed">Toevoegen mislukt. Probeer het opnieuw.</p>
+                }
+              } @else {
+                <p class="add-unavailable">Dit product staat alleen in de folder — we kunnen het nog niet aan je lijst toevoegen.</p>
+              }
             </ion-content>
           }
         </ng-template>
@@ -135,6 +143,11 @@ interface FlyerPage {
     </ion-content>
   `,
   styles: [`
+    .add-unavailable, .add-failed {
+      font-family: 'Space Mono', monospace; font-size: 0.8rem;
+      text-align: center; opacity: 0.8; margin: 12px 0 0;
+    }
+    .add-failed { color: var(--retro-red, #e30613); }
     .loading, .empty-state {
       display: flex; flex-direction: column; align-items: center;
       padding: 48px; text-align: center; color: var(--ion-color-medium);
@@ -230,6 +243,7 @@ export class FlyerViewerPage implements OnInit {
   loading = signal(true);
   currentIdx = signal(0);
   selectedProduct = signal<HotspotProduct | null>(null);
+  addFailed = signal(false);
 
   currentPage = computed(() => this.pages()[this.currentIdx()] ?? null);
 
@@ -258,15 +272,19 @@ export class FlyerViewerPage implements OnInit {
   }
 
   addToList(product: HotspotProduct) {
+    if (product.dealId == null) return;
+
     this.posthog.posthog.capture('flyer_product_added_to_shopping_list', {
       product_name: product.name,
       brand_name: product.brandName,
       discount_percent: product.discountPercent,
       retailer_slug: this.shopSlug,
     });
-    // The product id from the flyer is a GraphQL offer id, not a deal DB id
-    // For now just close the modal — full integration needs deal ID mapping
-    this.selectedProduct.set(null);
+
+    this.shoppingList.addDeal(product.dealId).subscribe({
+      next: () => this.selectedProduct.set(null),
+      error: () => this.addFailed.set(true)
+    });
   }
 
   private loadPages(brochureId: string) {
