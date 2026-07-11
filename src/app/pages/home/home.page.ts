@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -15,6 +15,8 @@ import { PosthogService } from '../../services/posthog.service';
 import { UserDataService } from '../../services/user-data.service';
 import { AuthService } from '../../services/auth.service';
 import { HapticsService } from '../../services/haptics.service';
+
+const MAX_EMPTY_POLLS = 6;
 
 @Component({
   selector: 'app-home',
@@ -74,7 +76,15 @@ import { HapticsService } from '../../services/haptics.service';
         </a>
       }
 
-      @if (dealService.totalDeals() === 0 && !dealService.loading()) {
+      @if (dealService.error() && dealService.totalDeals() === 0 && !dealService.loading()) {
+        <div class="error-banner">
+          <div>
+            <strong>Geen verbinding</strong>
+            <p>We konden de deals niet ophalen. Controleer je internetverbinding.</p>
+          </div>
+          <ion-button size="small" (click)="retry()">Opnieuw proberen</ion-button>
+        </div>
+      } @else if (dealService.totalDeals() === 0 && !dealService.loading()) {
         <div class="scraping-banner">
           <ion-spinner name="crescent"></ion-spinner>
           <div>
@@ -284,6 +294,14 @@ import { HapticsService } from '../../services/haptics.service';
     }
     .scraping-banner p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
 
+    .error-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      margin: 12px; padding: 16px; border-radius: 14px;
+      background: var(--ion-card-background, white);
+      border-left: 4px solid var(--retro-red, #e30613);
+    }
+    .error-banner p { margin: 4px 0 0; font-size: 0.85rem; color: var(--ion-color-medium); }
+
     .retailer-scroll {
       display: flex; gap: 12px; padding: 12px 14px;
       overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
@@ -409,7 +427,7 @@ import { HapticsService } from '../../services/haptics.service';
     .signin-cta-btn ion-icon { font-size: 1rem; }
   `]
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, OnDestroy {
   dealService = inject(DealService);
   private router = inject(Router);
   private posthog = inject(PosthogService);
@@ -558,13 +576,23 @@ export class HomePage implements OnInit {
   }
 
   private startPollingIfEmpty() {
+    let attempts = 0;
     this.pollInterval = setInterval(() => {
-      if (this.dealService.totalDeals() === 0) {
-        this.loadData();
-      } else {
+      if (this.dealService.totalDeals() > 0 || attempts >= MAX_EMPTY_POLLS) {
         clearInterval(this.pollInterval);
+        return;
       }
+      attempts++;
+      this.loadData();
     }, 10000);
+  }
+
+  retry() {
+    this.loadData();
+  }
+
+  ngOnDestroy() {
+    if (this.pollInterval) clearInterval(this.pollInterval);
   }
 
   doRefresh(event: any) {

@@ -105,6 +105,12 @@ import { PosthogService } from '../../services/posthog.service';
             </div>
           }
         </div>
+      } @else if (dealService.error() && dealService.totalDeals() === 0) {
+        <div class="empty-state">
+          <p>Geen verbinding</p>
+          <p>We konden de deals niet ophalen. Controleer je internetverbinding.</p>
+          <ion-button size="small" (click)="retry()">Opnieuw proberen</ion-button>
+        </div>
       } @else if (dealService.filteredDeals().length === 0) {
         <div class="empty-state">
           <p>Geen deals gevonden</p>
@@ -450,6 +456,13 @@ export class DealsPage implements OnInit, OnDestroy {
       ? this.dealService.loadDealsByRetailer(this.retailerSlug)
       : this.dealService.loadDeals();
     obs.subscribe({ complete: () => event.target.complete() });
+  }
+
+  retry() {
+    const obs = this.retailerSlug
+      ? this.dealService.loadDealsByRetailer(this.retailerSlug)
+      : this.dealService.loadDeals();
+    obs.subscribe();
   }
 
   onSearch(event: CustomEvent) {
