@@ -46,7 +46,13 @@ interface PriceHistoryEntry {
     </ion-header>
 
     <ion-content>
-      @if (!deal) {
+      @if (notFound()) {
+        <div class="loading">
+          <p class="notfound-title">Deze deal bestaat niet meer</p>
+          <p class="notfound-body">De promotie is verlopen of niet meer beschikbaar.</p>
+          <ion-button routerLink="/deals" expand="block">Bekijk alle deals</ion-button>
+        </div>
+      } @else if (!deal) {
         <div class="loading">
           <ion-spinner></ion-spinner>
           <p>Deal laden...</p>
@@ -233,6 +239,12 @@ interface PriceHistoryEntry {
       padding: 48px; color: var(--retro-ink-soft);
       font-family: 'Space Mono', monospace;
     }
+    .notfound-title {
+      font-family: 'Anton', sans-serif; text-transform: uppercase;
+      font-size: 1.25rem; color: var(--retro-ink); margin: 0 0 8px;
+      text-align: center;
+    }
+    .notfound-body { margin: 0 0 20px; text-align: center; }
 
     .hero {
       position: relative;
@@ -607,6 +619,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
   private haptics = inject(HapticsService);
 
   deal: Deal | undefined;
+  notFound = signal(false);
   imageError = false;
   imageZoomed = signal(false);
   priceHistory = signal<PriceHistoryEntry[]>([]);
@@ -664,6 +677,10 @@ export class DealDetailPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isFinite(id)) {
+      this.notFound.set(true);
+      return;
+    }
     const existing = this.dealService.deals().find(d => d.id === id);
     if (existing) {
       this.setDeal(existing, id);
@@ -678,7 +695,7 @@ export class DealDetailPage implements OnInit, OnDestroy {
           // (discountPercentage 0), expired deals, and deep-linked/shared URLs.
           this.http.get<Deal>(`${environment.apiUrl}/deals/${id}`).subscribe({
             next: d => this.setDeal(d, id),
-            error: () => {}
+            error: () => this.notFound.set(true)
           });
         }
       });
