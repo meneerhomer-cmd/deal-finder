@@ -59,6 +59,7 @@ export interface Product {
   dealCount: number;
   retailerCount: number;
   minCurrentPrice: number | null;
+  comparisonGrade: boolean;
 }
 
 export interface ProductResponse {

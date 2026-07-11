@@ -71,20 +71,27 @@ import { HapticsService } from '../../services/haptics.service';
             Beschikbaar bij {{ product()!.retailerCount }} {{ product()!.retailerCount === 1 ? 'winkel' : 'winkels' }}
           </p>
 
-          @if (unitCheapest(); as u) {
-            <div class="savings-headline">
-              <ion-icon name="trophy-outline"></ion-icon>
-              <span>Goedkoopst per {{ u.word }}: <strong>{{ u.retailer }}</strong> — €{{ u.unitPrice | number:'1.2-2' }}/{{ u.word }}@if (u.pct > 0) {<span class="pct"> · {{ u.pct }}% goedkoper</span>}</span>
-            </div>
-          } @else if (absoluteSavings()) {
-            <div class="savings-headline">
-              <ion-icon name="trophy-outline"></ion-icon>
-              <span>Goedkoopst bij <strong>{{ absoluteSavings()!.cheapestRetailer }}</strong> — bespaar €{{ absoluteSavings()!.amount | number:'1.2-2' }}</span>
-            </div>
+          @if (comparisonGrade()) {
+            @if (unitCheapest(); as u) {
+              <div class="savings-headline">
+                <ion-icon name="trophy-outline"></ion-icon>
+                <span>Goedkoopst per {{ u.word }}: <strong>{{ u.retailer }}</strong> — €{{ u.unitPrice | number:'1.2-2' }}/{{ u.word }}@if (u.pct > 0) {<span class="pct"> · {{ u.pct }}% goedkoper</span>}</span>
+              </div>
+            } @else if (absoluteSavings()) {
+              <div class="savings-headline">
+                <ion-icon name="trophy-outline"></ion-icon>
+                <span>Goedkoopst bij <strong>{{ absoluteSavings()!.cheapestRetailer }}</strong> — bespaar €{{ absoluteSavings()!.amount | number:'1.2-2' }}</span>
+              </div>
+            } @else if (sortedDeals().length > 1) {
+              <div class="savings-headline same-price">
+                <ion-icon name="storefront-outline"></ion-icon>
+                <span>Zelfde prijs bij {{ sortedDeals().length }} winkels</span>
+              </div>
+            }
           } @else if (sortedDeals().length > 1) {
-            <div class="savings-headline same-price">
+            <div class="savings-headline brand-range">
               <ion-icon name="storefront-outline"></ion-icon>
-              <span>Zelfde prijs bij {{ sortedDeals().length }} winkels</span>
+              <span>Dit merk is in promo bij {{ sortedDeals().length }} winkels. De verpakking of variant kan per winkel verschillen — vergelijk de prijzen hieronder zelf.</span>
             </div>
           }
 
@@ -188,6 +195,11 @@ import { HapticsService } from '../../services/haptics.service';
     }
     .savings-headline ion-icon { font-size: 1.3rem; flex-shrink: 0; }
     .savings-headline.same-price { background: var(--retro-newsprint-bright); box-shadow: 3px 3px 0 0 var(--retro-ink-soft, #4a4540); }
+    .savings-headline.brand-range {
+      background: var(--retro-newsprint-bright);
+      box-shadow: 3px 3px 0 0 var(--retro-ink-soft, #4a4540);
+      font-size: 0.85rem; line-height: 1.35;
+    }
 
     .retailer-list { display: flex; flex-direction: column; gap: 14px; }
     .retailer-row { display: flex; flex-direction: column; }
@@ -290,7 +302,10 @@ export class ProductPage implements OnInit {
   // GOEDKOOPST: a strict unit-price winner when we have unit data; otherwise the
   // strict absolute winner, but only when the spread is plausible (>2.2x usually
   // means mismatched sizes/forms, not a real saving).
+  comparisonGrade = computed(() => this.product()?.comparisonGrade === true);
+
   hasCheapest = computed(() => {
+    if (!this.comparisonGrade()) return false;
     const comp = this.unitComparable();
     if (comp.length >= 2) {
       return (comp[0].derivedUnitPrice as number) < (comp[1].derivedUnitPrice as number);
