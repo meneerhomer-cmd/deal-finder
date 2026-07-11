@@ -29,6 +29,7 @@ export interface Deal {
   lowestPriceSeen: number | null;
   atLowestPrice: boolean;
   fingerprint?: string | null;
+  extracted?: boolean;
   derivedUnitPrice?: number | null;
   derivedUnitLabel?: string | null;
 }
@@ -154,11 +155,8 @@ export function looksNonFood(deal: Deal): boolean {
 export function isFoodDeal(deal: Deal): boolean {
   if (looksNonFood(deal)) return false;
   if (deal.categorySlug) return FOOD_SLUGS.has(deal.categorySlug);
-  // ~600 deals have a null categorySlug but a correct extracted category.
-  // Non-food deals get a null fingerprint at extraction time, so a present
-  // fingerprint means the extractor classified this as an in-scope (food /
-  // launch) product — trust it when the coarse categorySlug is missing.
-  return !!deal.fingerprint;
+  if (deal.extracted) return !!deal.fingerprint;
+  return true;
 }
 
 export function getCategoryEmoji(categorySlug: string | null): string {

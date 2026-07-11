@@ -60,9 +60,18 @@ describe('isFoodDeal', () => {
     expect(isFoodDeal(deal({ productName: 'Boormachine', categorySlug: 'gereedschap' }))).toBe(false);
   });
 
-  it('falls back to fingerprint presence when categorySlug is null', () => {
-    expect(isFoodDeal(deal({ productName: 'Innocent fruitsap', fingerprint: 'fruit:sap:innocent:innocent:standard' }))).toBe(true);
-    expect(isFoodDeal(deal({ productName: 'Mystery item', fingerprint: null }))).toBe(false);
+  it('falls back to fingerprint presence when categorySlug is null and the deal was extracted', () => {
+    expect(isFoodDeal(deal({ productName: 'Innocent fruitsap', extracted: true, fingerprint: 'fruit:sap:innocent:innocent:standard' }))).toBe(true);
+    expect(isFoodDeal(deal({ productName: 'Mystery item', extracted: true, fingerprint: null }))).toBe(false);
+  });
+
+  it('stays visible when the deal was never extracted (unknown is not non-food)', () => {
+    expect(isFoodDeal(deal({ productName: 'Mystery item', extracted: false, fingerprint: null }))).toBe(true);
+    expect(isFoodDeal(deal({ productName: 'Mystery item' }))).toBe(true);
+  });
+
+  it('still rejects a never-extracted deal that looks non-food', () => {
+    expect(isFoodDeal(deal({ productName: 'Davidoff Cool Water eau de toilette', extracted: false, fingerprint: null }))).toBe(false);
   });
 
   it('keeps every food slug in scope', () => {
